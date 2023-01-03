@@ -14,4 +14,8 @@ public class Debug {
             LOGGER.info(msg);
         }
     }
+
+    public static void info(String msgFormat, Object... args) {
+        info(String.format(msgFormat, args));
+    }
 }
