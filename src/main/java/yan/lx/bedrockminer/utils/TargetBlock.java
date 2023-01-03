@@ -32,7 +32,7 @@ public class TargetBlock {
     private int retryMax;
     private Status status;
 
-    private Queue<BlockPos> recyclingTask;
+    private final Queue<BlockPos> recyclingTask;
 
     /**
      * 构造函数
@@ -66,16 +66,11 @@ public class TargetBlock {
         return world;
     }
 
-    public Status getStatus() {
-        return status;
-    }
-
-
     /**
      * 更新处理程序
      */
     public boolean updater() {
-        Debug.info(String.format("[%s]当前处理状态: %s", tickTimes, status));
+        Debug.info("[%s]当前处理状态: %s", tickTimes, status);
         switch (this.status) {
             case TIME_OUT, FAILED, ITEM_RECYCLING, FINISH -> {
                 return updateHandler();     // 状态处理
@@ -236,29 +231,29 @@ public class TargetBlock {
                 boolean isRecycleRedstoneTorchBlock = redstoneTorchBlockPos != null && (world.getBlockState(redstoneTorchBlockPos).isOf(Blocks.REDSTONE_TORCH) || world.getBlockState(redstoneTorchBlockPos).isOf(Blocks.REDSTONE_WALL_TORCH));
                 boolean isRecycleSlimeBlock = slimeBlockPos != null && world.getBlockState(slimeBlockPos).isOf(Blocks.SLIME_BLOCK);
                 if (slimeBlockPos != null) {
-                    Debug.info(String.format("[物品回收][%s][粘液块][BlockState]: %s", tickRecycleTimes, world.getBlockState(slimeBlockPos)));
-                    Debug.info(String.format("[物品回收][%s][粘液块][Block]: %s", tickRecycleTimes, world.getBlockState(slimeBlockPos).getBlock().getName()));
+                    Debug.info("[物品回收][%s][粘液块][BlockState]: %s", tickRecycleTimes, world.getBlockState(slimeBlockPos));
+                    Debug.info("[物品回收][%s][粘液块][Block]: %s", tickRecycleTimes, world.getBlockState(slimeBlockPos).getBlock().getName());
                 }
 
                 // 粘液块
                 if (isRecycleSlimeBlock) {
                     if (!recyclingTask.contains(slimeBlockPos)) {
                         recyclingTask.offer(slimeBlockPos);
-                        Debug.info(String.format("[物品回收][%s][开始添加][粘液块]: %s", tickRecycleTimes, slimeBlockPos));
+                        Debug.info("[物品回收][%s][开始添加][粘液块]: %s", tickRecycleTimes, slimeBlockPos);
                     }
                 }
                 // 红石火把
                 if (isRecycleRedstoneTorchBlock) {
                     if (!recyclingTask.contains(redstoneTorchBlockPos)) {
                         recyclingTask.offer(redstoneTorchBlockPos);
-                        Debug.info(String.format("[物品回收][%s][开始添加][红石火把]: %s", tickRecycleTimes, redstoneTorchBlockPos));
+                        Debug.info("[物品回收][%s][开始添加][红石火把]: %s", tickRecycleTimes, redstoneTorchBlockPos);
                     }
                 }
                 // 活塞
                 if (isRecyclePistonBlock) {
                     if (!recyclingTask.contains(pistonBlockPos)) {
                         recyclingTask.offer(pistonBlockPos);
-                        Debug.info(String.format("[物品回收][%s][开始添加][活塞]: %s", tickRecycleTimes, pistonBlockPos));
+                        Debug.info("[物品回收][%s][开始添加][活塞]: %s", tickRecycleTimes, pistonBlockPos);
                     }
                 }
                 // 可能残留的活塞
@@ -267,14 +262,14 @@ public class TargetBlock {
                     if (world.getBlockState(pistonPos1).isOf(Blocks.PISTON)) {
                         if (!recyclingTask.contains(pistonPos1)) {
                             recyclingTask.offer(pistonPos1);
-                            Debug.info(String.format("[物品回收][%s][开始添加][活塞up]: %s", tickRecycleTimes, pistonPos1));
+                            Debug.info("[物品回收][%s][开始添加][活塞up]: %s", tickRecycleTimes, pistonPos1);
                         }
                     }
                     BlockPos pistonPos2 = pistonBlockPos.up().up();
                     if (world.getBlockState(pistonPos2).isOf(Blocks.PISTON)) {
                         if (!recyclingTask.contains(pistonPos1)) {
                             recyclingTask.offer(pistonPos2);
-                            Debug.info(String.format("[物品回收][%s][开始添加][活塞upup]: %s", tickRecycleTimes, pistonPos2));
+                            Debug.info("[物品回收][%s][开始添加][活塞upup]: %s", tickRecycleTimes, pistonPos2);
                         }
                     }
                 }
@@ -283,7 +278,7 @@ public class TargetBlock {
                     BlockPos pos = recyclingTask.poll();
                     if (!world.getBlockState(pos).isAir()) {
                         BlockBreaker.breakBlock(pos);
-                        Debug.info(String.format("[物品回收][%s][开始回收]: %s", tickRecycleTimes, pos));
+                        Debug.info("[物品回收][%s][开始回收]: %s", tickRecycleTimes, pos);
                     }
                     return false;
                 }
@@ -322,7 +317,7 @@ public class TargetBlock {
             // 检查目标方块是否存在(成功)
             if (world.getBlockState(blockPos).isAir()) {
                 // 获取需要回收物品的清单
-                Debug.info("[更新状态]: 目标方块已不存在, 准备执行回收任务");
+                Debug.info("[更新状态]: 目标方块(%s)已不存在, 准备执行回收任务", block.getName().getString());
                 status = Status.ITEM_RECYCLING; // 物品回收状态
                 return;
             }
