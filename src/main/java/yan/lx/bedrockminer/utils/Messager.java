@@ -10,7 +10,6 @@ public class Messager {
     }
 
     public static void rawactionBar(String message) {
-        Text text = Text.literal(message);
         MinecraftClient.getInstance().inGameHud.setOverlayMessage(Text.literal(message), false);
     }
 
