@@ -17,7 +17,7 @@ public class Messager {
         MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(Text.translatable(message));
     }
 
-    public static void rawchat(String message) {
+    public static void rawChat(String message) {
         MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(Text.literal(message));
     }
 }

@@ -9,5 +9,8 @@
   "bedrockminer.fail.missing.piston": "Needs more piston!",
   "bedrockminer.fail.missing.redstonetorch": "Needs more redstone torch!",
   "bedrockminer.fail.missing.slime": "Needs more slime block!",
-  "bedrockminer.fail.missing.instantmine": "Can't instantly mine piston! EfficiencyⅤ+HasteⅡ required!"
+  "bedrockminer.fail.missing.instantmine": "Can't instantly mine piston! EfficiencyⅤ+HasteⅡ required!",
+  "bedrockminer.command.debug.true": "Startup debug mode successful!",
+  "bedrockminer.command.debug.false": "Closed debug mode successful!",
+  "bedrockminer.command.debug.outputType": "Debug output type switch success!"
 }

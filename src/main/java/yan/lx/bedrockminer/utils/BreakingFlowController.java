@@ -17,17 +17,9 @@ import java.util.List;
 
 public class BreakingFlowController {
     private static int tickNum = 0;
-    private static List<Block> allowBlockList = new LinkedList<>();
+    public static List<Block> allowBlockList = new LinkedList<>();
     private static List<TargetBlock> cachedTargetBlockList = new LinkedList<>();
     private static boolean working = false;
-
-    static {
-        allowBlockList.add(Blocks.BEDROCK);            // 基岩
-        allowBlockList.add(Blocks.OBSIDIAN);           // 黑曜石
-        allowBlockList.add(Blocks.END_PORTAL);         // 末地传送门
-        allowBlockList.add(Blocks.END_PORTAL_FRAME);   // 末地传送门-框架
-        allowBlockList.add(Blocks.END_GATEWAY);        // 末地折跃门
-    }
 
     public static void onDoItemUse(HitResult crosshairTarget, ClientWorld world, ClientPlayerEntity player) {
         if (crosshairTarget.getType() != HitResult.Type.BLOCK || !player.getMainHandStack().isEmpty()) {
@@ -140,8 +132,8 @@ public class BreakingFlowController {
                 boolean finish = cachedTargetBlockList.get(i).updater();
                 if (finish) {
                     cachedTargetBlockList.remove(i);
-                    i--;
                 }
+                return;
             }
         }
     }

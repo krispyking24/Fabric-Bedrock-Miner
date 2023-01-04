@@ -14,25 +14,20 @@ public enum Status {
 
     /*** 放置活塞 ***/
     PLACE_PISTON,
-
     /*** 放置粘液块 ***/
     PLACE_SLIME_BLOCK,
-
     /*** 放置红石火把 ***/
     PLACE_REDSTONE_TORCH,
 
     /*** 扩展开始 ***/
     EXTENDED_START,
-
     /*** 活塞移动中 ***/
     PISTON_MOVING,
-
     /*** 等待游戏更新 ***/
     WAIT_GAME_UPDATE,
 
     /*** 超时 ***/
     TIME_OUT,
-
     /*** 失败 ***/
     FAILED,
     /*** 物品回收 ***/
