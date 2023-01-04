@@ -124,7 +124,7 @@ public class TargetBlock {
                     Debug.info("[%s][状态处理][查找活塞位置]: 完成, %s", tickTimes, pistonBlockPos);
                     this.status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
                 } else {
-                    Messager.actionBar("[%s][状态处理]bedrockminer.fail.place.piston");   // 无法放置活塞
+                    Messager.actionBar("bedrockminer.fail.place.piston");   // 无法放置活塞
                     this.status = Status.FAILED;  // 失败状态
                 }
             }
