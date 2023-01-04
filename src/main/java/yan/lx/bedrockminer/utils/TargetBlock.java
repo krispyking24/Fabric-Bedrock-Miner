@@ -168,6 +168,8 @@ public class TargetBlock {
                         Debug.info("[%s][状态处理][放置活塞]: 放置成功", tickTimes);
                     } else {
                         Debug.info("[%s][状态处理][放置活塞]: 放置失败", tickTimes);
+                        this.status = Status.FAILED;
+                        return false;
                     }
                 }
                 this.status = Status.WAIT_GAME_UPDATE;  // 等待更新状态

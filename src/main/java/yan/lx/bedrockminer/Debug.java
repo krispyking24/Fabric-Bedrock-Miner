@@ -7,6 +7,7 @@ public class Debug {
     private static final Logger LOGGER = BedrockMinerMod.LOGGER;
 
     public static OutputType outputType = OutputType.LOGGER_INFO;
+
     public static boolean enable = true;
 
     public static void info(String msg) {
