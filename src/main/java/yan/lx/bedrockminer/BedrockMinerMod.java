@@ -1,16 +1,14 @@
 package yan.lx.bedrockminer;
 
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.minecraft.block.Blocks;
-import net.minecraft.server.command.ServerCommandSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yan.lx.bedrockminer.utils.BreakingFlowController;
 import yan.lx.bedrockminer.utils.Messager;
 
-import static net.minecraft.server.command.CommandManager.*;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 public class BedrockMinerMod implements ModInitializer {
     public static final String NAME = "bedrockMiner";
@@ -30,7 +28,7 @@ public class BedrockMinerMod implements ModInitializer {
     }
 
     private void registerCommand() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             var root = literal(NAME);
             var debug = literal("debug");
             {
@@ -74,6 +72,7 @@ public class BedrockMinerMod implements ModInitializer {
             // 注册
             dispatcher.register(root);
         });
+
 
     }
 
