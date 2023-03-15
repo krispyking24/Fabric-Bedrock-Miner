@@ -6,13 +6,33 @@
 # 说明
 该项目 fork 自 "LXYan2333/Fabric-Bedrock-Miner" 进行修改<br>
 原项目地址：https://github.com/LXYan2333/Fabric-Bedrock-Miner
-1. 支持破坏方块列表
+
+## 2023-3-16
+
+1. 支持破坏方块白名单列表
    - 基岩
-   - 黑曜石
    - 末地传送门
    - 末地传送门-框架
    - 末地折跃门
-2. 优化物品回收
+2. 不支持破坏方块黑名单列表（服务器）
+   - 普通命令方块
+   - 连锁型命令方块
+   - 循环型命令方块
+   - 结构空位
+   - 结构方块
+3. 添加命令
+4. 移除默认支持黑曜石方块
+5. 修复部分BUG
+6. 优化处理逻辑
+
+### 命令说明
+- `/bedrockMiner` 开启/关闭
+- `/bedrockMiner block add whitelist <block>` 添加白名单方块列表
+- `/bedrockMiner block add blacklist <block>` 添加黑名单方块列表
+- `/bedrockMiner block remove whitelist <block>` 移除白名单方块列表
+- `/bedrockMiner block remove blacklist <block>` 移除黑名单方块列表
+- `/bedrockMiner debug true` 开启调试模式
+- `/bedrockMiner debug false` 关闭调试模式
 
 # 视频
 https://www.youtube.com/watch?v=b8Y86yxjr_Y  

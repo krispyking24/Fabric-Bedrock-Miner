@@ -28,21 +28,21 @@ public class BlockPlacer {
         if (pos == null || item == null) {
             return;
         }
-
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        PlayerEntity player = minecraftClient.player;
+        var minecraftClient = MinecraftClient.getInstance();
+        var world = minecraftClient.world;
+        var player = minecraftClient.player;
         ClientPlayNetworkHandler clientPlayNetworkHandler = minecraftClient.getNetworkHandler();
-        if (player == null || clientPlayNetworkHandler == null) {
+        if (world == null || player == null || clientPlayNetworkHandler == null) {
             return;
         }
-
+        if (!world.getBlockState(pos).getMaterial().isReplaceable()) {
+            return;
+        }
         Direction direction = Direction.UP;
         float pitch = 90f;
         minecraftClient.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(player.getYaw(1.0f), pitch, player.isOnGround()));
-
         InventoryManager.switchToItem(item);
         BlockHitResult hitResult = new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), direction, pos, false);
-
         placeBlockWithoutInteractingBlock(hitResult);
     }
 
@@ -56,26 +56,24 @@ public class BlockPlacer {
         if (pos == null || direction == null) {
             return;
         }
-
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        PlayerEntity player = minecraftClient.player;
+        var minecraftClient = MinecraftClient.getInstance();
+        var world = minecraftClient.world;
+        var player = minecraftClient.player;
         ClientPlayNetworkHandler clientPlayNetworkHandler = minecraftClient.getNetworkHandler();
-
-        if (player == null || clientPlayNetworkHandler == null) {
+        if (world == null || player == null || clientPlayNetworkHandler == null) {
             return;
         }
-
+        if (!world.getBlockState(pos).getMaterial().isReplaceable()) {
+            return;
+        }
         float pitch = switch (direction) {
             case UP, NORTH, SOUTH, WEST, EAST -> 90f;
             case DOWN -> -90f;
         };
-        minecraftClient.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(player.getYaw(1.0f), pitch, player.isOnGround()));
-
+        minecraftClient.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(player.getYaw(), pitch, player.isOnGround()));
         Vec3d vec3d = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
-
         InventoryManager.switchToItem(Blocks.PISTON);
         BlockHitResult hitResult = new BlockHitResult(vec3d, Direction.UP, pos, false);
-
         placeBlockWithoutInteractingBlock(hitResult);
     }
 
@@ -90,11 +88,8 @@ public class BlockPlacer {
         if (world == null || player == null || interactionManager == null) {
             return;
         }
-
         ItemStack itemStack = player.getStackInHand(Hand.MAIN_HAND);
-
         interactionManager.sendSequencedPacket(minecraftClient.world, sequence -> new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, hitResult, sequence));
-
         if (!itemStack.isEmpty() && !player.getItemCooldownManager().isCoolingDown(itemStack.getItem())) {
             ItemUsageContext itemUsageContext = new ItemUsageContext(player, Hand.MAIN_HAND, hitResult);
             itemStack.useOnBlock(itemUsageContext);

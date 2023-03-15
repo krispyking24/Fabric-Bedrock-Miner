@@ -12,5 +12,8 @@
   "bedrockminer.fail.missing.instantmine": "Can't instantly mine piston! EfficiencyⅤ+HasteⅡ required!",
   "bedrockminer.command.debug.true": "Startup debug mode successful!",
   "bedrockminer.command.debug.false": "Closed debug mode successful!",
-  "bedrockminer.command.debug.outputType": "Debug output type switch success!"
+  "bedrockminer.command.block.whitelist.add": "Added successfully!",
+  "bedrockminer.command.block.whitelist.remove": "Delete successfully!",
+  "bedrockminer.command.block.blacklist.add": "Added successfully!",
+  "bedrockminer.command.block.blacklist.remove": "Delete successfully!"
 }

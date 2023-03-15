@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import yan.lx.bedrockminer.utils.Messager;
 
 public class Debug {
-    private static final Logger LOGGER = BedrockMinerMod.LOGGER;
+    private static final Logger LOGGER = BedrockMinerMod.logger;
 
     public static OutputType outputType = OutputType.LOGGER_INFO;
 

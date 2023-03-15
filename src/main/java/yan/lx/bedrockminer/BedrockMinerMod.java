@@ -2,78 +2,54 @@ package yan.lx.bedrockminer;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.minecraft.block.Blocks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import yan.lx.bedrockminer.command.BaseCommand;
+import yan.lx.bedrockminer.command.BlockCommand;
+import yan.lx.bedrockminer.command.DebugCommand;
+import yan.lx.bedrockminer.config.Config;
 import yan.lx.bedrockminer.utils.BreakingFlowController;
 import yan.lx.bedrockminer.utils.Messager;
+
+import java.util.ArrayList;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 public class BedrockMinerMod implements ModInitializer {
-    public static final String NAME = "bedrockMiner";
-    public static final Logger LOGGER = LoggerFactory.getLogger("Bedrock Miner");
+    public static final String name = "bedrockMiner";
+    public static final String prefix = "bedrockMiner";
+    public static final Logger logger = LoggerFactory.getLogger("Bedrock Miner");
 
     @Override
     public void onInitialize() {
-        BreakingFlowController.allowBlockList.add(Blocks.BEDROCK);            // 基岩
-        BreakingFlowController.allowBlockList.add(Blocks.OBSIDIAN);           // 黑曜石
-        BreakingFlowController.allowBlockList.add(Blocks.END_PORTAL);         // 末地传送门
-        BreakingFlowController.allowBlockList.add(Blocks.END_PORTAL_FRAME);   // 末地传送门-框架
-        BreakingFlowController.allowBlockList.add(Blocks.END_GATEWAY);        // 末地折跃门
-
+        Config.load();
         registerCommand();
 
         Debug.info("模组初始化成功");
     }
 
     private void registerCommand() {
+        // 初始化命令实例
+        var commands = new ArrayList<BaseCommand>();
+        commands.add(new BlockCommand());
+        commands.add(new DebugCommand());
+
+        // 开始注册
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            var root = literal(NAME);
-            var debug = literal("debug");
-            {
-                // 输出类型
-                debug.then(literal("outputType")
-                        // 客户端覆盖栏消息
-                        .then(literal("overlayMessage").executes(context -> {
-                            Debug.outputType = Debug.OutputType.OVERLAY_MESSAGE;
-                            Messager.chat("bedrockminer.command.debug.outputType");
-                            return 0;
-                        }))
-                        // 客户端消息
-                        .then(literal("chatMessage").executes(context -> {
-                            Debug.outputType = Debug.OutputType.CHAT_MESSAGE;
-                            Messager.chat("bedrockminer.command.debug.outputType");
-                            return 0;
-                        }))
-                        // 日志信息
-                        .then(literal("loggerInfo").executes(context -> {
-                            Debug.outputType = Debug.OutputType.LOGGER_INFO;
-                            Messager.chat("bedrockminer.command.debug.outputType");
-                            return 0;
-                        }))
-                );
-                // 开
-                debug.then(literal("true").executes(context -> {
-                    Debug.enable = true;
-                    Messager.chat("bedrockminer.command.debug.true");
-                    return 0;
-                }));
-                // 关
-                debug.then(literal("false").executes(context -> {
-                    Debug.enable = true;
-                    Messager.chat("bedrockminer.command.debug.true");
-                    return 0;
-                }));
+            for (var command : commands) {
+                command.register(dispatcher, registryAccess);
             }
 
-            // 子命令添加主命令
-            root.then(debug);
-            // 注册
-            dispatcher.register(root);
+            dispatcher.register(literal(prefix).executes(context -> {
+                        if (BreakingFlowController.isWorking()) {
+                            BreakingFlowController.setWorking(false);
+                        } else {
+                            BreakingFlowController.setWorking(true);
+                        }
+                        return 0;
+                    })
+            );
         });
-
-
     }
 
 }

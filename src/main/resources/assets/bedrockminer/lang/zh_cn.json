@@ -12,5 +12,8 @@
   "bedrockminer.fail.missing.instantmine": "无法秒破活塞！请确保效率Ⅴ+急迫Ⅱ",
   "bedrockminer.command.debug.true": "启动调适模式成功!",
   "bedrockminer.command.debug.false": "关闭调适模式成功!",
-  "bedrockminer.command.debug.outputType": "调适输出类型切换成功!"
+  "bedrockminer.command.block.whitelist.add": "添加成功!",
+  "bedrockminer.command.block.whitelist.remove": "删除成功!",
+  "bedrockminer.command.block.blacklist.add": "添加成功!",
+  "bedrockminer.command.block.blacklist.remove": "删除成功!"
 }

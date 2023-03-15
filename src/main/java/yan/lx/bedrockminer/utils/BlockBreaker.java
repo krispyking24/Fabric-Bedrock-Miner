@@ -96,9 +96,7 @@ public class BlockBreaker {
             // 更新方块正在破坏进程
             if (interactionManager.updateBlockBreakingProgress(blockPos, direction)) {
                 minecraftClient.particleManager.addBlockBreakingParticles(blockPos, direction);
-                player.swingHand(Hand.MAIN_HAND);
             }
-
             // 检查是否已经成功
             return world.getBlockState(blockPos).isAir();
         }

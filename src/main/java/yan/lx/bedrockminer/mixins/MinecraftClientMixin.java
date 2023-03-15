@@ -22,39 +22,38 @@ public class MinecraftClientMixin {
     @Shadow
     @Nullable
     public ClientWorld world;
+
     @Shadow
     @Nullable
     public ClientPlayerEntity player;
+
     @Shadow
     @Nullable
     public HitResult crosshairTarget;
-    @Shadow
-    private Profiler profiler;
 
-    public Profiler getProfiler() {
-        return profiler;
-    }
 
-    /**
-     * 物品使用
-     */
     @Inject(method = "doItemUse", at = @At(value = "HEAD"))
     private void onDoItemUse(CallbackInfo ci) {
         if (crosshairTarget == null || world == null || player == null) {
             return;
         }
-        BreakingFlowController.onDoItemUse(crosshairTarget, world, player);
+        if (crosshairTarget.getType() != HitResult.Type.BLOCK || !player.getMainHandStack().isEmpty()) {
+            return;
+        }
+        var blockHitResult = (BlockHitResult) crosshairTarget;
+        var blockPos = blockHitResult.getBlockPos();
+        var blockState = world.getBlockState(blockPos);
+        var block = blockState.getBlock();
+        BreakingFlowController.switchOnOff(block);
     }
 
-    /**
-     * 处理方块破坏
-     */
     @Inject(method = "handleBlockBreaking", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;swingHand(Lnet/minecraft/util/Hand;)V"), locals = LocalCapture.CAPTURE_FAILSOFT)
     private void onHandleBlockBreaking(boolean bl, CallbackInfo ci, BlockHitResult blockHitResult, BlockPos blockPos, Direction direction) {
         if (world == null) {
             return;
         }
-        BreakingFlowController.onHandleBlockBreaking(world, blockPos);
+        var blockState = world.getBlockState(blockPos);
+        var block = blockState.getBlock();
+        BreakingFlowController.addTask(block, blockPos, world);
     }
 }
-
