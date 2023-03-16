@@ -33,7 +33,7 @@ Original project address: https://github.com/LXYan2333/Fabric-Bedrock-Miner
 - `/bedrockMiner block remove blacklist <block>` remove blacklist block list
 - `/bedrockMiner debug true` enables debug mode
 - `/bedrockMiner debug false` turn off debug mode
-~~~~
+
 # Showcase
 https://www.youtube.com/watch?v=b8Y86yxjr_Y  
 https://www.bilibili.com/video/BV1Fv411P7Vc
