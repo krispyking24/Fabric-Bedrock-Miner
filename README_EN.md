@@ -1,4 +1,4 @@
-**English** | [中文](https://github.com/Bunnui/Fabric-Bedrock-Miner/blob/main/README.md)
+**English** | [中文](https://github.com/Bunnui/Fabric-Bedrock-Miner/blob/mian/README.md)
 
 # Fabric-Bedrock-Miner
 A Fabric client mod to "mine" bedrock!
