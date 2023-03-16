@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.command.CommandRegistryAccess;
 import yan.lx.bedrockminer.command.argument.BlockArgument;
 import yan.lx.bedrockminer.config.Config;
@@ -24,24 +25,24 @@ public class BlockCommand extends BaseCommand {
         builder.then(literal("add")
                         .then(literal("whitelist")
                                 .then(argument("block", new BlockArgument(registryAccess).setFilter(this::filterWhitelist))
-                                        .executes(context -> addWhitelist(context))
+                                        .executes(this::addWhitelist)
                                 )
                         )
                         .then(literal("blacklist")
                                 .then(argument("block", new BlockArgument(registryAccess).setFilter(this::filterBlacklist))
-                                        .executes(context -> addBlacklist(context))
+                                        .executes(this::addBlacklist)
                                 )
                         )
                 )
                 .then(literal("remove")
                         .then(literal("whitelist")
                                 .then(argument("block", new BlockArgument(registryAccess).setFilter(this::showWhitelist))
-                                        .executes(context -> removeWhitelist(context))
+                                        .executes(this::removeWhitelist)
                                 )
                         )
                         .then(literal("blacklist")
                                 .then(argument("block", new BlockArgument(registryAccess).setFilter(this::showBlacklist))
-                                        .executes(context -> removeBlacklist(context))
+                                        .executes(this::removeBlacklist)
                                 )
                         )
                 );
@@ -51,6 +52,9 @@ public class BlockCommand extends BaseCommand {
 
     private Boolean showWhitelist(Block block) {
         var config = Config.getInstance();
+        if (block.equals(Blocks.AIR)){
+            return false;
+        }
         for (var whitelist : config.blockWhitelist) {
             if (BlockUtils.getId(block).equals(whitelist)) {
                 return true;
@@ -61,6 +65,9 @@ public class BlockCommand extends BaseCommand {
 
     private Boolean filterWhitelist(Block block) {
         var config = Config.getInstance();
+        if (block.equals(Blocks.AIR)){
+            return false;
+        }
         for (var whitelist : config.blockWhitelist) {
             if (BlockUtils.getId(block).equals(whitelist)) {
                 return false;
@@ -70,6 +77,9 @@ public class BlockCommand extends BaseCommand {
     }
 
     private Boolean showBlacklist(Block block) {
+        if (block.equals(Blocks.AIR)){
+            return false;
+        }
         var config = Config.getInstance();
         for (var whitelist : config.blockBlacklist) {
             if (BlockUtils.getId(block).equals(whitelist)) {
@@ -80,6 +90,9 @@ public class BlockCommand extends BaseCommand {
     }
 
     private Boolean filterBlacklist(Block block) {
+        if (block.equals(Blocks.AIR)){
+            return false;
+        }
         var config = Config.getInstance();
         for (var whitelist : config.blockBlacklist) {
             if (BlockUtils.getId(block).equals(whitelist)) {

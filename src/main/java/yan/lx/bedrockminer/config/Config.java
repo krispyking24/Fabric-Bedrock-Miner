@@ -15,6 +15,7 @@ import java.util.List;
 public class Config {
     private static final File file = new File(FabricLoader.getInstance().getConfigDir().toFile(), "bedrockminer.json");
     private static @Nullable Config instance;
+    public boolean debug;
     public List<String> blockWhitelist = new ArrayList<>();
     public List<String> blockBlacklist = new ArrayList<>();
 

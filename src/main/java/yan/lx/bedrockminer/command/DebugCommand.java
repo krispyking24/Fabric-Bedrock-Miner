@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
 import yan.lx.bedrockminer.Debug;
+import yan.lx.bedrockminer.config.Config;
 import yan.lx.bedrockminer.utils.Messager;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.*;
@@ -29,7 +30,8 @@ public class DebugCommand extends BaseCommand {
         } else {
             Messager.chat("bedrockminer.command.debug.false");
         }
-        Debug.enable = b;
+        Config.getInstance().debug = b;
+        Config.save();
         return 0;
     }
 }
