@@ -7,7 +7,7 @@
 该项目 fork 自 "LXYan2333/Fabric-Bedrock-Miner" 进行修改<br>
 原项目地址：https://github.com/LXYan2333/Fabric-Bedrock-Miner
 
-## 2023-3-16
+## 2023-3-16(更新1.19.4)
 
 1. 支持破坏方块白名单列表
    - 基岩
