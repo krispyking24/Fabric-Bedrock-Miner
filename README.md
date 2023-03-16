@@ -1,4 +1,4 @@
-[中文](https://github.com/Bunnui/Fabric-Bedrock-Miner/blob/main/README.md) | **English**
+**中文** | [English](https://github.com/Bunnui/Fabric-Bedrock-Miner/blob/main/README_EN.md) 
 
 # Fabric-Bedrock-Miner
 帮你“挖掘”基岩的客户端 Fabric mod！
