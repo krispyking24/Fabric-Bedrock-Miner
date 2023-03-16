@@ -1,6 +1,7 @@
 package yan.lx.bedrockminer;
 
 import org.slf4j.Logger;
+import yan.lx.bedrockminer.config.Config;
 import yan.lx.bedrockminer.utils.Messager;
 
 public class Debug {
@@ -8,10 +9,8 @@ public class Debug {
 
     public static OutputType outputType = OutputType.LOGGER_INFO;
 
-    public static boolean enable = true;
-
     public static void info(String msg) {
-        if (enable) {
+        if (Config.getInstance().debug) {
             switch (outputType) {
                 case CHAT_MESSAGE -> Messager.rawChat(msg);
                 case OVERLAY_MESSAGE -> Messager.rawactionBar(msg);
