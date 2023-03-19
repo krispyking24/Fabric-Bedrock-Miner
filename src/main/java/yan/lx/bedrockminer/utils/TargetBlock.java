@@ -276,7 +276,7 @@ public class TargetBlock {
                             slimeBlockPos = null;
                         }
                     } else if (blockState.isAir()) {
-                        redstoneTorchBlockPos = null;
+                        slimeBlockPos = null;
                     }
                 }
 
