@@ -252,7 +252,7 @@ public class TargetBlock {
                             pistonBlockPos = null;
                         }
                     } else if (blockState.isAir()) {
-                        redstoneTorchBlockPos = null;
+                        pistonBlockPos = null;
                     }
                 }
                 // 红石火把
