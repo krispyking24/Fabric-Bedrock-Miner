@@ -1,8 +1,8 @@
 package yan.lx.bedrockminer.utils;
 
 import net.minecraft.block.Block;
-import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 
 public class BlockUtils {
 
@@ -11,7 +11,7 @@ public class BlockUtils {
     }
 
     public static Identifier getIdentifier(Block block) {
-        return Registries.BLOCK.getId(block);
+        return Registry.BLOCK.getId(block);
     }
 
     public static String getId(Block block) {

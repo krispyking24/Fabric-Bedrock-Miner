@@ -1,12 +1,13 @@
 package yan.lx.bedrockminer.command;
 
-import com.ibm.icu.text.MessagePatternUtil;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import yan.lx.bedrockminer.command.argument.BlockArgument;
 import yan.lx.bedrockminer.config.Config;
 import yan.lx.bedrockminer.utils.BlockUtils;
@@ -22,25 +23,24 @@ public class BlockCommand extends BaseCommand {
 
     @Override
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandRegistryAccess registryAccess) {
-        builder.then(literal("add")
-                        .then(literal("whitelist")
+        builder.then(literal("whitelist")
+                        .then(literal("add")
                                 .then(argument("block", new BlockArgument(registryAccess).setFilter(this::filterWhitelist))
                                         .executes(this::addWhitelist)
                                 )
                         )
-                        .then(literal("blacklist")
+                        .then(literal("remove")
+                                .then(argument("block", new BlockArgument(registryAccess).setFilter(this::showWhitelist))
+                                        .executes(this::removeWhitelist)
+                                )
+                        ))
+                .then(literal("blacklist")
+                        .then(literal("add")
                                 .then(argument("block", new BlockArgument(registryAccess).setFilter(this::filterBlacklist))
                                         .executes(this::addBlacklist)
                                 )
                         )
-                )
-                .then(literal("remove")
-                        .then(literal("whitelist")
-                                .then(argument("block", new BlockArgument(registryAccess).setFilter(this::showWhitelist))
-                                        .executes(this::removeWhitelist)
-                                )
-                        )
-                        .then(literal("blacklist")
+                        .then(literal("remove")
                                 .then(argument("block", new BlockArgument(registryAccess).setFilter(this::showBlacklist))
                                         .executes(this::removeBlacklist)
                                 )
@@ -48,54 +48,58 @@ public class BlockCommand extends BaseCommand {
                 );
     }
 
-
-
-    private Boolean showWhitelist(Block block) {
-        var config = Config.getInstance();
-        if (block.equals(Blocks.AIR)){
-            return false;
+    private boolean isAir(Identifier blockId) {
+        var air = false;
+        if (blockId.equals(BlockUtils.getIdentifier(Blocks.AIR))) {
+            air = true;
+        } else if (blockId.equals(BlockUtils.getIdentifier(Blocks.CAVE_AIR))) {
+            air = true;
+        } else if (blockId.equals(BlockUtils.getIdentifier(Blocks.VOID_AIR))) {
+            air = true;
         }
+        return air;
+    }
+
+    private Boolean showWhitelist(Identifier blockId) {
+        var config = Config.getInstance();
         for (var whitelist : config.blockWhitelist) {
-            if (BlockUtils.getId(block).equals(whitelist)) {
+            if (blockId.toString().equals(whitelist)) {
                 return true;
             }
         }
         return false;
     }
 
-    private Boolean filterWhitelist(Block block) {
-        var config = Config.getInstance();
-        if (block.equals(Blocks.AIR)){
+    private Boolean filterWhitelist(Identifier blockId) {
+        if (isAir(blockId)) {
             return false;
         }
+        var config = Config.getInstance();
         for (var whitelist : config.blockWhitelist) {
-            if (BlockUtils.getId(block).equals(whitelist)) {
+            if (blockId.toString().equals(whitelist)) {
                 return false;
             }
         }
         return true;
     }
 
-    private Boolean showBlacklist(Block block) {
-        if (block.equals(Blocks.AIR)){
-            return false;
-        }
+    private Boolean showBlacklist(Identifier blockId) {
         var config = Config.getInstance();
         for (var whitelist : config.blockBlacklist) {
-            if (BlockUtils.getId(block).equals(whitelist)) {
+            if (blockId.toString().equals(whitelist)) {
                 return true;
             }
         }
         return false;
     }
 
-    private Boolean filterBlacklist(Block block) {
-        if (block.equals(Blocks.AIR)){
+    private Boolean filterBlacklist(Identifier blockId) {
+        if (isAir(blockId)) {
             return false;
         }
         var config = Config.getInstance();
         for (var whitelist : config.blockBlacklist) {
-            if (BlockUtils.getId(block).equals(whitelist)) {
+            if (blockId.toString().equals(whitelist)) {
                 return false;
             }
         }
@@ -106,10 +110,10 @@ public class BlockCommand extends BaseCommand {
         var block = BlockArgument.getBlock(context, "block");
         var config = Config.getInstance();
         var id = BlockUtils.getId(block);
-        if (!config.blockWhitelist.contains(id)) {
+        if (config.blockWhitelist.contains(id)) {
             config.blockWhitelist.add(id);
             Config.save();
-            Messager.chat("bedrockminer.command.block.whitelist.add");
+            sendChat("bedrockminer.command.block.whitelist.add", block);
         }
         return 0;
     }
@@ -121,7 +125,7 @@ public class BlockCommand extends BaseCommand {
         if (config.blockWhitelist.contains(id)) {
             config.blockWhitelist.remove(id);
             Config.save();
-            Messager.chat("bedrockminer.command.block.whitelist.remove");
+            sendChat("bedrockminer.command.block.whitelist.remove", block);
         }
         return 0;
     }
@@ -133,7 +137,7 @@ public class BlockCommand extends BaseCommand {
         if (!config.blockBlacklist.contains(id)) {
             config.blockBlacklist.add(id);
             Config.save();
-            Messager.chat("bedrockminer.command.block.blacklist.add");
+            sendChat("bedrockminer.command.block.blacklist.add", block);
         }
         return 0;
     }
@@ -145,8 +149,12 @@ public class BlockCommand extends BaseCommand {
         if (config.blockBlacklist.contains(id)) {
             config.blockBlacklist.remove(id);
             Config.save();
-            Messager.chat("bedrockminer.command.block.blacklist.remove");
+            sendChat("bedrockminer.command.block.blacklist.remove", block);
         }
         return 0;
+    }
+
+    private void sendChat(String translatableKey, Block block) {
+        Messager.rawChat(Text.translatable(translatableKey).getString().replace("%BlockName%", block.getName().getString()));
     }
 }
