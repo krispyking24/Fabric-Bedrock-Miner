@@ -5,6 +5,7 @@
   "bedrockminer.warn.multiplayer": "§7It seems that you are playing on a server? §r\n§7Please ask other players' opinions first.§r",
   "bedrockminer.fail.place.piston": "Failed to place piston!",
   "bedrockminer.fail.place.redstonetorch": "Failed to place redstone torch!",
+  "bedrockminer.fail.place.slimeBlock": "Failed to place slime block!",
   "bedrockminer.fail.missing.survival": "Survival Only!",
   "bedrockminer.fail.missing.piston": "Needs more piston!",
   "bedrockminer.fail.missing.redstonetorch": "Needs more redstone torch!",
