@@ -4,26 +4,25 @@
 A Fabric client mod to "mine" bedrock!
 
 # illustrate
-This project fork modified from "LXYan2333/Fabric-Bedrock-Miner"<br>
-Original project address: https://github.com/LXYan2333/Fabric-Bedrock-Miner
+This project fork modified from [LXYan2333/Fabric-Bedrock-Miner](https://github.com/LXYan2333/Fabric-Bedrock-Miner) <br>
 
-## 2023-3-16
+## Default list of squares list
 
-1. Support destroying block whitelist
-   - Bedrock
-   - End Portal
-   - End Portal - Frame
-   - End gateway
-2. Does not support breaking block blacklist (server)~~~~
-   - Command Block
-   - Chain Command Block
-   - Repeating Command Block
-   - Structure Void
-   - Structure Block
-3. Add commands
-4. Remove default support for obsidian blocks
-5. Fix some bugs
-6. Optimize processing logic
+#### White List of squares (destruct supported)
+- Bedrock
+- End Portal
+- End Portal - Frame
+- End gateway
+
+#### Server block blacklist list (does not support corruption, cannot be changed by instructions, built-in)
+- Command Block
+- Chain Command Block
+- Repeating Command Block
+- Structure Void
+- Structure Block
+- 
+#### Default filtering
+- Air
 
 ### Command description
 - `/bedrockMiner` enable/disable

@@ -1,31 +1,30 @@
 **中文** | [English](https://github.com/Bunnui/Fabric-Bedrock-Miner/blob/mian/README_EN.md) 
 
 # Fabric-Bedrock-Miner
-帮你“挖掘”基岩的客户端 Fabric mod！
+帮你 "挖掘" 基岩的客户端 Fabric mod！
 
 # 说明
-该项目 fork 自 "LXYan2333/Fabric-Bedrock-Miner" 进行修改<br>
-原项目地址：https://github.com/LXYan2333/Fabric-Bedrock-Miner
+该项目 fork 自 [LXYan2333/Fabric-Bedrock-Miner](https://github.com/LXYan2333/Fabric-Bedrock-Miner) 进行修改
 
-## 2023-3-16
+## 默认方块列表清单
 
-1. 支持破坏方块白名单列表
-   - 基岩
-   - 末地传送门
-   - 末地传送门-框架
-   - 末地折跃门
-2. 不支持破坏方块黑名单列表（服务器）
-   - 普通命令方块
-   - 连锁型命令方块
-   - 循环型命令方块
-   - 结构空位
-   - 结构方块
-3. 添加命令
-4. 移除默认支持黑曜石方块
-5. 修复部分BUG
-6. 优化处理逻辑
+#### 方块白名单列表（支持破坏）
+- 基岩
+- 末地传送门
+- 末地传送门-框架
+- 末地折跃门
 
-### 命令说明
+#### 服务器方块黑名单列表（不支持破坏，无法通过指令更改，内置）
+- 普通型命令方块
+- 连锁型命令方块
+- 循环型命令方块
+- 结构空位
+- 结构方块
+
+#### 默认过滤
+- 空气
+
+## 客户端命令说明
 - `/bedrockMiner` 开启/关闭
 - `/bedrockMiner block whitelist add <block>` 添加白名单方块列表
 - `/bedrockMiner block whitelist remove <block>` 移除白名单方块列表
@@ -35,7 +34,8 @@
 - `/bedrockMiner debug false` 关闭调试模式
 
 # 视频
-https://www.youtube.com/watch?v=b8Y86yxjr_Y  
+https://www.youtube.com/watch?v=b8Y86yxjr_Y
+</br>
 https://www.bilibili.com/video/BV1Fv411P7Vc
 
 # 使用
