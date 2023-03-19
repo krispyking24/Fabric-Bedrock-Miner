@@ -7,7 +7,7 @@
 该项目 fork 自 "LXYan2333/Fabric-Bedrock-Miner" 进行修改<br>
 原项目地址：https://github.com/LXYan2333/Fabric-Bedrock-Miner
 
-## 2023-3-16(更新1.19.4)
+## 2023-3-16
 
 1. 支持破坏方块白名单列表
    - 基岩
@@ -27,10 +27,10 @@
 
 ### 命令说明
 - `/bedrockMiner` 开启/关闭
-- `/bedrockMiner block add whitelist <block>` 添加白名单方块列表
-- `/bedrockMiner block add blacklist <block>` 添加黑名单方块列表
-- `/bedrockMiner block remove whitelist <block>` 移除白名单方块列表
-- `/bedrockMiner block remove blacklist <block>` 移除黑名单方块列表
+- `/bedrockMiner block whitelist add <block>` 添加白名单方块列表
+- `/bedrockMiner block whitelist remove <block>` 移除白名单方块列表
+- `/bedrockMiner block blacklist add <block>` 添加黑名单方块列表
+- `/bedrockMiner block blacklist remove <block>` 移除黑名单方块列表
 - `/bedrockMiner debug true` 开启调试模式
 - `/bedrockMiner debug false` 关闭调试模式
 

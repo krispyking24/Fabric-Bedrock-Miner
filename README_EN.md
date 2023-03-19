@@ -14,7 +14,7 @@ Original project address: https://github.com/LXYan2333/Fabric-Bedrock-Miner
    - End Portal
    - End Portal - Frame
    - End gateway
-2. Does not support breaking block blacklist (server)
+2. Does not support breaking block blacklist (server)~~~~
    - Command Block
    - Chain Command Block
    - Repeating Command Block
@@ -27,10 +27,10 @@ Original project address: https://github.com/LXYan2333/Fabric-Bedrock-Miner
 
 ### Command description
 - `/bedrockMiner` enable/disable
-- `/bedrockMiner block add whitelist <block>` add whitelist block list
-- `/bedrockMiner block add blacklist <block>` add blacklist block list
-- `/bedrockMiner block remove whitelist <block>` remove whitelist block list
-- `/bedrockMiner block remove blacklist <block>` remove blacklist block list
+- `/bedrockMiner block whitelist add <block>` add whitelist block list
+- `/bedrockMiner block whitelist remove <block>` remove whitelist block list
+- `/bedrockMiner block blacklist add <block>` add blacklist block list
+- `/bedrockMiner block blacklist remove <block>` remove blacklist block list
 - `/bedrockMiner debug true` enables debug mode
 - `/bedrockMiner debug false` turn off debug mode
 
