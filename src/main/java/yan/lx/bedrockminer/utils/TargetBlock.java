@@ -11,9 +11,6 @@ import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
 import yan.lx.bedrockminer.Debug;
 
-import java.util.ArrayList;
-import java.util.Objects;
-
 public class TargetBlock {
     private final Block block;
     private final BlockPos blockPos;
@@ -67,7 +64,6 @@ public class TargetBlock {
         if (handleStatus()) {
             updateStatus();
         }
-
     }
 
     private boolean handleStatus() {
@@ -88,47 +84,55 @@ public class TargetBlock {
                 // 检查活塞能否放置
                 if (CheckingEnvironment.has2BlocksOfPlaceToPlacePiston(world, blockPos)) {
                     Debug.info("[%s][状态处理][查找活塞位置]: 完成, %s", count, pistonBlockPos);
-                    status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
                 } else {
                     Debug.info("[%s][状态处理][查找活塞位置]: 失败", count);
                     Messager.actionBar("bedrockminer.fail.place.piston");   // 无法放置活塞
-                    status = Status.FAILED;  // 失败状态
+                    status = Status.FAILED;    // 失败状态
+                    return false;
                 }
+                status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
             }
             case FIND_REDSTONE_TORCH_POSITION -> {
-                var redstoneTorchBlockPosList = CheckingEnvironment.findNearbyFlatBlockToPlaceRedstoneTorch(world, pistonBlockPos);
-                if (redstoneTorchBlockPosList.size() > 0) {
-                    for (var redstoneTorchBlockPos : redstoneTorchBlockPosList) {
-                        if (!world.getBlockState(redstoneTorchBlockPos.down()).isAir()) {
-                            this.redstoneTorchBlockPos = redstoneTorchBlockPos;
-                            break;
+                if (pistonBlockPos != null) {
+                    var redstoneTorchBlockPosList = CheckingEnvironment.findNearbyFlatBlockToPlaceRedstoneTorch(world, pistonBlockPos);
+                    if (redstoneTorchBlockPosList.size() > 0) {
+                        for (var pos : redstoneTorchBlockPosList) {
+                            // 优选不用红石火把基座方块的位置, 人物是否在基座范围内不太懂, 先不管他了
+                            if (!world.getBlockState(pos.down()).isAir()) {
+                                redstoneTorchBlockPos = pos;
+                                break;
+                            }
+                        }
+                        if (redstoneTorchBlockPosList.size() > 0 && redstoneTorchBlockPos == null) {
+                            redstoneTorchBlockPos = redstoneTorchBlockPosList.get(0);
                         }
                     }
-                    if (redstoneTorchBlockPosList.size() > 0 && redstoneTorchBlockPos == null) {
-                        this.redstoneTorchBlockPos = redstoneTorchBlockPosList.get(0);
-                    }
-                }
-                if (redstoneTorchBlockPos != null) {
-                    Debug.info("[%s][状态处理][查找红石火把位置]: 成功, %s", count, redstoneTorchBlockPos);
-                    status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
-                } else {
-                    // 查找可以放置红石火把基座位置
-                    Debug.info("[%s][状态处理][查找红石火把位置]: 失败, 准备尝试查找粘液块", count);
-                    Debug.info("[%s][状态处理][查找粘液块位置]: 准备, %s", count, this.slimeBlockPos);
-                    slimeBlockPos = CheckingEnvironment.findPossibleSlimeBlockPos(world, blockPos);
-                    if (slimeBlockPos != null) {
-                        redstoneTorchBlockPos = this.slimeBlockPos.up();
-                        status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
-                        Debug.info("[%s][状态处理][查找粘液块位置]: 成功, %s", count, this.slimeBlockPos);
-                        Debug.info("[%s][状态处理][查找红石火把位置]: 成功, %s", count, this.redstoneTorchBlockPos);
+                    if (redstoneTorchBlockPos != null) {
+                        Debug.info("[%s][状态处理][查找红石火把位置]: 成功, %s", count, redstoneTorchBlockPos);
                     } else {
-                        Messager.actionBar("bedrockminer.fail.place.redstonetorch"); // 无法放置红石火把(没有可放置的基座方块)
-                        status = Status.FAILED;    // 失败状态
-                        Debug.info("[%s][状态处理][查找粘液块位置]: 失败", count);
-                        Debug.info("[%s][状态处理][查找红石火把位置]: 失败", count);
+                        // 查找可以放置红石火把基座位置
+                        Debug.info("[%s][状态处理][查找红石火把位置]: 失败, 准备尝试查找粘液块", count);
+                        Debug.info("[%s][状态处理][查找粘液块位置]: 准备, %s", count, slimeBlockPos);
+                        slimeBlockPos = CheckingEnvironment.findPossibleSlimeBlockPos(world, blockPos);
+                        if (slimeBlockPos != null) {
+                            redstoneTorchBlockPos = slimeBlockPos.up();
+                            status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
+                            Debug.info("[%s][状态处理][查找粘液块位置]: 成功, %s", count, slimeBlockPos);
+                            Debug.info("[%s][状态处理][查找红石火把位置]: 成功, %s", count, redstoneTorchBlockPos);
+                        } else {
+                            Messager.actionBar("bedrockminer.fail.place.redstonetorch"); // 无法放置红石火把(没有可放置的基座方块)
+                            Debug.info("[%s][状态处理][查找粘液块位置]: 失败", count);
+                            Debug.info("[%s][状态处理][查找红石火把位置]: 失败", count);
+                            status = Status.FAILED;    // 失败状态
+                            return false;
+                        }
                     }
+                } else {
+                    status = Status.FAILED;    // 失败状态
+                    return false;
                 }
 
+                status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
             }
             case PLACE_PISTON -> {
                 if (pistonBlockPos != null) {
@@ -143,12 +147,13 @@ public class TargetBlock {
                     if (world.getBlockState(pistonBlockPos).isOf(Blocks.PISTON)) {
                         Debug.info("[%s][状态处理][放置活塞]: 放置成功", count);
                     } else {
+                        Messager.actionBar("bedrockminer.fail.place.piston");   // 无法放置活塞
                         Debug.info("[%s][状态处理][放置活塞]: 放置失败", count);
                         status = Status.FAILED;
                         return false;
                     }
                 }
-                this.status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
+                status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
             }
             case PLACE_SLIME_BLOCK -> {
                 if (slimeBlockPos != null) {
@@ -157,10 +162,13 @@ public class TargetBlock {
                     if (world.getBlockState(slimeBlockPos).isOf(Blocks.SLIME_BLOCK)) {
                         Debug.info("[%s][状态处理][放置粘液块]: 放置成功", count);
                     } else {
+                        Messager.actionBar("bedrockminer.fail.place.slimeBlock");
+                        Debug.info("[%s][状态处理][放置粘液块]: 放置失败", count);
                         status = Status.FAILED;
+                        return false;
                     }
                 }
-                status = Status.WAIT_GAME_UPDATE;
+                status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
             }
             case PLACE_REDSTONE_TORCH -> {
                 Debug.info("[%s][状态处理][放置红石火把]: 准备放置, %s", count, redstoneTorchBlockPos);
@@ -168,7 +176,10 @@ public class TargetBlock {
                 if (!world.getBlockState(redstoneTorchBlockPos).isAir()) {
                     Debug.info("[%s][状态处理][放置红石火把]: 放置成功", count);
                 } else {
+                    Messager.actionBar("bedrockminer.fail.place.redstonetorch");
                     Debug.info("[%s][状态处理][放置红石火把]: 放置失败", count);
+                    status = Status.FAILED;
+                    return false;
                 }
                 status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
             }
@@ -212,7 +223,7 @@ public class TargetBlock {
             case ITEM_RECYCLING -> {
 
                 // 回收任务超时直接退出任务
-                if (recycleCount++ > 10) {
+                if (recycleCount++ > 20) {
                     status = Status.FINISH;
                 }
                 // 活塞

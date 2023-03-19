@@ -89,7 +89,7 @@ public class BreakingFlowController {
                 Messager.actionBar(haveEnoughItems);
                 return;
             }
-
+            // 仅生存执行
             if (minecraftClient.interactionManager != null && minecraftClient.interactionManager.getCurrentGameMode().isSurvivalLike()) {
                 if (checkIsAllowBlock(block)) {
                     for (var targetBlock : cache) {
@@ -125,7 +125,7 @@ public class BreakingFlowController {
         if (interactionManager.getCurrentGameMode().isCreative()) {
             return;
         }
-        var count = 0;
+        // 使用迭代器, 安全删除列表
         var iterator = cache.iterator();
         while (iterator.hasNext()) {
             var currentTask = iterator.next();
@@ -136,20 +136,15 @@ public class BreakingFlowController {
             }
             // 判断玩家与方块距离是否在处理范围内
             if (currentTask.getBlockPos().isWithinDistance(player.getPos(), 3.4f)) {
-                if (count++ < 2) {
-                    currentTask.tick();
-                    if (currentTask.getStatus() == Status.FINISH) {
-                        iterator.remove();
-                    }
-                } else {
-                    return;
+                // 为了tick内部能打印出完成状态, 所以才放在tick前面
+                if (currentTask.getStatus() == Status.FINISH) {
+                    iterator.remove();
                 }
+                currentTask.tick();
+                return;
             }
-
         }
-
     }
-
 
     private static boolean shouldAddNewTargetBlock(BlockPos pos) {
         for (TargetBlock targetBlock : cache) {
