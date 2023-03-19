@@ -9,12 +9,11 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.Block;
 import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.CommandRegistryWrapper;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.BlockArgumentParser;
+import net.minecraft.registry.*;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
 import org.jetbrains.annotations.Nullable;
 import yan.lx.bedrockminer.Debug;
 
@@ -27,12 +26,12 @@ import static net.minecraft.command.argument.BlockArgumentParser.INVALID_BLOCK_I
 
 public class BlockArgument implements ArgumentType<Block> {
     private static final Collection<String> EXAMPLES = Arrays.asList("stone", "minecraft:stone");
-    private final CommandRegistryWrapper<Block> registryWrapper;
+    private final RegistryWrapper<Block> registryWrapper;
     @Nullable
     private Function<Identifier, Boolean> filter;
 
     public BlockArgument(CommandRegistryAccess commandRegistryAccess) {
-        registryWrapper = commandRegistryAccess.createWrapper(Registry.BLOCK_KEY);
+        registryWrapper = commandRegistryAccess.createWrapper(RegistryKeys.BLOCK);
     }
 
     public static Block getBlock(CommandContext<FabricClientCommandSource> context, String name) {
@@ -46,12 +45,12 @@ public class BlockArgument implements ArgumentType<Block> {
         }
         var string = reader.getString().substring(i, reader.getCursor());
         var blockId = new Identifier(string);
-        var block = registryWrapper.getEntry(RegistryKey.of(Registry.BLOCK_KEY, blockId)).orElseThrow(() -> {
+        var block = registryWrapper.getOptional(RegistryKey.of(RegistryKeys.BLOCK, blockId)).orElseThrow(() -> {
             reader.setCursor(i);
             return INVALID_BLOCK_ID_EXCEPTION.createWithContext(reader, blockId.toString());
         }).value();
         // 检查过滤器
-        if (filter != null && !filter.apply(Registry.BLOCK.getId(block))) {
+        if (filter != null && !filter.apply(Registries.BLOCK.getId(block))) {
             reader.setCursor(i);
             throw INVALID_BLOCK_ID_EXCEPTION.createWithContext(reader, blockId.toString());
         }
