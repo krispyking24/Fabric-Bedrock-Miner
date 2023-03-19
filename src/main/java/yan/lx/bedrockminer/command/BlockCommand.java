@@ -110,7 +110,7 @@ public class BlockCommand extends BaseCommand {
         var block = BlockArgument.getBlock(context, "block");
         var config = Config.getInstance();
         var id = BlockUtils.getId(block);
-        if (config.blockWhitelist.contains(id)) {
+        if (!config.blockWhitelist.contains(id)) {
             config.blockWhitelist.add(id);
             Config.save();
             sendChat("bedrockminer.command.block.whitelist.add", block);
