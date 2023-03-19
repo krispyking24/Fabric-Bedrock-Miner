@@ -41,11 +41,7 @@ public class BedrockMinerMod implements ModInitializer {
             }
 
             dispatcher.register(literal(prefix).executes(context -> {
-                        if (BreakingFlowController.isWorking()) {
-                            BreakingFlowController.setWorking(false);
-                        } else {
-                            BreakingFlowController.setWorking(true);
-                        }
+                BreakingFlowController.setWorking(!BreakingFlowController.isWorking());
                         return 0;
                     })
             );
