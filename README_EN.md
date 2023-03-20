@@ -25,7 +25,7 @@ This project fork modified from [LXYan2333/Fabric-Bedrock-Miner](https://github.
 - Structure Block
 - Jigsaw Block
 
-#### Command blocks to add filter
+#### Block to add command filters
 - Air
 - Replaceable blocks
 
