@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import yan.lx.bedrockminer.command.argument.BlockArgument;
@@ -48,16 +49,10 @@ public class BlockCommand extends BaseCommand {
                 );
     }
 
-    private boolean isAir(Identifier blockId) {
-        var air = false;
-        if (blockId.equals(BlockUtils.getIdentifier(Blocks.AIR))) {
-            air = true;
-        } else if (blockId.equals(BlockUtils.getIdentifier(Blocks.CAVE_AIR))) {
-            air = true;
-        } else if (blockId.equals(BlockUtils.getIdentifier(Blocks.VOID_AIR))) {
-            air = true;
-        }
-        return air;
+    private boolean isFilterBlock(Identifier blockId) {
+        var block = Registries.BLOCK.get(blockId);
+        // 过滤空气和可替换方块
+        return block.getDefaultState().isAir() || block.getDefaultState().isReplaceable();
     }
 
     private Boolean showWhitelist(Identifier blockId) {
@@ -71,7 +66,7 @@ public class BlockCommand extends BaseCommand {
     }
 
     private Boolean filterWhitelist(Identifier blockId) {
-        if (isAir(blockId)) {
+        if (isFilterBlock(blockId)) {
             return false;
         }
         var config = Config.getInstance();
@@ -94,7 +89,7 @@ public class BlockCommand extends BaseCommand {
     }
 
     private Boolean filterBlacklist(Identifier blockId) {
-        if (isAir(blockId)) {
+        if (isFilterBlock(blockId)) {
             return false;
         }
         var config = Config.getInstance();

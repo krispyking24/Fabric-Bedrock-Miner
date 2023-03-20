@@ -24,11 +24,13 @@ public class BreakingFlowController {
 
     static {
         // 默认方块黑名单 (用于限制的服务器, 与自定义黑名单分离)
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.COMMAND_BLOCK));            // 普通命令方块
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.CHAIN_COMMAND_BLOCK));      // 连锁型命令方块
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.REPEATING_COMMAND_BLOCK));  // 循环型命令方块
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.STRUCTURE_VOID));           // 结构空位
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.STRUCTURE_BLOCK));          // 结构方块
+        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.BARRIER));                    // 屏障
+        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.COMMAND_BLOCK));              // 普通命令方块
+        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.CHAIN_COMMAND_BLOCK));        // 连锁型命令方块
+        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.REPEATING_COMMAND_BLOCK));    // 循环型命令方块
+        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.STRUCTURE_VOID));             // 结构空位
+        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.STRUCTURE_BLOCK));            // 结构方块
+        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.JIGSAW));                     // 拼图方块
     }
 
     public static boolean checkIsAllowBlock(Block block) {
