@@ -13,8 +13,9 @@
   "bedrockminer.fail.missing.instantmine": "Can't instantly mine piston! EfficiencyⅤ+HasteⅡ required!",
   "bedrockminer.command.debug.true": "Startup debug mode successful!",
   "bedrockminer.command.debug.false": "Closed debug mode successful!",
-  "bedrockminer.command.block.whitelist.add": "§7Add whitelist block [%BlockName%] success!",
-  "bedrockminer.command.block.whitelist.remove": "§7Remove whitelist block [%BlockName%] success!",
-  "bedrockminer.command.block.blacklist.add": "§7Add blacklist block [%BlockName%] succeeded!",
-  "bedrockminer.command.block.blacklist.remove": "§7Remove blacklist Block [%BlockName%] succeeded!"
+  "bedrockminer.command.block.whitelist.add": "§7Add whitelist block \"%blockName%\" success!",
+  "bedrockminer.command.block.whitelist.remove": "§7Remove whitelist block \"%blockName%\" success!",
+  "bedrockminer.command.block.blacklist.add": "§7Add blacklist block \"%blockName%\" succeeded!",
+  "bedrockminer.command.block.blacklist.remove": "§7Remove blacklist Block \"%blockName%\" succeeded!",
+  "bedrockminer.command.invalidBlockNameException": "The entered \"%s\" block name is incorrect or the block has already been added!"
 }
