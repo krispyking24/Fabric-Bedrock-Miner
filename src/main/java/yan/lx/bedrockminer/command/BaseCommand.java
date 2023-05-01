@@ -16,6 +16,6 @@ public abstract class BaseCommand {
     public final void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
         var builder = literal(this.getName());
         build(builder, registryAccess);
-        dispatcher.register(literal(BedrockMinerMod.prefix).then(builder));
+        dispatcher.register(literal(BedrockMinerMod.COMMAND_PREFIX).then(builder));
     }
 }

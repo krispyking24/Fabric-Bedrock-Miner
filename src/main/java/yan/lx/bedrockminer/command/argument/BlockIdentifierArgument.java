@@ -10,12 +10,9 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.Block;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.CommandSource;
-import net.minecraft.command.argument.BlockArgumentParser;
 import net.minecraft.registry.*;
-import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
-import yan.lx.bedrockminer.Debug;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,13 +21,13 @@ import java.util.function.Function;
 
 import static net.minecraft.command.argument.BlockArgumentParser.INVALID_BLOCK_ID_EXCEPTION;
 
-public class BlockArgument implements ArgumentType<Block> {
+public class BlockIdentifierArgument implements ArgumentType<Block> {
     private static final Collection<String> EXAMPLES = Arrays.asList("stone", "minecraft:stone");
     private final RegistryWrapper<Block> registryWrapper;
     @Nullable
     private Function<Identifier, Boolean> filter;
 
-    public BlockArgument(CommandRegistryAccess commandRegistryAccess) {
+    public BlockIdentifierArgument(CommandRegistryAccess commandRegistryAccess) {
         registryWrapper = commandRegistryAccess.createWrapper(RegistryKeys.BLOCK);
     }
 
@@ -47,12 +44,12 @@ public class BlockArgument implements ArgumentType<Block> {
         var blockId = new Identifier(string);
         var block = registryWrapper.getOptional(RegistryKey.of(RegistryKeys.BLOCK, blockId)).orElseThrow(() -> {
             reader.setCursor(i);
-            return INVALID_BLOCK_ID_EXCEPTION.createWithContext(reader, blockId.toString());
+            return INVALID_BLOCK_ID_EXCEPTION.create(blockId.toString());
         }).value();
         // 检查过滤器
         if (filter != null && !filter.apply(Registries.BLOCK.getId(block))) {
             reader.setCursor(i);
-            throw INVALID_BLOCK_ID_EXCEPTION.createWithContext(reader, blockId.toString());
+            throw INVALID_BLOCK_ID_EXCEPTION.create(blockId.toString());
         }
         return block;
     }
@@ -89,7 +86,7 @@ public class BlockArgument implements ArgumentType<Block> {
         return EXAMPLES;
     }
 
-    public BlockArgument setFilter(Function<Identifier, Boolean> filter) {
+    public BlockIdentifierArgument setFilter(Function<Identifier, Boolean> filter) {
         this.filter = filter;
         return this;
     }

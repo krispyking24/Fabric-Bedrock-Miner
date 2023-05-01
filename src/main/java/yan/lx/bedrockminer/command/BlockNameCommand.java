@@ -8,41 +8,42 @@ import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import yan.lx.bedrockminer.command.argument.BlockIdentifierArgument;
+import yan.lx.bedrockminer.command.argument.BlockNameArgument;
 import yan.lx.bedrockminer.command.argument.BlockNameArgument;
 import yan.lx.bedrockminer.config.Config;
 import yan.lx.bedrockminer.utils.BlockUtils;
 import yan.lx.bedrockminer.utils.MessageUtils;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.*;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
-public class BlockCommand extends BaseCommand {
+public class BlockNameCommand extends BaseCommand {
     @Override
     public String getName() {
-        return "block";
+        return "blockName";
     }
 
     @Override
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandRegistryAccess registryAccess) {
         builder.then(literal("whitelist")
                         .then(literal("add")
-                                .then(argument("block", new BlockIdentifierArgument(registryAccess).setFilter(this::filterWhitelist))
+                                .then(argument("block", new BlockNameArgument(registryAccess).setFilter(this::filterWhitelist))
                                         .executes(this::addWhitelist)
                                 )
                         )
                         .then(literal("remove")
-                                .then(argument("block", new BlockIdentifierArgument(registryAccess).setFilter(this::showWhitelist))
+                                .then(argument("block", new BlockNameArgument(registryAccess).setFilter(this::showWhitelist))
                                         .executes(this::removeWhitelist)
                                 )
                         ))
                 .then(literal("blacklist")
                         .then(literal("add")
-                                .then(argument("block", new BlockIdentifierArgument(registryAccess).setFilter(this::filterBlacklist))
+                                .then(argument("block", new BlockNameArgument(registryAccess).setFilter(this::filterBlacklist))
                                         .executes(this::addBlacklist)
                                 )
                         )
                         .then(literal("remove")
-                                .then(argument("block", new BlockIdentifierArgument(registryAccess).setFilter(this::showBlacklist))
+                                .then(argument("block", new BlockNameArgument(registryAccess).setFilter(this::showBlacklist))
                                         .executes(this::removeBlacklist)
                                 )
                         )
@@ -138,7 +139,7 @@ public class BlockCommand extends BaseCommand {
     }
 
     private int removeBlacklist(CommandContext<FabricClientCommandSource> context) {
-        var block = BlockIdentifierArgument.getBlock(context, "block");
+        var block = BlockNameArgument.getBlock(context, "block");
         var config = Config.getInstance();
         var id = BlockUtils.getId(block);
         if (config.blockBlacklist.contains(id)) {
@@ -150,6 +151,6 @@ public class BlockCommand extends BaseCommand {
     }
 
     private void sendChat(String translatableKey, Block block) {
-        MessageUtils.addMessage(Text.translatable(translatableKey).getString().replace("%BlockName%", block.getName().getString()));
+        MessageUtils.addMessage(Text.translatable(translatableKey).getString().replace("%blockName%", block.getName().getString()));
     }
 }
