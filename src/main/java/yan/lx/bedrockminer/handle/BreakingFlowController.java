@@ -1,25 +1,22 @@
-package yan.lx.bedrockminer.utils;
+package yan.lx.bedrockminer.handle;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
-import org.jetbrains.annotations.Nullable;
 import yan.lx.bedrockminer.config.Config;
+import yan.lx.bedrockminer.utils.*;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class BreakingFlowController {
-    private static List<String> defaultBlockBlacklist = new ArrayList<>();
-    private static List<TargetBlock> cache = new LinkedList<>();
+    private static final List<String> defaultBlockBlacklist = new ArrayList<>();
+    private static final List<TargetBlock> handleTaskCaches = new LinkedList<>();
     private static boolean working = false;
 
     static {
@@ -59,23 +56,22 @@ public class BreakingFlowController {
         return false;
     }
 
-
     public static void switchOnOff(Block block) {
         if (working) {
-            Messager.chat("bedrockminer.toggle.off");
+            MessageUtils.addMessageKey("bedrockminer.toggle.off");
             working = false;
         } else {
             if (checkIsAllowBlock(block)) {
                 MinecraftClient minecraftClient = MinecraftClient.getInstance();
                 // 判断玩家是否为创造
                 if (minecraftClient.interactionManager != null && minecraftClient.interactionManager.getCurrentGameMode().isCreative()) {
-                    Messager.chat("bedrockminer.fail.missing.survival");
+                    MessageUtils.addMessageKey("bedrockminer.fail.missing.survival");
                     return;
                 }
-                Messager.chat("bedrockminer.toggle.on");
+                MessageUtils.addMessageKey("bedrockminer.toggle.on");
                 // 判断是否在服务器
                 if (!minecraftClient.isInSingleplayer()) {
-                    Messager.chat("bedrockminer.warn.multiplayer");
+                    MessageUtils.addMessageKey("bedrockminer.warn.multiplayer");
                 }
                 working = true;
             }
@@ -86,22 +82,22 @@ public class BreakingFlowController {
         var minecraftClient = MinecraftClient.getInstance();
         if (working) {
             // 判断部分开启条件
-            String haveEnoughItems = InventoryManager.warningMessage();
+            String haveEnoughItems = InventoryManagerUtils.warningMessage();
             if (haveEnoughItems != null) {
-                Messager.actionBar(haveEnoughItems);
+                MessageUtils.setOverlayMessageKey(haveEnoughItems);
                 return;
             }
             // 仅生存执行
             if (minecraftClient.interactionManager != null && minecraftClient.interactionManager.getCurrentGameMode().isSurvivalLike()) {
                 if (checkIsAllowBlock(block)) {
-                    for (var targetBlock : cache) {
+                    for (var targetBlock : handleTaskCaches) {
                         // 检查重复任务
                         if (targetBlock.getBlockPos().getManhattanDistance(pos) == 0) {
                             return;
                         }
                     }
                     var targetBlock = new TargetBlock(world.getBlockState(pos).getBlock(), pos, world);
-                    cache.add(targetBlock);
+                    handleTaskCaches.add(targetBlock);
                 }
             }
         }
@@ -121,14 +117,17 @@ public class BreakingFlowController {
     }
 
     public static void updater(ClientWorld world, PlayerEntity player, ClientPlayerInteractionManager interactionManager) {
-        if (InventoryManager.warningMessage() != null) {
+        // 检查使用环境
+        if (InventoryManagerUtils.warningMessage() != null) {
             return;
         }
+        // 检查玩家模式
         if (interactionManager.getCurrentGameMode().isCreative()) {
             return;
         }
         // 使用迭代器, 安全删除列表
-        var iterator = cache.iterator();
+        var iterator = handleTaskCaches.iterator();
+        var count = 0;
         while (iterator.hasNext()) {
             var currentTask = iterator.next();
             // 玩家切换世界,距离目标方块太远时,删除缓存任务
@@ -137,19 +136,21 @@ public class BreakingFlowController {
                 break;
             }
             // 判断玩家与方块距离是否在处理范围内
-            if (currentTask.getBlockPos().isWithinDistance(player.getPos(), 3.4f)) {
+            if (currentTask.getBlockPos().isWithinDistance(player.getEyePos(), 3.5f)) {
                 // 为了tick内部能打印出完成状态, 所以才放在tick前面
                 if (currentTask.getStatus() == Status.FINISH) {
                     iterator.remove();
                 }
                 currentTask.tick();
-                return;
+                if (++count > 1) {
+                    return;
+                }
             }
         }
     }
 
     private static boolean shouldAddNewTargetBlock(BlockPos pos) {
-        for (TargetBlock targetBlock : cache) {
+        for (TargetBlock targetBlock : handleTaskCaches) {
             if (targetBlock.getBlockPos().getManhattanDistance(pos) == 0) {
                 return false;
             }
@@ -163,9 +164,9 @@ public class BreakingFlowController {
 
     public static void setWorking(boolean working) {
         if (working) {
-            Messager.chat("bedrockminer.toggle.on");
+            MessageUtils.addMessageKey("bedrockminer.toggle.on");
         } else {
-            Messager.chat("bedrockminer.toggle.off");
+            MessageUtils.addMessageKey("bedrockminer.toggle.off");
         }
         BreakingFlowController.working = working;
     }

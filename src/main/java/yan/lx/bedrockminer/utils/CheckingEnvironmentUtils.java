@@ -1,7 +1,11 @@
 package yan.lx.bedrockminer.utils;
 
 import net.minecraft.block.Blocks;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
@@ -10,7 +14,7 @@ import java.util.List;
 
 import static net.minecraft.block.Block.sideCoversSmallSquare;
 
-public class CheckingEnvironment {
+public class CheckingEnvironmentUtils {
 
     public static List<BlockPos> findNearbyFlatBlockToPlaceRedstoneTorch(ClientWorld world, BlockPos blockPos) {
         var list = new ArrayList<BlockPos>();
@@ -30,14 +34,15 @@ public class CheckingEnvironment {
     }
 
     public static BlockPos findPossibleSlimeBlockPos(ClientWorld world, BlockPos blockPos) {
-        if (world.getBlockState(blockPos.east()).getMaterial().isReplaceable() && (world.getBlockState(blockPos.east().up()).getMaterial().isReplaceable())) {
-            return blockPos.east();
-        } else if (world.getBlockState(blockPos.west()).getMaterial().isReplaceable() && (world.getBlockState(blockPos.west().up()).getMaterial().isReplaceable())) {
-            return blockPos.west();
-        } else if (world.getBlockState(blockPos.south()).getMaterial().isReplaceable() && (world.getBlockState(blockPos.south().up()).getMaterial().isReplaceable())) {
-            return blockPos.south();
-        } else if (world.getBlockState(blockPos.north()).getMaterial().isReplaceable() && (world.getBlockState(blockPos.north().up()).getMaterial().isReplaceable())) {
-            return blockPos.north();
+        for (Direction direction : Direction.Type.HORIZONTAL) {
+            BlockPos newBlockPos = blockPos.offset(direction);
+            if (!world.getBlockState(newBlockPos).getMaterial().isReplaceable()) {
+                continue;
+            }
+            if (CheckingEnvironmentUtils.isBlocked(newBlockPos)) {
+                continue;
+            }
+            return newBlockPos;
         }
         return null;
     }
@@ -47,7 +52,7 @@ public class CheckingEnvironment {
         BlockPos pos2 = blockPos.up().up();     // 活塞臂位置
         // 获取硬度,应该是活塞位置处有其他方块吧？
         if (world.getBlockState(pos1).getHardness(world, pos1) == 0) {
-            BlockBreaker.breakPistonBlock(pos1);
+            BlockBreakerUtils.breakPistonBlock(pos1);
         }
         // 判断活塞位置和活塞臂位置是否可以放置
         return world.getBlockState(pos1).getMaterial().isReplaceable() && world.getBlockState(pos2).getMaterial().isReplaceable();
@@ -68,5 +73,16 @@ public class CheckingEnvironment {
             list.add(pistonBlockPos.north());
         }
         return list;
+    }
+
+    public static boolean isBlocked(BlockPos blockPos) {
+        var player = MinecraftClient.getInstance().player;
+        if (player != null) {
+            var slimeItem = Blocks.SLIME_BLOCK.asItem();
+            var context = new ItemPlacementContext(player, Hand.MAIN_HAND, slimeItem.getDefaultStack(),
+                    new BlockHitResult(blockPos.toCenterPos(), Direction.UP, blockPos, false));
+            return !context.canPlace();
+        }
+        return true;
     }
 }

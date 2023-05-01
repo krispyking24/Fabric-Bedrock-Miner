@@ -1,13 +1,10 @@
 package yan.lx.bedrockminer.command;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.sun.jdi.connect.Connector;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
-import yan.lx.bedrockminer.Debug;
 import yan.lx.bedrockminer.config.Config;
-import yan.lx.bedrockminer.utils.Messager;
+import yan.lx.bedrockminer.utils.MessageUtils;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.*;
 
@@ -26,9 +23,9 @@ public class DebugCommand extends BaseCommand {
 
     private int toggleSwitch(boolean b) {
         if (b) {
-            Messager.chat("bedrockminer.command.debug.true");
+            MessageUtils.addMessageKey("bedrockminer.command.debug.true");
         } else {
-            Messager.chat("bedrockminer.command.debug.false");
+            MessageUtils.addMessageKey("bedrockminer.command.debug.false");
         }
         Config.getInstance().debug = b;
         Config.save();

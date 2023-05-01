@@ -15,21 +15,45 @@ import net.minecraft.util.math.Direction;
 import java.util.HashMap;
 
 
-public class BlockBreaker {
-//    public static void breakBlock(BlockPos pos) {
-//        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-//        ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
-//        if (interactionManager == null || pos == null) {
-//            return;
-//        }
-//        InventoryManager.switchToItem(Items.DIAMOND_PICKAXE);
-//        interactionManager.attackBlock(pos, Direction.UP);
-//    }
+public class BlockBreakerUtils {
 
-    public static boolean breakPistonBlock(BlockPos pos) {
+    /**
+     * 破坏活塞方块
+     *
+     * @param pos 位置
+     * @return true为破坏成功，false表示正在破坏（需要等到下一个tick处理）
+     */
+    public static boolean instantBreakPistonBlock(BlockPos pos) {
         return instantBreakBlock(pos, Direction.UP, Items.DIAMOND_PICKAXE, Items.NETHERITE_PICKAXE);
     }
 
+    /**
+     * 破坏活塞方块
+     *
+     * @param pos 位置
+     * @return true为破坏成功，false表示正在破坏（需要等到下一个tick处理）
+     */
+    public static boolean breakPistonBlock(BlockPos pos) {
+        return breakBlock(pos, Direction.UP, Items.DIAMOND_PICKAXE, Items.NETHERITE_PICKAXE);
+    }
+
+    /**
+     * 破坏活塞方块
+     *
+     * @param pos 位置
+     */
+    public static boolean breakBlock(BlockPos pos) {
+       return breakBlock(pos, Direction.UP);
+    }
+
+    /**
+     * 破坏活塞方块
+     *
+     * @param pos 位置
+     */
+    public static boolean instantBreakBlock(BlockPos pos) {
+        return breakBlock(pos, Direction.UP);
+    }
 
     /**
      * 瞬间破坏方块
@@ -51,18 +75,17 @@ public class BlockBreaker {
         if (useItem.length == 0) {
             useItem = new Item[]{player.getInventory().getMainHandStack().getItem()};
         }
-        HashMap<Integer, ItemStack> itemStacks = InventoryManager.getPlayerInventoryUsableItemSlotMap(useItem);
+        HashMap<Integer, ItemStack> itemStacks = InventoryManagerUtils.getPlayerInventoryUsableItemSlotMap(useItem);
         for (var itemSlot : itemStacks.keySet()) {
             ItemStack itemStack = itemStacks.get(itemSlot);
             // 检查耐久是否发起警告(剩余耐久<=检查值)
-            if (InventoryManager.isItemDamageWarning(itemStack, 10)) {
+            if (InventoryManagerUtils.isItemDamageWarning(itemStack, 10)) {
                 continue;
             }
             // 检查目标方块是否可以瞬间破坏的(0.05秒内完成也就是1tick)
-            if (InventoryManager.isInstantBreakingBlock(block, itemStack)) {
-                InventoryManager.switchToItemSlot(itemSlot);                // 切换到物品
+            if (InventoryManagerUtils.isInstantBreakingBlock(block, itemStack)) {
+                InventoryManagerUtils.switchToItemSlot(itemSlot);        // 切换到物品
                 interactionManager.attackBlock(blockPos, direction);     // 攻击方块
-                player.swingHand(Hand.MAIN_HAND);
                 return world.getBlockState(blockPos).isAir();
             }
         }
@@ -85,14 +108,13 @@ public class BlockBreaker {
         if (player == null || world == null || interactionManager == null || blockPos == null) {
             return false;
         }
-
         // 获取玩家背包中可以使用的物品清单
         if (useItem.length == 0) {
-            useItem = new Item[]{ player.getInventory().getMainHandStack().getItem() };
+            useItem = new Item[]{player.getInventory().getMainHandStack().getItem()};
         }
-        HashMap<Integer, ItemStack> itemStacks = InventoryManager.getPlayerInventoryUsableItemSlotMap(useItem);
+        HashMap<Integer, ItemStack> itemStacks = InventoryManagerUtils.getPlayerInventoryUsableItemSlotMap(useItem);
         for (var itemSlot : itemStacks.keySet()) {
-            InventoryManager.switchToItemSlot(itemSlot);    // 切换到物品
+            InventoryManagerUtils.switchToItemSlot(itemSlot);    // 切换到物品
             // 更新方块正在破坏进程
             if (interactionManager.updateBlockBreakingProgress(blockPos, direction)) {
                 minecraftClient.particleManager.addBlockBreakingParticles(blockPos, direction);

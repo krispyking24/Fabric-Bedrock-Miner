@@ -17,7 +17,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
-public class BlockPlacer {
+public class BlockPlacerUtils {
     /**
      * 简单方块放置
      *
@@ -39,9 +39,13 @@ public class BlockPlacer {
             return;
         }
         Direction direction = Direction.UP;
-        float pitch = 90f;
-        minecraftClient.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(player.getYaw(1.0f), pitch, player.isOnGround()));
-        InventoryManager.switchToItem(item);
+        var x = player.getX();
+        var y = player.getY();
+        var z = player.getZ();
+        var yaw = player.getYaw();
+        var pitch = 90f;
+        minecraftClient.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(x, y, z, yaw, pitch, player.isOnGround()));
+        InventoryManagerUtils.switchToItem(item);
         BlockHitResult hitResult = new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), direction, pos, false);
         placeBlockWithoutInteractingBlock(hitResult);
     }
@@ -66,13 +70,17 @@ public class BlockPlacer {
         if (!world.getBlockState(pos).getMaterial().isReplaceable()) {
             return;
         }
-        float pitch = switch (direction) {
+        var x = player.getX();
+        var y = player.getY();
+        var z = player.getZ();
+        var yaw = player.getYaw();
+        var pitch = switch (direction) {
             case UP, NORTH, SOUTH, WEST, EAST -> 90f;
             case DOWN -> -90f;
         };
-        minecraftClient.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(player.getYaw(), pitch, player.isOnGround()));
+        minecraftClient.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(x, y, z, yaw, pitch, player.isOnGround()));
         Vec3d vec3d = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
-        InventoryManager.switchToItem(Blocks.PISTON);
+        InventoryManagerUtils.switchToItem(Blocks.PISTON);
         BlockHitResult hitResult = new BlockHitResult(vec3d, Direction.UP, pos, false);
         placeBlockWithoutInteractingBlock(hitResult);
     }

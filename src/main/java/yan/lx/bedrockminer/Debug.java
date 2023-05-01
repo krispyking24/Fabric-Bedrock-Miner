@@ -2,18 +2,17 @@ package yan.lx.bedrockminer;
 
 import org.slf4j.Logger;
 import yan.lx.bedrockminer.config.Config;
-import yan.lx.bedrockminer.utils.Messager;
+import yan.lx.bedrockminer.utils.MessageUtils;
 
 public class Debug {
-    private static final Logger LOGGER = BedrockMinerMod.logger;
-
+    private static final Logger LOGGER = BedrockMinerMod.LOGGER;
     public static OutputType outputType = OutputType.LOGGER_INFO;
 
     public static void info(String msg) {
         if (Config.getInstance().debug) {
             switch (outputType) {
-                case CHAT_MESSAGE -> Messager.rawChat(msg);
-                case OVERLAY_MESSAGE -> Messager.rawactionBar(msg);
+                case CHAT_MESSAGE -> MessageUtils.addMessage(msg);
+                case OVERLAY_MESSAGE -> MessageUtils.setOverlayMessage(msg);
                 case LOGGER_INFO -> LOGGER.info(msg);
             }
         }

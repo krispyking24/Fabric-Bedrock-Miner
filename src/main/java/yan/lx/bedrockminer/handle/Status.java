@@ -1,4 +1,4 @@
-package yan.lx.bedrockminer.utils;
+package yan.lx.bedrockminer.handle;
 
 /**
  * 工作状态类型
@@ -9,6 +9,9 @@ public enum Status {
 
     /*** 查找活塞位置 ***/
     FIND_PISTON_POSITION,
+
+    /*** 查找活塞位置 ***/
+    FIND_SLIME_POSITION,
     /*** 查找红石火把位置 ***/
     FIND_REDSTONE_TORCH_POSITION,
 
@@ -32,6 +35,8 @@ public enum Status {
     FAILED,
     /*** 物品回收 ***/
     ITEM_RECYCLING,
+    /*** 重试 ***/
+    RETRY,
     /*** 完成 ***/
     FINISH,
 }

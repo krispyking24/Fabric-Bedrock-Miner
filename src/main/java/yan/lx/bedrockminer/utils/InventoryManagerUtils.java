@@ -16,13 +16,14 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemConvertible;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.registry.tag.FluidTags;
 
 import java.util.HashMap;
 
 
-public class InventoryManager {
+public class InventoryManagerUtils {
     public static void switchToItem(ItemConvertible item) {
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
         PlayerEntity player = minecraftClient.player;
@@ -35,7 +36,7 @@ public class InventoryManager {
 
         int i = playerInventory.getSlotWithStack(new ItemStack(item));
 
-        if ("diamond_pickaxe".equals(item.toString())) {
+        if (item.equals(Items.DIAMOND_PICKAXE)) {
             i = getEfficientTool(playerInventory);
         }
 
@@ -58,6 +59,7 @@ public class InventoryManager {
         return -1;
     }
 
+    /*** 检查是否可以立即开采活塞 ***/
     public static boolean canInstantlyMinePiston() {
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
         PlayerEntity player = minecraftClient.player;
@@ -65,7 +67,6 @@ public class InventoryManager {
             return false;
         }
         PlayerInventory playerInventory = player.getInventory();
-
         for (int i = 0; i < playerInventory.size(); i++) {
             if (getBlockBreakingSpeed(Blocks.PISTON.getDefaultState(), i) > 45f) {
                 return true;
@@ -108,7 +109,6 @@ public class InventoryManager {
                 case 0 -> 0.3F;
                 case 1 -> 0.09F;
                 case 2 -> 0.0027F;
-                case 3 -> 8.1E-4F;
                 default -> 8.1E-4F;
             };
 
@@ -140,19 +140,19 @@ public class InventoryManager {
             return "bedrockminer.fail.missing.survival";
         }
 
-        if (InventoryManager.getInventoryItemCount(Blocks.PISTON) < 2) {
+        if (InventoryManagerUtils.getInventoryItemCount(Blocks.PISTON) < 2) {
             return "bedrockminer.fail.missing.piston";
         }
 
-        if (InventoryManager.getInventoryItemCount(Blocks.REDSTONE_TORCH) < 1) {
+        if (InventoryManagerUtils.getInventoryItemCount(Blocks.REDSTONE_TORCH) < 1) {
             return "bedrockminer.fail.missing.redstonetorch";
         }
 
-        if (InventoryManager.getInventoryItemCount(Blocks.SLIME_BLOCK) < 1) {
+        if (InventoryManagerUtils.getInventoryItemCount(Blocks.SLIME_BLOCK) < 1) {
             return "bedrockminer.fail.missing.slime";
         }
 
-        if (!InventoryManager.canInstantlyMinePiston()) {
+        if (!InventoryManagerUtils.canInstantlyMinePiston()) {
             return "bedrockminer.fail.missing.instantmine";
         }
         return null;
