@@ -172,14 +172,14 @@ public class TargetBlock {
                     }
                     InventoryManagerUtils.switchToItem(Blocks.PISTON);
                     BlockPlacerUtils.pistonPlacement(pistonBlockPos, Direction.UP);
-                    if (world.getBlockState(pistonBlockPos).isOf(Blocks.PISTON)) {
-                        Debug.info("[%s][%s][状态处理][放置活塞]: 放置成功", id, count);
-                    } else {
-                        MessageUtils.setOverlayMessageKey("bedrockminer.fail.place.piston");   // 无法放置活塞
-                        Debug.info("[%s][%s][状态处理][放置活塞]: 放置失败", id, count);
-                        status = Status.FAILED;
-                        return false;
-                    }
+//                    if (world.getBlockState(pistonBlockPos).isOf(Blocks.PISTON)) {
+//                        Debug.info("[%s][%s][状态处理][放置活塞]: 放置成功", id, count);
+//                    } else {
+//                        MessageUtils.setOverlayMessageKey("bedrockminer.fail.place.piston");   // 无法放置活塞
+//                        Debug.info("[%s][%s][状态处理][放置活塞]: 放置失败", id, count);
+//                        status = Status.FAILED;
+//                        return false;
+//                    }
                 }
                 status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
             }
@@ -187,14 +187,14 @@ public class TargetBlock {
                 if (slimeBlockPos != null) {
                     Debug.info("[%s][%s][状态处理][放置粘液块]: 放置准备, %s", id, count, slimeBlockPos);
                     BlockPlacerUtils.simpleBlockPlacement(slimeBlockPos, Blocks.SLIME_BLOCK);
-                    if (world.getBlockState(slimeBlockPos).isOf(Blocks.SLIME_BLOCK)) {
-                        Debug.info("[%s][%s][状态处理][放置粘液块]: 放置成功", id, count);
-                    } else {
-                        MessageUtils.setOverlayMessageKey("bedrockminer.fail.place.slimeBlock");
-                        Debug.info("[%s][%s][状态处理][放置粘液块]: 放置失败", id, count);
-                        status = Status.FAILED;
-                        return false;
-                    }
+//                    if (world.getBlockState(slimeBlockPos).isOf(Blocks.SLIME_BLOCK)) {
+//                        Debug.info("[%s][%s][状态处理][放置粘液块]: 放置成功", id, count);
+//                    } else {
+//                        MessageUtils.setOverlayMessageKey("bedrockminer.fail.place.slimeBlock");
+//                        Debug.info("[%s][%s][状态处理][放置粘液块]: 放置失败", id, count);
+//                        status = Status.FAILED;
+//                        return false;
+//                    }
                 }
                 status = Status.WAIT_GAME_UPDATE;  // 等待更新状态
             }
@@ -204,16 +204,16 @@ public class TargetBlock {
                         if (Block.sideCoversSmallSquare(world, redstoneTorchBlockPos.down(), Direction.UP)) {
                             Debug.info("[%s][%s][状态处理][放置红石火把]: 准备放置, %s", id, count, redstoneTorchBlockPos);
                             BlockPlacerUtils.simpleBlockPlacement(redstoneTorchBlockPos, Blocks.REDSTONE_TORCH);
-                            if (world.getBlockState(redstoneTorchBlockPos).isOf(Blocks.REDSTONE_TORCH)) {
-                                Debug.info("[%s][%s][状态处理][放置红石火把]: 放置成功", id, count);
-                            } else if (!world.getBlockState(redstoneTorchBlockPos).isOf(Blocks.REDSTONE_TORCH)) {
-                                Debug.info("[%s][%s][状态处理][放置红石火把]: 放置状态不对,重新放置！", id, count);
-                                if (BlockBreakerUtils.breakBlock(redstoneTorchBlockPos)) {
-                                    BlockPlacerUtils.simpleBlockPlacement(redstoneTorchBlockPos, Blocks.REDSTONE_TORCH);
-                                }
-                            } else {
-                                Debug.info("[%s][%s][状态处理][放置红石火把]: 放置失败", id, count);
-                            }
+//                            if (world.getBlockState(redstoneTorchBlockPos).isOf(Blocks.REDSTONE_TORCH)) {
+//                                Debug.info("[%s][%s][状态处理][放置红石火把]: 放置成功", id, count);
+//                            } else if (!world.getBlockState(redstoneTorchBlockPos).isOf(Blocks.REDSTONE_TORCH)) {
+//                                Debug.info("[%s][%s][状态处理][放置红石火把]: 放置状态不对,重新放置！", id, count);
+//                                if (BlockBreakerUtils.breakBlock(redstoneTorchBlockPos)) {
+//                                    BlockPlacerUtils.simpleBlockPlacement(redstoneTorchBlockPos, Blocks.REDSTONE_TORCH);
+//                                }
+//                            } else {
+//                                Debug.info("[%s][%s][状态处理][放置红石火把]: 放置失败", id, count);
+//                            }
                             status = Status.WAIT_GAME_UPDATE;
                             return false;
                         }
