@@ -14,7 +14,8 @@ import java.util.List;
 
 public class Config {
     private static final File file = new File(FabricLoader.getInstance().getConfigDir().toFile(), "bedrockminer.json");
-    private static volatile @Nullable Config instance;
+    private static Config instance = Config.load();
+
     public boolean debug = false;
     public List<String> blockWhitelist = new ArrayList<>();
     public List<String> blockBlacklist = new ArrayList<>();
@@ -32,10 +33,11 @@ public class Config {
         blockWhitelist.add(BlockUtils.getId(Blocks.END_GATEWAY));              // 末地折跃门
     }
 
-    public static void load() {
+    public static Config load() {
+        Config config = null;
         Gson gson = new Gson();
         try (Reader reader = new FileReader(file)) {
-            instance = gson.fromJson(reader, Config.class);
+            config = gson.fromJson(reader, Config.class);
             BedrockMinerMod.LOGGER.info("已成功加载配置文件");
         } catch (Exception e) {
             if (file.exists()) {
@@ -48,6 +50,12 @@ public class Config {
                 BedrockMinerMod.LOGGER.info("找不到配置文件");
             }
         }
+        if (config == null) {
+            config = new Config();
+        }
+        instance = config;
+        save();
+        return config;
     }
 
     public static void save() {
@@ -61,14 +69,6 @@ public class Config {
     }
 
     public static Config getInstance() {
-        if (instance == null) {
-            synchronized (Config.class) {
-                if (instance == null) {
-                    instance = new Config();
-                    save();
-                }
-            }
-        }
         return instance;
     }
 }

@@ -26,6 +26,10 @@ public class Debug {
         info(String.format(msgFormat, args));
     }
 
+    public static void info(Object obj) {
+        info(obj.toString());
+    }
+
     public enum OutputType {
         CHAT_MESSAGE,
 

@@ -16,7 +16,7 @@ import java.util.List;
 
 public class BreakingFlowController {
     private static final List<String> defaultBlockBlacklist = new ArrayList<>();
-    private static final List<TargetBlock> handleTaskCaches = new LinkedList<>();
+    private static final List<TaskHandle> handleTaskCaches = new LinkedList<>();
     private static boolean working = false;
 
     static {
@@ -96,7 +96,7 @@ public class BreakingFlowController {
                             return;
                         }
                     }
-                    var targetBlock = new TargetBlock(world.getBlockState(pos).getBlock(), pos, world);
+                    var targetBlock = new TaskHandle(world.getBlockState(pos).getBlock(), pos, world);
                     handleTaskCaches.add(targetBlock);
                 }
             }
@@ -127,7 +127,6 @@ public class BreakingFlowController {
         }
         // 使用迭代器, 安全删除列表
         var iterator = handleTaskCaches.iterator();
-        var count = 0;
         while (iterator.hasNext()) {
             var currentTask = iterator.next();
             // 玩家切换世界,距离目标方块太远时,删除缓存任务
@@ -138,24 +137,13 @@ public class BreakingFlowController {
             // 判断玩家与方块距离是否在处理范围内
             if (currentTask.getBlockPos().isWithinDistance(player.getEyePos(), 3.5f)) {
                 // 为了tick内部能打印出完成状态, 所以才放在tick前面
-                if (currentTask.getStatus() == Status.FINISH) {
+                if (currentTask.getStatus() == TaskStatus.FINISH) {
                     iterator.remove();
                 }
                 currentTask.tick();
-                if (++count > 1) {
-                    return;
-                }
+                return;
             }
         }
-    }
-
-    private static boolean shouldAddNewTargetBlock(BlockPos pos) {
-        for (TargetBlock targetBlock : handleTaskCaches) {
-            if (targetBlock.getBlockPos().getManhattanDistance(pos) == 0) {
-                return false;
-            }
-        }
-        return true;
     }
 
     public static boolean isWorking() {

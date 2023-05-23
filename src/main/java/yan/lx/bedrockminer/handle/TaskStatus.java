@@ -3,7 +3,7 @@ package yan.lx.bedrockminer.handle;
 /**
  * 工作状态类型
  */
-public enum Status {
+public enum TaskStatus {
     /*** 初始化 ***/
     INITIALIZATION,
 
@@ -21,6 +21,11 @@ public enum Status {
     PLACE_SLIME_BLOCK,
     /*** 放置红石火把 ***/
     PLACE_REDSTONE_TORCH,
+
+    /*** 放置错误，活塞 ***/
+    PLACE_ERROR_PISTON,
+    /*** 放置错误，红石火把 ***/
+    PLACE_ERROR_REDSTONE_TORCH,
 
     /*** 扩展开始 ***/
     EXTENDED_START,
