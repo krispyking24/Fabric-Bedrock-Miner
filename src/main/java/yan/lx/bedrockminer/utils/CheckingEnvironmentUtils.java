@@ -35,7 +35,6 @@ public class CheckingEnvironmentUtils {
             if (!sideCoversSmallSquare(world, blockPos.down(), Direction.UP)) {
                 continue;
             }
-
             if (blockState.getMaterial().isReplaceable() || blockState.isOf(Blocks.REDSTONE_TORCH)) {
                 list.add(blockPos);
             }
@@ -44,7 +43,7 @@ public class CheckingEnvironmentUtils {
     }
 
     /**
-     * 查找可能放置红石火把的位置
+     * 查找可能放置粘液块的位置
      *
      * @param world
      * @param pistonBlockPos
@@ -53,11 +52,12 @@ public class CheckingEnvironmentUtils {
     public static List<BlockPos> findPossibleSlimeBlockPos(ClientWorld world, BlockPos pistonBlockPos) {
         var list = new ArrayList<BlockPos>();
         for (Direction direction : Direction.Type.HORIZONTAL) {
-            BlockPos blockPos = pistonBlockPos.offset(direction).down();
-            if (!world.getBlockState(blockPos).getMaterial().isReplaceable()) {
+            BlockPos redTorchPos = pistonBlockPos.offset(direction);
+            BlockPos BaseBlockPos = redTorchPos.down();
+            if (!world.getBlockState(redTorchPos).isReplaceable() || !world.getBlockState(BaseBlockPos).isReplaceable()) {
                 continue;
             }
-            list.add(blockPos);
+            list.add(BaseBlockPos);
         }
         return list;
     }
