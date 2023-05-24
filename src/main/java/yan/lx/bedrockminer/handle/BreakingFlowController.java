@@ -141,7 +141,6 @@ public class BreakingFlowController {
                     iterator.remove();
                 }
                 currentTask.tick();
-                return;
             }
         }
     }
