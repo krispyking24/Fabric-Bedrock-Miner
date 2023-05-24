@@ -31,6 +31,9 @@ public enum TaskStatus {
     EXTENDED_START,
     /*** 活塞移动中 ***/
     PISTON_MOVING,
+
+    /*** 等待 ***/
+    WAIT,
     /*** 等待游戏更新 ***/
     WAIT_GAME_UPDATE,
 

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import yan.lx.bedrockminer.Debug;
 import yan.lx.bedrockminer.utils.*;
 
+import java.text.ParsePosition;
 import java.util.UUID;
 
 import static net.minecraft.block.Block.sideCoversSmallSquare;
@@ -39,6 +40,8 @@ public class TaskHandle {
     private int delayCount;
     private final int delayCountMax = 10;
 
+    private int waitCount;
+
     /**
      * 构造函数
      *
@@ -54,7 +57,6 @@ public class TaskHandle {
         // 初始化
         this.id = UUID.randomUUID();
         this.status = TaskStatus.INITIALIZATION;
-
     }
 
     public BlockPos getBlockPos() {
@@ -71,7 +73,7 @@ public class TaskHandle {
 
     public void tick() {
         Debug.info();
-        Debug.info("[%s][%s][当前处理状态]: %s", id, timeoutCount, status);
+        Debug.info("[%s][%s][状态]: %s", id, timeoutCount, status);
         if (handleStatus()) {
             updateStatus();
         }
@@ -81,7 +83,6 @@ public class TaskHandle {
         var minecraftClient = MinecraftClient.getInstance();
         var player = minecraftClient.player;
         if (player == null) return true;
-
         switch (status) {
             case INITIALIZATION -> {
                 this.pistonBlockPos = null;
@@ -135,11 +136,28 @@ public class TaskHandle {
 
                     hasTried = true;
                     Debug.info("[%s][%s][状态处理][执行]：执行完成", id, timeoutCount);
-                    status = TaskStatus.WAIT_GAME_UPDATE;  // 等待状态
+                    status = TaskStatus.WAIT;  // 等待状态
                 }
             }
             case PISTON_MOVING -> status = TaskStatus.WAIT_GAME_UPDATE;  // 等待更新状态
+            case WAIT -> {
+                // ping延迟补偿
+                var playerListEntry = player.networkHandler.getPlayerListEntry(player.getUuid());
+                if (playerListEntry != null) {
+                    var ping = playerListEntry.getLatency();
+                    var waitTick = ping / 20 + 1;
+                    Debug.info("[%s][%s][状态处理][等待]：延迟时间, %s", id, timeoutCount, ping);
+                    Debug.info("[%s][%s][状态处理][等待]：等待总刻, %s", id, timeoutCount, waitTick);
+                    if (waitCount++ > waitTick) {
+                        status = TaskStatus.WAIT_GAME_UPDATE;
+                        return false;
+                    }
+                }
+            }
             case WAIT_GAME_UPDATE -> {
+                if (waitCount > 0) {
+                    waitCount = 0;
+                }
                 return true;
             }
             case TIME_OUT -> {
@@ -179,24 +197,6 @@ public class TaskHandle {
                             if (BlockBreakerUtils.breakPistonBlock(pistonPos1)) {
                                 return false;
                             }
-                        }
-
-                        // 检查四周活塞臂
-                        if (world.getBlockState(pistonBlockPos.west()).isOf(Blocks.PISTON_HEAD)) {
-                            BlockBreakerUtils.instantBreakBlock(pistonBlockPos.west());
-                            return false;
-                        }
-                        if (world.getBlockState(pistonBlockPos.south()).isOf(Blocks.PISTON_HEAD)) {
-                            BlockBreakerUtils.instantBreakBlock(pistonBlockPos.south());
-                            return false;
-                        }
-                        if (world.getBlockState(pistonBlockPos.north()).isOf(Blocks.PISTON_HEAD)) {
-                            BlockBreakerUtils.instantBreakBlock(pistonBlockPos.south());
-                            return false;
-                        }
-                        if (world.getBlockState(pistonBlockPos.east()).isOf(Blocks.PISTON_HEAD)) {
-                            BlockBreakerUtils.instantBreakBlock(pistonBlockPos.south());
-                            return false;
                         }
 
                         // 活塞
@@ -260,8 +260,8 @@ public class TaskHandle {
             }
             case RETRY -> {
                 this.status = TaskStatus.INITIALIZATION;
-                this.retrying = false;
                 Debug.info("[%s][%s][状态处理][重试]: 重新尝试", id, timeoutCount);
+                return false;
             }
             case FINISH -> {
                 return false;
@@ -272,6 +272,11 @@ public class TaskHandle {
 
 
     private void updateStatus() {
+        //  延迟补偿
+        if (status == TaskStatus.WAIT) {
+            return;
+        }
+
         // 检查超时
         if (timeoutCount++ > timeoutCountMax) {
             Debug.info("[%s][%s][玩家交互更新]: 超时", id, timeoutCount);
@@ -280,34 +285,28 @@ public class TaskHandle {
         }
 
         // 检查目标方块
-        {
-            var blockState = world.getBlockState(blockPos);
-            if (blockState.isAir()) {
-                Debug.info("[%s][%s][更新状态]: 目标方块(%s)已不存在, 准备执行回收任务", id, timeoutCount, block.getName().getString());
-                status = TaskStatus.ITEM_RECYCLING;
-                return;
-            }
+        var blockState = world.getBlockState(blockPos);
+        if (blockState.isAir()) {
+            Debug.info("[%s][%s][更新状态]: 目标方块(%s)已不存在, 准备执行回收任务", id, timeoutCount, block.getName().getString());
+            status = TaskStatus.ITEM_RECYCLING;
+            return;
         }
 
+
         // 检查活塞
-        {
-            if (pistonBlockPos == null) {
-                Debug.info("[%s][%s][更新状态]: 活塞位置未获取", id, timeoutCount);
-                status = TaskStatus.FIND_PISTON_POSITION;
-                return;
-            }
+        if (pistonBlockPos == null) {
+            Debug.info("[%s][%s][更新状态]: 活塞位置未获取", id, timeoutCount);
+            status = TaskStatus.FIND_PISTON_POSITION;
+            return;
+        } else {
             Debug.info("[%s][%s][更新状态]: 活塞位置已获取", id, timeoutCount);
-
-            // 检查活塞放置情况
             var pistonState = world.getBlockState(pistonBlockPos);
-
             // 检查活塞当前是否还处于技术性方块(36号方块)
             if (pistonState.isOf(Blocks.MOVING_PISTON)) {
                 Debug.info("[%s][%s][更新状态]: 活塞移动中", id, timeoutCount);
                 status = TaskStatus.PISTON_MOVING;
                 return;
             }
-
             // 检查活塞状态
             if (pistonState.isOf(Blocks.PISTON)) {
                 var direction = world.getBlockState(pistonBlockPos).get(PistonBlock.FACING);
@@ -342,12 +341,11 @@ public class TaskHandle {
                     return;
                 }
             }
-
-
         }
 
+
         // 检查红石火把基座
-        {
+        if (!hasTried) {
             if (slimeBlockPos != null) {
                 var slimeBlockState = world.getBlockState(slimeBlockPos);
                 if (slimeBlockState.isReplaceable()) {
@@ -357,8 +355,9 @@ public class TaskHandle {
             }
         }
 
+
         // 检查红石火把
-        {
+        if (!hasTried) {
             if (redstoneTorchBlockPos == null) {
                 Debug.info("[%s][%s][更新状态]: 红石火把位置未获取", id, timeoutCount);
                 status = TaskStatus.FIND_REDSTONE_TORCH_POSITION;
@@ -473,35 +472,30 @@ public class TaskHandle {
             status = TaskStatus.FIND_PISTON_POSITION;  // 等待更新状态
             return false;
         }
-        // 放置前再次确认是否可以放置
         if (!CheckingEnvironmentUtils.has2BlocksOfPlaceToPlacePiston(world, blockPos)) {
-            MessageUtils.setOverlayMessageKey("bedrockminer.fail.place.piston");   // 无法放置活塞
-            status = TaskStatus.FAILED;
-            Debug.info("[%s][%s][状态处理][放置活塞]: 无法放置", id, timeoutCount);
-            return false;
+            Debug.info("[%s][%s][状态处理][放置活塞]: 放置失败, 该位置可能无法放置或有实体存在, %s", id, timeoutCount, pistonBlockPos);
+            MessageUtils.setOverlayMessageKey("bedrockminer.fail.place.piston");
         }
         InventoryManagerUtils.switchToItem(Blocks.PISTON);
         BlockPlacerUtils.pistonPlacement(pistonBlockPos, Direction.UP);
-        status = TaskStatus.WAIT_GAME_UPDATE;  // 等待更新状态
-        return false;
+        status = TaskStatus.WAIT;  // 等待更新状态
+        return true;
     }
 
     private boolean onPlaceSlimeBlock() {
         if (slimeBlockPos == null) {
-            Debug.info("[%s][%s][更新状态]: 基座方块未知未获取, 无法放置", id, timeoutCount);
+            Debug.info("[%s][%s][状态处理][放置基座方块]: 基座方块未知未获取, 无法放置", id, timeoutCount);
             status = TaskStatus.FIND_SLIME_POSITION;
             return false;
         }
-        // 实体检测
         if (!CheckingEnvironmentUtils.canPlace(slimeBlockPos, Blocks.SLIME_BLOCK, Direction.UP)) {
-            Debug.info("[%s][%s][更新状态]: 基座方块无法放置, 可能放置位置有实体(玩家)站在该位置上", id, timeoutCount);
-            status = TaskStatus.FAILED;
-            return false;
+            Debug.info("[%s][%s][状态处理][放置基座方块]: 放置失败, 该位置可能无法放置或有实体存在, %s", id, timeoutCount, slimeBlockPos);
+            MessageUtils.setOverlayMessageKey("bedrockminer.fail.place.slimeBlock");
         }
-        Debug.info("[%s][%s][更新状态]: 放置基座方块, %s", id, timeoutCount, slimeBlockPos);
+        Debug.info("[%s][%s][状态处理][放置基座方块]: 放置, %s", id, timeoutCount, slimeBlockPos);
         BlockPlacerUtils.simpleBlockPlacement(slimeBlockPos, Blocks.SLIME_BLOCK);
-        status = TaskStatus.WAIT_GAME_UPDATE;  // 等待更新状态
-        return false;
+        status = TaskStatus.WAIT;  // 等待更新状态
+        return true;
     }
 
     private boolean onPlaceRedstoneTorch() {
@@ -513,8 +507,8 @@ public class TaskHandle {
         }
         Debug.info("[%s][%s][状态处理][放置红石火把]: 放置红石火把, %s", id, timeoutCount, redstoneTorchBlockPos);
         BlockPlacerUtils.simpleBlockPlacement(redstoneTorchBlockPos, Blocks.REDSTONE_TORCH);
-        status = TaskStatus.WAIT_GAME_UPDATE;
-        return false;
+        status = TaskStatus.WAIT;
+        return true;
     }
 
 }
