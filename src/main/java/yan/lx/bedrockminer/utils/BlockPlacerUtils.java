@@ -89,18 +89,14 @@ public class BlockPlacerUtils {
      * 放置没有交互的方块
      */
     private static void placeBlockWithoutInteractingBlock(BlockHitResult hitResult) {
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        ClientWorld world = minecraftClient.world;
-        PlayerEntity player = minecraftClient.player;
-        ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
+        var minecraftClient = MinecraftClient.getInstance();
+        var world = minecraftClient.world;
+        var player = minecraftClient.player;
+        var interactionManager = minecraftClient.interactionManager;
         if (world == null || player == null || interactionManager == null) {
             return;
         }
-        ItemStack itemStack = player.getStackInHand(Hand.MAIN_HAND);
-        interactionManager.sendSequencedPacket(minecraftClient.world, sequence -> new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, hitResult, sequence));
-        if (!itemStack.isEmpty() && !player.getItemCooldownManager().isCoolingDown(itemStack.getItem())) {
-            ItemUsageContext itemUsageContext = new ItemUsageContext(player, Hand.MAIN_HAND, hitResult);
-            itemStack.useOnBlock(itemUsageContext);
-        }
+        interactionManager.interactBlock(player, Hand.MAIN_HAND, hitResult);
+        interactionManager.interactItem(player, Hand.MAIN_HAND);
     }
 }
