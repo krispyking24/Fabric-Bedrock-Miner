@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-import yan.lx.bedrockminer.handle.BreakingFlowController;
+import yan.lx.bedrockminer.handle.TaskManager;
 
 @Mixin(MinecraftClient.class)
 public class MinecraftClientMixin {
@@ -43,7 +43,7 @@ public class MinecraftClientMixin {
         var blockPos = blockHitResult.getBlockPos();
         var blockState = world.getBlockState(blockPos);
         var block = blockState.getBlock();
-        BreakingFlowController.switchOnOff(block);
+        TaskManager.switchOnOff(block);
     }
 
     @Inject(method = "handleBlockBreaking", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;swingHand(Lnet/minecraft/util/Hand;)V"), locals = LocalCapture.CAPTURE_FAILSOFT)
@@ -53,6 +53,6 @@ public class MinecraftClientMixin {
         }
         var blockState = world.getBlockState(blockPos);
         var block = blockState.getBlock();
-        BreakingFlowController.addTask(block, blockPos, world);
+        TaskManager.addTask(block, blockPos, world);
     }
 }

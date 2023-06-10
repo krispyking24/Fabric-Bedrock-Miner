@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class BreakingFlowController {
+public class TaskManager {
     private static final List<String> defaultBlockBlacklist = new ArrayList<>();
     private static final List<TaskHandle> handleTaskCaches = new LinkedList<>();
     private static boolean working = false;
@@ -127,7 +127,8 @@ public class BreakingFlowController {
         }
         // 使用迭代器, 安全删除列表
         var iterator = handleTaskCaches.iterator();
-        while (iterator.hasNext()) {
+        var count = 0;
+        while (iterator.hasNext() && count++ < Config.getInstance().taskLimit) {
             var currentTask = iterator.next();
             // 玩家切换世界,距离目标方块太远时,删除缓存任务
             if (currentTask.getWorld() != world) {
@@ -155,6 +156,6 @@ public class BreakingFlowController {
         } else {
             MessageUtils.addMessageKey("bedrockminer.toggle.off");
         }
-        BreakingFlowController.working = working;
+        TaskManager.working = working;
     }
 }
