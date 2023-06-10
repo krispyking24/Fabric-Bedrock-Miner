@@ -30,15 +30,15 @@ public class TaskHandle {
     private BlockPos slimeBlockPos;
 
     private int timeoutCount;
-    private final int timeoutCountMax = 40;
+    private final int timeoutCountMax;
     private boolean hasTried;
     private TaskStatus status;
     private int recycleCount;
     private boolean retrying;
     private int retryCount;
-    private final int retryMax = 3;
+    private final int retryMax;
     private int delayCount;
-    private final int delayCountMax = 10;
+    private final int delayCountMax;
 
     private int waitCount;
 
@@ -50,11 +50,12 @@ public class TaskHandle {
      * @param world    目标方块所在世界
      */
     public TaskHandle(Block block, BlockPos blockPos, ClientWorld world) {
-        // 赋值
         this.block = block;
         this.blockPos = blockPos;
         this.world = world;
-        // 初始化
+        this.timeoutCountMax = 30;
+        this.retryMax = 2;
+        this.delayCountMax = 10;
         this.id = UUID.randomUUID();
         this.status = TaskStatus.INITIALIZATION;
     }
@@ -145,7 +146,7 @@ public class TaskHandle {
                 var playerListEntry = player.networkHandler.getPlayerListEntry(player.getUuid());
                 if (playerListEntry != null) {
                     var ping = playerListEntry.getLatency();
-                    var waitTick = ping / 20 + 1;
+                    var waitTick = ping / 50 + 1; // 50mspt=(1000ms/20tick)
                     Debug.info("[%s][%s][状态处理][等待]：延迟时间, %s", id, timeoutCount, ping);
                     Debug.info("[%s][%s][状态处理][等待]：等待总刻, %s", id, timeoutCount, waitTick);
                     if (waitCount++ > waitTick) {
@@ -400,7 +401,7 @@ public class TaskHandle {
     private boolean onFindSlimePosition() {
         if (redstoneTorchBlockPos != null) {
             var pos = redstoneTorchBlockPos.down();
-            if (world.getBlockState(pos).getMaterial().isReplaceable()) {
+            if (world.getBlockState(pos).isReplaceable()) {
                 slimeBlockPos = pos;
                 Debug.info("[%s][%s][状态处理][查找基座位置]: 成功, %s", id, timeoutCount, slimeBlockPos);
                 status = TaskStatus.WAIT_GAME_UPDATE;

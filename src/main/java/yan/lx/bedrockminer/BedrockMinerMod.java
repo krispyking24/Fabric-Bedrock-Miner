@@ -2,18 +2,12 @@ package yan.lx.bedrockminer;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.minecraft.entity.ai.brain.task.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import yan.lx.bedrockminer.command.BaseCommand;
-import yan.lx.bedrockminer.command.BlockCommand;
-import yan.lx.bedrockminer.command.BlockNameCommand;
-import yan.lx.bedrockminer.command.DebugCommand;
-import yan.lx.bedrockminer.config.Config;
-import yan.lx.bedrockminer.handle.BreakingFlowController;
+import yan.lx.bedrockminer.command.*;
+import yan.lx.bedrockminer.handle.TaskManager;
 
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
@@ -35,6 +29,7 @@ public class BedrockMinerMod implements ModInitializer {
         commands.add(new BlockCommand());
         commands.add(new BlockNameCommand());
         commands.add(new DebugCommand());
+        commands.add(new TaskCommand());
 
         // 开始注册
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
@@ -44,7 +39,7 @@ public class BedrockMinerMod implements ModInitializer {
             }
             // 主命令执行
             dispatcher.register(literal(COMMAND_PREFIX).executes(context -> {
-                        BreakingFlowController.setWorking(!BreakingFlowController.isWorking());
+                        TaskManager.setWorking(!TaskManager.isWorking());
                         return 0;
                     })
             );

@@ -35,7 +35,7 @@ public class BlockPlacerUtils {
         if (world == null || player == null || clientPlayNetworkHandler == null) {
             return;
         }
-        if (!world.getBlockState(pos).getMaterial().isReplaceable()) {
+        if (!world.getBlockState(pos).isReplaceable()) {
             return;
         }
         Direction direction = Direction.UP;
@@ -67,7 +67,7 @@ public class BlockPlacerUtils {
         if (world == null || player == null || clientPlayNetworkHandler == null) {
             return;
         }
-        if (!world.getBlockState(pos).getMaterial().isReplaceable()) {
+        if (!world.getBlockState(pos).isReplaceable()) {
             return;
         }
         var x = player.getX();

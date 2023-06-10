@@ -17,6 +17,7 @@ public class Config {
     private static Config instance = Config.load();
 
     public boolean debug = false;
+    public int taskLimit = 1;
     public List<String> blockWhitelist = new ArrayList<>();
     public List<String> blockBlacklist = new ArrayList<>();
 

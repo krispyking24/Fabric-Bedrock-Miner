@@ -35,7 +35,7 @@ public class CheckingEnvironmentUtils {
             if (!sideCoversSmallSquare(world, blockPos.down(), Direction.UP)) {
                 continue;
             }
-            if (blockState.getMaterial().isReplaceable() || blockState.isOf(Blocks.REDSTONE_TORCH)) {
+            if (blockState.isReplaceable() || blockState.isOf(Blocks.REDSTONE_TORCH)) {
                 list.add(blockPos);
             }
         }
@@ -73,7 +73,7 @@ public class CheckingEnvironmentUtils {
             BlockBreakerUtils.breakPistonBlock(pos2);
         }
         // 判断活塞位置和活塞臂位置是否可以放置
-        return world.getBlockState(pos1).getMaterial().isReplaceable() && world.getBlockState(pos2).getMaterial().isReplaceable();
+        return world.getBlockState(pos1).isReplaceable() && world.getBlockState(pos2).isReplaceable();
     }
 
     public static List<BlockPos> findNearbyRedstoneTorch(ClientWorld world, BlockPos pistonBlockPos) {

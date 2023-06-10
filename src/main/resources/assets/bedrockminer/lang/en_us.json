@@ -17,5 +17,6 @@
   "bedrockminer.command.block.whitelist.remove": "§7Remove whitelist block \"%blockName%\" success!",
   "bedrockminer.command.block.blacklist.add": "§7Add blacklist block \"%blockName%\" succeeded!",
   "bedrockminer.command.block.blacklist.remove": "§7Remove blacklist Block \"%blockName%\" succeeded!",
-  "bedrockminer.command.invalidBlockNameException": "The entered \"%s\" block name is incorrect or the block has already been added!"
+  "bedrockminer.command.invalidBlockNameException": "The entered \"%s\" block name is incorrect or the block has already been added!",
+  "bedrockminer.command.limit": "The task limit has been successfully adjusted to %limit%."
 }

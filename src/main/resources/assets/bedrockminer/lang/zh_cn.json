@@ -17,5 +17,7 @@
   "bedrockminer.command.block.whitelist.remove": "§7删除白名单方块 \"blockName\" 成功!",
   "bedrockminer.command.block.blacklist.add": "§7添加黑名单方块 \"blockName\" 成功!",
   "bedrockminer.command.block.blacklist.remove": "§7删除黑名单方块 \"blockName\" 成功!",
-  "bedrockminer.command.invalidBlockNameException": "输入的 \"%s\" 名称错误或该方块已经被添加！"
+  "bedrockminer.command.invalidBlockNameException": "输入的 \"%s\" 名称错误或该方块已经被添加！",
+  "bedrockminer.command.limit": "成功将任务执行上限调整为: %limit%"
+
 }
