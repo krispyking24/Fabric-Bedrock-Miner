@@ -142,7 +142,7 @@ public class TaskManager {
                     iterator.remove();
                 }
                 currentTask.tick();
-                if (count++ >= Config.getInstance().taskLimit) {
+                if (++count >= Config.getInstance().taskLimit) {
                     return;
                 }
             }
