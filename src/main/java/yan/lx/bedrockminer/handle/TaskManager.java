@@ -128,7 +128,7 @@ public class TaskManager {
         // 使用迭代器, 安全删除列表
         var iterator = handleTaskCaches.iterator();
         var count = 0;
-        while (iterator.hasNext() && count++ < Config.getInstance().taskLimit) {
+        while (iterator.hasNext()) {
             var currentTask = iterator.next();
             // 玩家切换世界,距离目标方块太远时,删除缓存任务
             if (currentTask.getWorld() != world) {
@@ -142,6 +142,9 @@ public class TaskManager {
                     iterator.remove();
                 }
                 currentTask.tick();
+                if (count++ >= Config.getInstance().taskLimit) {
+                    return;
+                }
             }
         }
     }
