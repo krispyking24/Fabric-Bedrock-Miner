@@ -7,12 +7,11 @@ import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import yan.lx.bedrockminer.config.Config;
 import yan.lx.bedrockminer.utils.*;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class TaskManager {
     private static final List<String> defaultBlockBlacklist = new ArrayList<>();
@@ -125,6 +124,14 @@ public class TaskManager {
         if (interactionManager.getCurrentGameMode().isCreative()) {
             return;
         }
+
+        // 从新根据玩家距离进行排序
+        handleTaskCaches.sort((o1, o2) -> {
+            var distanceA = player.getPos().distanceTo(o1.getBlockPos().toCenterPos());
+            var distanceB = player.getPos().distanceTo(o2.getBlockPos().toCenterPos());
+            return Double.compare(distanceA, distanceB);
+        });
+
         // 使用迭代器, 安全删除列表
         var iterator = handleTaskCaches.iterator();
         var count = 0;
