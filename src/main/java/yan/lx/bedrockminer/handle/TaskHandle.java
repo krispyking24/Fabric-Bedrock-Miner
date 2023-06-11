@@ -176,9 +176,9 @@ public class TaskHandle {
             }
             case ITEM_RECYCLING -> {
                 // 回收任务超时直接退出任务
-                if (recycleCount++ < 40) {
+                if (recycleCount++ < 20) {
                     // 跳过几tick, 因为活塞位置可能在执行活塞回收任务
-                    if (recycleCount < 4) {
+                    if (recycleCount < 3) {
                         return false;
                     }
                     // 活塞
@@ -187,17 +187,15 @@ public class TaskHandle {
                         BlockPos pistonPos1 = pistonBlockPos.up();
                         if (world.getBlockState(pistonPos1).isOf(Blocks.PISTON)) {
                             Debug.info("[%s][%s][状态处理][物品回收][%s][活塞up]: %s", id, timeoutCount, recycleCount, pistonPos1);
-                            if (BlockBreakerUtils.breakPistonBlock(pistonPos1)) {
-                                return false;
-                            }
+                            BlockBreakerUtils.breakPistonBlock(pistonPos1);
+                            return false;
                         }
                         // 可能残留的活塞2
                         BlockPos pistonPos2 = pistonBlockPos.up().up();
                         if (world.getBlockState(pistonPos2).isOf(Blocks.PISTON)) {
                             Debug.info("[%s][%s][状态处理][物品回收][%s][活塞upup]: %s", id, timeoutCount, recycleCount, pistonPos2);
-                            if (BlockBreakerUtils.breakPistonBlock(pistonPos1)) {
-                                return false;
-                            }
+                            BlockBreakerUtils.breakPistonBlock(pistonPos1);
+                            return false;
                         }
 
                         // 活塞
@@ -207,13 +205,11 @@ public class TaskHandle {
                             // 破坏活塞
                             if (BlockBreakerUtils.breakPistonBlock(pistonBlockPos)) {
                                 pistonBlockPos = null;
-                                return false;
                             }
-
                         } else if (blockState.isAir()) {
                             pistonBlockPos = null;
-                            return false;
                         }
+                        return false;
                     }
                     // 红石火把
                     if (redstoneTorchBlockPos != null) {
@@ -222,12 +218,11 @@ public class TaskHandle {
                             Debug.info("[%s][%s][状态处理][物品回收][%s][红石火把]: %s", id, timeoutCount, recycleCount, redstoneTorchBlockPos);
                             if (BlockBreakerUtils.breakBlock(redstoneTorchBlockPos, Direction.UP)) {
                                 redstoneTorchBlockPos = null;
-                                return false;
                             }
                         } else if (blockState.isAir()) {
                             redstoneTorchBlockPos = null;
-                            return false;
                         }
+                        return false;
                     }
                     // 粘液块
                     if (slimeBlockPos != null) {
@@ -236,8 +231,8 @@ public class TaskHandle {
                             Debug.info("[%s][%s][状态处理][物品回收][%s][粘液块]: %s", id, timeoutCount, recycleCount, slimeBlockPos);
                             if (BlockBreakerUtils.breakBlock(slimeBlockPos, Direction.UP)) {
                                 slimeBlockPos = null;
-                                return false;
                             }
+                            return false;
                         } else if (blockState.isAir()) {
                             slimeBlockPos = null;
                             return false;
