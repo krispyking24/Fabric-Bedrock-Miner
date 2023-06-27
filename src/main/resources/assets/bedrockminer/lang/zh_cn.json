@@ -1,23 +1,22 @@
 {
   "bedrockminer": "Bedrock Miner",
+  "bedrockminer.debug.on": "启动调适模式成功!",
+  "bedrockminer.debug.off": "关闭调适模式成功!",
   "bedrockminer.toggle.on": "§2Bedrock Miner 启动成功！作者：Bunny_i, 原作者：LXYan (当前项目已重构部分处理逻辑代码)",
   "bedrockminer.toggle.off": "§7Bedrock Miner 关闭成功。",
   "bedrockminer.warn.multiplayer": "§7看起来你好像是在服务器使用Bedrock Miner？§r\n§7在使用本mod前请先征询其他玩家的意见。§r",
-  "bedrockminer.fail.place.piston": "无法放置活塞！",
+  "bedrockminer.fail.place.piston": "无法放置活塞！（该位置没有放置条件或放置点有实体或玩家）",
   "bedrockminer.fail.place.redstonetorch": "无法放置红石火把！",
-  "bedrockminer.fail.place.slimeBlock": "无法放置粘液块！（可能放置点有实体或玩家）",
+  "bedrockminer.fail.place.slimeBlock": "无法放置粘液块！（该位置没有放置条件或放置点有实体或玩家）",
   "bedrockminer.fail.missing.survival": "仅限生存模式！",
   "bedrockminer.fail.missing.piston": "活塞不够啦！",
   "bedrockminer.fail.missing.redstonetorch": "红石火把不够啦！",
   "bedrockminer.fail.missing.slime": "黏液块不够啦！",
   "bedrockminer.fail.missing.instantmine": "无法秒破活塞！请确保效率Ⅴ+急迫Ⅱ",
-  "bedrockminer.command.debug.true": "启动调适模式成功!",
-  "bedrockminer.command.debug.false": "关闭调适模式成功!",
   "bedrockminer.command.block.whitelist.add": "§7添加白名单方块 \"%blockName%\" 成功!",
   "bedrockminer.command.block.whitelist.remove": "§7删除白名单方块 \"%blockName%\" 成功!",
   "bedrockminer.command.block.blacklist.add": "§7添加黑名单方块 \"%blockName%\" 成功!",
   "bedrockminer.command.block.blacklist.remove": "§7删除黑名单方块 \"%blockName%\" 成功!",
   "bedrockminer.command.invalidBlockNameException": "输入的 \"%s\" 名称错误或该方块已经被添加！",
   "bedrockminer.command.limit": "成功将任务执行上限调整为: %limit%"
-
 }

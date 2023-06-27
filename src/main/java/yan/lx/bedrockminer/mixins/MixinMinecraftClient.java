@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import yan.lx.bedrockminer.handle.TaskManager;
 
 @Mixin(MinecraftClient.class)
-public class MinecraftClientMixin {
+public class MixinMinecraftClient {
     @Shadow
     @Nullable
     public ClientWorld world;
@@ -32,7 +32,7 @@ public class MinecraftClientMixin {
 
 
     @Inject(method = "doItemUse", at = @At(value = "HEAD"))
-    private void onDoItemUse(CallbackInfo ci) {
+    private void doItemUse(CallbackInfo ci) {
         if (crosshairTarget == null || world == null || player == null) {
             return;
         }
@@ -47,7 +47,7 @@ public class MinecraftClientMixin {
     }
 
     @Inject(method = "handleBlockBreaking", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;swingHand(Lnet/minecraft/util/Hand;)V"), locals = LocalCapture.CAPTURE_FAILSOFT)
-    private void onHandleBlockBreaking(boolean bl, CallbackInfo ci, BlockHitResult blockHitResult, BlockPos blockPos, Direction direction) {
+    private void handleBlockBreaking(boolean bl, CallbackInfo ci, BlockHitResult blockHitResult, BlockPos blockPos, Direction direction) {
         if (world == null) {
             return;
         }

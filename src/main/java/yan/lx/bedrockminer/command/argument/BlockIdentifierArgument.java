@@ -13,6 +13,7 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.registry.*;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
+import yan.lx.bedrockminer.utils.BlockUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,13 +24,8 @@ import static net.minecraft.command.argument.BlockArgumentParser.INVALID_BLOCK_I
 
 public class BlockIdentifierArgument implements ArgumentType<Block> {
     private static final Collection<String> EXAMPLES = Arrays.asList("stone", "minecraft:stone");
-    private final RegistryWrapper<Block> registryWrapper;
     @Nullable
     private Function<Identifier, Boolean> filter;
-
-    public BlockIdentifierArgument(CommandRegistryAccess commandRegistryAccess) {
-        registryWrapper = commandRegistryAccess.createWrapper(RegistryKeys.BLOCK);
-    }
 
     public static Block getBlock(CommandContext<FabricClientCommandSource> context, String name) {
         return context.getArgument(name, Block.class);
@@ -40,46 +36,49 @@ public class BlockIdentifierArgument implements ArgumentType<Block> {
         while (reader.canRead() && isCharValid(reader.peek())) {
             reader.skip();
         }
+        // 获取用户输入的字符串内容
         var string = reader.getString().substring(i, reader.getCursor());
+        // 检查方块注册表中是否存在该名称
         var blockId = new Identifier(string);
-        var block = registryWrapper.getOptional(RegistryKey.of(RegistryKeys.BLOCK, blockId)).orElseThrow(() -> {
+        var optionalBlock = Registries.BLOCK.stream().filter(block -> BlockUtils.getIdentifier(block).equals(blockId)).findFirst();
+        if (optionalBlock.isEmpty()) {
             reader.setCursor(i);
-            return INVALID_BLOCK_ID_EXCEPTION.create(blockId.toString());
-        }).value();
+            throw INVALID_BLOCK_ID_EXCEPTION.create(string);
+        }
+        // 已获取到方块信息
+        var block = optionalBlock.get();
         // 检查过滤器
-        if (filter != null && !filter.apply(Registries.BLOCK.getId(block))) {
+        if (filter != null && !filter.apply(BlockUtils.getIdentifier(block))) {
             reader.setCursor(i);
-            throw INVALID_BLOCK_ID_EXCEPTION.create(blockId.toString());
+            throw INVALID_BLOCK_ID_EXCEPTION.create(string);
         }
         return block;
     }
 
 
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        StringReader reader = new StringReader(builder.getInput());
+        var reader = new StringReader(builder.getInput());
         reader.setCursor(builder.getStart());
         // 读取标识符
         var i = reader.getCursor();
         while (reader.canRead() && isCharValid(reader.peek())) {
             reader.skip();
         }
+        // 获取用户输入的字符串内容
         var string = reader.getString().substring(i, reader.getCursor());
-        var blockId = new Identifier(string);
-        // 过滤标识符
-        var keys = registryWrapper.streamKeys().filter(x -> {
-            var identifier = x.getValue();
+        // 检查方块注册表中是否存在该名称
+        Registries.BLOCK.forEach(block -> {
+            var identifier = BlockUtils.getIdentifier(block);
             var namespace = identifier.getNamespace();
             var path = identifier.getPath();
-            if (blockId.getNamespace().startsWith(namespace) || blockId.getPath().startsWith(path)) {
-                if (filter != null) {
-                    return filter.apply(identifier);
-                } else {
-                    return true;
+            if (namespace.contains(string) || path.contains(string)) {
+                if (filter != null && filter.apply(identifier)) {
+                    // 添加建议列表
+                    builder.suggest(BlockUtils.getId(block));
                 }
             }
-            return false;
         });
-        return CommandSource.suggestIdentifiers(keys.map(RegistryKey::getValue), builder);
+        return builder.buildFuture();
     }
 
     public Collection<String> getExamples() {

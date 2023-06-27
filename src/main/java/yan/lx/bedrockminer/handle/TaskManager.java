@@ -3,74 +3,37 @@ package yan.lx.bedrockminer.handle;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Items;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import yan.lx.bedrockminer.config.Config;
 import yan.lx.bedrockminer.utils.*;
 
 import java.util.*;
 
+import static yan.lx.bedrockminer.BedrockMinerLang.*;
+
 public class TaskManager {
-    private static final List<String> defaultBlockBlacklist = new ArrayList<>();
     private static final List<TaskHandle> handleTaskCaches = new LinkedList<>();
     private static boolean working = false;
 
-    static {
-        // 默认方块黑名单 (用于限制的服务器, 与自定义黑名单分离)
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.BARRIER));                    // 屏障
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.COMMAND_BLOCK));              // 普通命令方块
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.CHAIN_COMMAND_BLOCK));        // 连锁型命令方块
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.REPEATING_COMMAND_BLOCK));    // 循环型命令方块
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.STRUCTURE_VOID));             // 结构空位
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.STRUCTURE_BLOCK));            // 结构方块
-        defaultBlockBlacklist.add(BlockUtils.getId(Blocks.JIGSAW));                     // 拼图方块
-    }
-
-    public static boolean checkIsAllowBlock(Block block) {
-        var minecraftClient = MinecraftClient.getInstance();
-        var config = Config.getInstance();
-        // 服务器方块黑名单检查
-        if (!minecraftClient.isInSingleplayer()) {
-            for (var defaultBlockBlack : defaultBlockBlacklist) {
-                if (BlockUtils.getId(block).equals(defaultBlockBlack)) {
-                    return false;
-                }
-            }
-        }
-        // 用户自定义方块黑名单检查
-        for (var blockBlack : config.blockBlacklist) {
-            if (BlockUtils.getId(block).equals(blockBlack)) {
-                return false;
-            }
-        }
-        // 用户自定义方块白名单检查
-        for (var blockBlack : config.blockWhitelist) {
-            if (BlockUtils.getId(block).equals(blockBlack)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static void switchOnOff(Block block) {
         if (working) {
-            MessageUtils.addMessageKey("bedrockminer.toggle.off");
+            MessageUtils.addMessage(TOGGLE_OFF);
             working = false;
         } else {
             if (checkIsAllowBlock(block)) {
-                MinecraftClient minecraftClient = MinecraftClient.getInstance();
-                // 判断玩家是否为创造
-                if (minecraftClient.interactionManager != null && minecraftClient.interactionManager.getCurrentGameMode().isCreative()) {
-                    MessageUtils.addMessageKey("bedrockminer.fail.missing.survival");
+                var client = MinecraftClient.getInstance();
+                // 检查玩家是否为创造
+                if (client.interactionManager != null && client.interactionManager.getCurrentGameMode().isCreative()) {
+                    MessageUtils.addMessage(FAIL_MISSING_SURVIVAL);
                     return;
                 }
-                MessageUtils.addMessageKey("bedrockminer.toggle.on");
-                // 判断是否在服务器
-                if (!minecraftClient.isInSingleplayer()) {
-                    MessageUtils.addMessageKey("bedrockminer.warn.multiplayer");
+                MessageUtils.addMessage(TOGGLE_ON);
+                // 检查是否在服务器
+                if (!client.isInSingleplayer()) {
+                    MessageUtils.addMessage(WARN_MULTIPLAYER);
                 }
                 working = true;
             }
@@ -78,59 +41,50 @@ public class TaskManager {
     }
 
     public static void addTask(Block block, BlockPos pos, ClientWorld world) {
-        var minecraftClient = MinecraftClient.getInstance();
-        if (working) {
-            // 判断部分开启条件
-            String haveEnoughItems = InventoryManagerUtils.warningMessage();
-            if (haveEnoughItems != null) {
-                MessageUtils.setOverlayMessageKey(haveEnoughItems);
-                return;
-            }
-            // 仅生存执行
-            if (minecraftClient.interactionManager != null && minecraftClient.interactionManager.getCurrentGameMode().isSurvivalLike()) {
-                if (checkIsAllowBlock(block)) {
-                    for (var targetBlock : handleTaskCaches) {
-                        // 检查重复任务
-                        if (targetBlock.getBlockPos().getManhattanDistance(pos) == 0) {
-                            return;
-                        }
+        if (!working) return;
+        var client = MinecraftClient.getInstance();
+        var interactionManager = client.interactionManager;
+        if (interactionManager == null) return;
+        if (reverseCheckInventoryItemConditionsAllow()) return;
+
+        // 仅生存执行
+        if (interactionManager.getCurrentGameMode().isSurvivalLike()) {
+            if (checkIsAllowBlock(block)) {
+                for (var targetBlock : handleTaskCaches) {
+                    // 检查重复任务
+                    if (targetBlock.getBlockPos().getManhattanDistance(pos) == 0) {
+                        return;
                     }
-                    var targetBlock = new TaskHandle(world.getBlockState(pos).getBlock(), pos, world);
-                    handleTaskCaches.add(targetBlock);
                 }
+                var targetBlock = new TaskHandle(world.getBlockState(pos).getBlock(), pos, world);
+                handleTaskCaches.add(targetBlock);
             }
         }
     }
+
+    public static void clearTask() {
+        handleTaskCaches.clear();
+    }
+
 
     public static void tick() {
         if (!working) return;
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        ClientWorld world = minecraftClient.world;
-        PlayerEntity player = minecraftClient.player;
-        ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
-        if (world == null || player == null || interactionManager == null) {
-            return;
-        }
-        // 运行更新程序
-        updater(world, player, interactionManager);
-    }
+        var minecraftClient = MinecraftClient.getInstance();
+        var world = minecraftClient.world;
+        var player = minecraftClient.player;
+        var interactionManager = minecraftClient.interactionManager;
+        if (world == null || player == null || interactionManager == null) return;
 
-    public static void updater(ClientWorld world, PlayerEntity player, ClientPlayerInteractionManager interactionManager) {
-        // 检查使用环境
-        if (InventoryManagerUtils.warningMessage() != null) {
-            return;
-        }
-        // 检查玩家模式
-        if (interactionManager.getCurrentGameMode().isCreative()) {
-            return;
-        }
+        if (handleTaskCaches.isEmpty()) return;
+        if (reverseCheckInventoryItemConditionsAllow()) return;    // 检查物品条件
+        if (interactionManager.getCurrentGameMode().isCreative()) return;   // 检查玩家模式
 
-        // 从新根据玩家距离进行排序
-        handleTaskCaches.sort((o1, o2) -> {
-            var distanceA = player.getPos().distanceTo(o1.getBlockPos().toCenterPos());
-            var distanceB = player.getPos().distanceTo(o2.getBlockPos().toCenterPos());
-            return Double.compare(distanceA, distanceB);
-        });
+//        // 从新根据玩家距离进行排序
+//        handleTaskCaches.sort((o1, o2) -> {
+//            var distanceA = player.getPos().distanceTo(o1.getBlockPos().toCenterPos());
+//            var distanceB = player.getPos().distanceTo(o2.getBlockPos().toCenterPos());
+//            return Double.compare(distanceA, distanceB);
+//        });
 
         // 使用迭代器, 安全删除列表
         var iterator = handleTaskCaches.iterator();
@@ -140,7 +94,7 @@ public class TaskManager {
             // 玩家切换世界,距离目标方块太远时,删除缓存任务
             if (currentTask.getWorld() != world) {
                 iterator.remove();
-                break;
+                continue;
             }
             // 判断玩家与方块距离是否在处理范围内
             if (currentTask.getBlockPos().isWithinDistance(player.getEyePos(), 3.5f)) {
@@ -149,11 +103,62 @@ public class TaskManager {
                     iterator.remove();
                 }
                 currentTask.tick();
-                if (++count >= Config.getInstance().taskLimit) {
+                if (++count >= Config.INSTANCE.taskLimit) {
                     return;
                 }
             }
         }
+    }
+
+    public static boolean checkIsAllowBlock(Block block) {
+        var minecraftClient = MinecraftClient.getInstance();
+        var config = Config.INSTANCE;
+        // 方块黑名单检查(服务器)
+        if (!minecraftClient.isInSingleplayer()) {
+            for (var defaultBlockBlack : config.blockBlacklistServer) {
+                if (BlockUtils.getId(block).equals(defaultBlockBlack)) {
+                    return false;
+                }
+            }
+        }
+        // 方块黑名单检查(用户自定义)
+        for (var blockBlack : config.blockBlacklist) {
+            if (BlockUtils.getId(block).equals(blockBlack)) {
+                return false;
+            }
+        }
+        // 方块白名单检查(用户自定义)
+        for (var blockBlack : config.blockWhitelist) {
+            if (BlockUtils.getId(block).equals(blockBlack)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean reverseCheckInventoryItemConditionsAllow() {
+        var client = MinecraftClient.getInstance();
+        var msg = (Text) null;
+        if (client.interactionManager != null && !client.interactionManager.getCurrentGameMode().isSurvivalLike()) {
+            msg = FAIL_MISSING_SURVIVAL;
+        }
+        if (InventoryManagerUtils.getInventoryItemCount(Items.PISTON) < 2) {
+            msg = FAIL_MISSING_PISTON;
+        }
+        if (InventoryManagerUtils.getInventoryItemCount(Items.REDSTONE_TORCH) < 1) {
+            msg = FAIL_MISSING_REDSTONETORCH;
+        }
+        if (InventoryManagerUtils.getInventoryItemCount(Items.SLIME_BLOCK) < 1) {
+            msg = FAIL_MISSING_SLIME;
+        }
+        if (!InventoryManagerUtils.canInstantlyMinePiston()) {
+            msg = FAIL_MISSING_INSTANTMINE;
+        }
+        if (msg != null) {
+            MessageUtils.setOverlayMessage(msg);
+            return true;
+        }
+        return false;
     }
 
     public static boolean isWorking() {
@@ -162,9 +167,9 @@ public class TaskManager {
 
     public static void setWorking(boolean working) {
         if (working) {
-            MessageUtils.addMessageKey("bedrockminer.toggle.on");
+            MessageUtils.addMessage(TOGGLE_ON);
         } else {
-            MessageUtils.addMessageKey("bedrockminer.toggle.off");
+            MessageUtils.addMessage(TOGGLE_OFF);
         }
         TaskManager.working = working;
     }

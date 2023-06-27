@@ -3,6 +3,7 @@ package yan.lx.bedrockminer.command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
+import yan.lx.bedrockminer.BedrockMinerLang;
 import yan.lx.bedrockminer.config.Config;
 import yan.lx.bedrockminer.utils.MessageUtils;
 
@@ -23,11 +24,11 @@ public class DebugCommand extends BaseCommand {
 
     private int toggleSwitch(boolean b) {
         if (b) {
-            MessageUtils.addMessageKey("bedrockminer.command.debug.true");
+            MessageUtils.addMessage(BedrockMinerLang.DEBUG_ON);
         } else {
-            MessageUtils.addMessageKey("bedrockminer.command.debug.false");
+            MessageUtils.addMessage(BedrockMinerLang.DEBUG_OFF);
         }
-        Config.getInstance().debug = b;
+        Config.INSTANCE.debug = b;
         Config.save();
         return 0;
     }

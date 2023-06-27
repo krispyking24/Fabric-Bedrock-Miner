@@ -1,11 +1,14 @@
 package yan.lx.bedrockminer.utils;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
@@ -13,6 +16,7 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.shape.VoxelShape;
 import yan.lx.bedrockminer.Debug;
 
 import java.util.ArrayList;
@@ -66,14 +70,33 @@ public class CheckingEnvironmentUtils {
         BlockPos pos1 = blockPos.up();          // 活塞位置
         BlockPos pos2 = blockPos.up().up();     // 活塞臂位置
         // 获取硬度, 打掉0硬度值的方块
-        if (world.getBlockState(pos1).getHardness(world, pos1) < 45f) {
+        var blockState1 = world.getBlockState(pos1);
+        if (!blockState1.isAir() && blockState1.getBlock().getHardness() < 45f) {
             BlockBreakerUtils.breakPistonBlock(pos1);
         }
-        if (world.getBlockState(pos2).getHardness(world, pos2) < 45f) {
+        var blockState2 = world.getBlockState(pos1);
+        if (!blockState2.isAir() && blockState2.getBlock().getHardness() < 45f) {
             BlockBreakerUtils.breakPistonBlock(pos2);
         }
+
+        // 实体碰撞箱
+        boolean b = true;
+        var state = Blocks.PISTON.getDefaultState();
+        var shape = state.getCollisionShape(world, pos1);
+        if (!shape.isEmpty()) {
+            for (var entity : world.getEntities()) {
+                // 过滤掉落物实体
+                if (entity instanceof ItemEntity) {
+                    continue;
+                }
+                if (entity.collidesWithStateAtPos(pos1, state)) {
+                    b = false;
+                }
+            }
+        }
+
         // 判断活塞位置和活塞臂位置是否可以放置
-        return world.getBlockState(pos1).isReplaceable() && world.getBlockState(pos2).isReplaceable();
+        return world.getBlockState(pos1).isReplaceable() && world.getBlockState(pos2).isReplaceable() && b;
     }
 
     public static List<BlockPos> findNearbyRedstoneTorch(ClientWorld world, BlockPos pistonBlockPos) {
@@ -102,9 +125,17 @@ public class CheckingEnvironmentUtils {
             var context = new ItemPlacementContext(player, Hand.MAIN_HAND, item.getDefaultStack(), new BlockHitResult(blockPos.toCenterPos(), direction, blockPos, false));
             // 实体碰撞箱
             boolean b = true;
-            for (var entity : world.getEntities()) {
-                if (entity.collidesWithStateAtPos(blockPos, block.getDefaultState())) {
-                    b = false;
+            var state = Blocks.PISTON.getDefaultState();
+            var shape = state.getCollisionShape(world, blockPos);
+            if (!shape.isEmpty()) {
+                for (var entity : world.getEntities()) {
+                    // 过滤掉落物实体
+                    if (entity instanceof ItemEntity) {
+                        continue;
+                    }
+                    if (entity.collidesWithStateAtPos(blockPos, state)) {
+                        b = false;
+                    }
                 }
             }
             return context.canPlace() && b;

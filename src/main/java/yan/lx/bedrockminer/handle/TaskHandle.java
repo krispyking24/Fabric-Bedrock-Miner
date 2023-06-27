@@ -5,16 +5,17 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.PistonBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.item.Items;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
 import yan.lx.bedrockminer.Debug;
 import yan.lx.bedrockminer.utils.*;
 
-import java.text.ParsePosition;
 import java.util.UUID;
 
 import static net.minecraft.block.Block.sideCoversSmallSquare;
+import static yan.lx.bedrockminer.BedrockMinerLang.*;
 
 public class TaskHandle {
     private UUID id;
@@ -28,6 +29,9 @@ public class TaskHandle {
     private BlockPos redstoneTorchBlockPos;
     @Nullable
     private BlockPos slimeBlockPos;
+    private boolean placePiston;
+    private boolean placeRedStoneTorch;
+    private boolean placeSlimeBlock;
 
     private int timeoutCount;
     private final int timeoutCountMax;
@@ -93,6 +97,9 @@ public class TaskHandle {
                 this.hasTried = false;
                 this.retrying = false;
                 this.delayCount = 0;
+                this.placePiston = false;
+                this.placeRedStoneTorch = false;
+                this.placeSlimeBlock = false;
                 this.status = TaskStatus.WAIT_GAME_UPDATE;  // 等待更新状态
                 Debug.info("[%s][%s][状态处理][初始化]: 完成", id, timeoutCount);
             }
@@ -112,7 +119,7 @@ public class TaskHandle {
                 return onPlaceSlimeBlock();
             }
             case PLACE_REDSTONE_TORCH -> {
-                return onPlaceRedstoneTorch();
+                return onPlaceRedStoneTorch();
             }
             case PLACE_ERROR_PISTON -> BlockBreakerUtils.breakPistonBlock(pistonBlockPos);
             case PLACE_ERROR_REDSTONE_TORCH -> BlockBreakerUtils.breakPistonBlock(redstoneTorchBlockPos);
@@ -133,7 +140,7 @@ public class TaskHandle {
 
                     // 放置朝下的活塞
                     Debug.info("[%s][%s][状态处理][执行]：放置朝下的活塞, %s", id, timeoutCount, pistonBlockPos);
-                    BlockPlacerUtils.pistonPlacement(pistonBlockPos, Direction.DOWN);
+                    BlockPlacerUtils.placement(pistonBlockPos, Direction.DOWN, Items.PISTON);
 
                     hasTried = true;
                     Debug.info("[%s][%s][状态处理][执行]：执行完成", id, timeoutCount);
@@ -216,7 +223,7 @@ public class TaskHandle {
                         var blockState = world.getBlockState(redstoneTorchBlockPos);
                         if (blockState.isOf(Blocks.REDSTONE_TORCH) || blockState.isOf(Blocks.REDSTONE_WALL_TORCH)) {
                             Debug.info("[%s][%s][状态处理][物品回收][%s][红石火把]: %s", id, timeoutCount, recycleCount, redstoneTorchBlockPos);
-                            if (BlockBreakerUtils.breakBlock(redstoneTorchBlockPos, Direction.UP)) {
+                            if (BlockBreakerUtils.simpleBreakBlock(redstoneTorchBlockPos)) {
                                 redstoneTorchBlockPos = null;
                             }
                         } else if (blockState.isAir()) {
@@ -229,7 +236,7 @@ public class TaskHandle {
                         var blockState = world.getBlockState(slimeBlockPos);
                         if (blockState.isOf(Blocks.SLIME_BLOCK)) {
                             Debug.info("[%s][%s][状态处理][物品回收][%s][粘液块]: %s", id, timeoutCount, recycleCount, slimeBlockPos);
-                            if (BlockBreakerUtils.breakBlock(slimeBlockPos, Direction.UP)) {
+                            if (BlockBreakerUtils.simpleBreakBlock(slimeBlockPos)) {
                                 slimeBlockPos = null;
                             }
                             return false;
@@ -388,7 +395,7 @@ public class TaskHandle {
             return true;
         }
         Debug.info("[%s][%s][状态处理][查找活塞位置]: 失败", id, timeoutCount);
-        MessageUtils.setOverlayMessageKey("bedrockminer.fail.place.piston");   // 无法放置活塞
+        MessageUtils.setOverlayMessage(FAIL_PLACE_PISTON);   // 无法放置活塞
         status = TaskStatus.FAILED;    // 失败状态
         return false;
     }
@@ -470,10 +477,10 @@ public class TaskHandle {
         }
         if (!CheckingEnvironmentUtils.has2BlocksOfPlaceToPlacePiston(world, blockPos)) {
             Debug.info("[%s][%s][状态处理][放置活塞]: 放置失败, 该位置可能无法放置或有实体存在, %s", id, timeoutCount, pistonBlockPos);
-            MessageUtils.setOverlayMessageKey("bedrockminer.fail.place.piston");
+            MessageUtils.setOverlayMessage(FAIL_PLACE_PISTON);
         }
-        InventoryManagerUtils.switchToItem(Blocks.PISTON);
-        BlockPlacerUtils.pistonPlacement(pistonBlockPos, Direction.UP);
+        BlockPlacerUtils.placement(pistonBlockPos, Direction.UP, Items.PISTON);
+        placePiston = true;
         status = TaskStatus.WAIT;  // 等待更新状态
         return true;
     }
@@ -486,15 +493,16 @@ public class TaskHandle {
         }
         if (!CheckingEnvironmentUtils.canPlace(slimeBlockPos, Blocks.SLIME_BLOCK, Direction.UP)) {
             Debug.info("[%s][%s][状态处理][放置基座方块]: 放置失败, 该位置可能无法放置或有实体存在, %s", id, timeoutCount, slimeBlockPos);
-            MessageUtils.setOverlayMessageKey("bedrockminer.fail.place.slimeBlock");
+            MessageUtils.setOverlayMessage(FAIL_PLACE_SLIMEBLOCK);
         }
         Debug.info("[%s][%s][状态处理][放置基座方块]: 放置, %s", id, timeoutCount, slimeBlockPos);
-        BlockPlacerUtils.simpleBlockPlacement(slimeBlockPos, Blocks.SLIME_BLOCK);
+        BlockPlacerUtils.simpleBlockPlacement(slimeBlockPos, Items.SLIME_BLOCK);
+        placeSlimeBlock = true;
         status = TaskStatus.WAIT;  // 等待更新状态
         return true;
     }
 
-    private boolean onPlaceRedstoneTorch() {
+    private boolean onPlaceRedStoneTorch() {
         if (redstoneTorchBlockPos == null) {
             Debug.info("[%s][%s][状态处理][放置红石火把]: 红石火把未获取", id, timeoutCount);
             slimeBlockPos = null;
@@ -502,7 +510,8 @@ public class TaskHandle {
             return false;
         }
         Debug.info("[%s][%s][状态处理][放置红石火把]: 放置红石火把, %s", id, timeoutCount, redstoneTorchBlockPos);
-        BlockPlacerUtils.simpleBlockPlacement(redstoneTorchBlockPos, Blocks.REDSTONE_TORCH);
+        BlockPlacerUtils.simpleBlockPlacement(redstoneTorchBlockPos, Items.REDSTONE_TORCH);
+        placeRedStoneTorch = true;
         status = TaskStatus.WAIT;
         return true;
     }

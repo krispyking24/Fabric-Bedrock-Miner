@@ -18,6 +18,7 @@ import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import yan.lx.bedrockminer.BedrockMinerMod;
 import yan.lx.bedrockminer.Debug;
+import yan.lx.bedrockminer.utils.BlockUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,13 +31,9 @@ import static net.minecraft.command.argument.BlockArgumentParser.INVALID_BLOCK_I
 public class BlockNameArgument implements ArgumentType<Block> {
     private static final DynamicCommandExceptionType INVALID_BLOCK_NAME_EXCEPTION = new DynamicCommandExceptionType(blockName -> Text.translatable("bedrockminer.command.invalidBlockNameException", blockName));
     private static final Collection<String> EXAMPLES = Arrays.asList("Stone", "Bedrock", "石头", "基岩");
-    private final RegistryWrapper<Block> registryWrapper;
     @Nullable
     private Function<Identifier, Boolean> filter;
 
-    public BlockNameArgument(CommandRegistryAccess commandRegistryAccess) {
-        registryWrapper = commandRegistryAccess.createWrapper(RegistryKeys.BLOCK);
-    }
 
     public static Block getBlock(CommandContext<FabricClientCommandSource> context, String name) {
         return context.getArgument(name, Block.class);
@@ -58,7 +55,8 @@ public class BlockNameArgument implements ArgumentType<Block> {
         // 已获取到方块信息
         var block = optionalBlock.get();
         // 检查过滤器
-        if (filter != null && !filter.apply(Registries.BLOCK.getId(block))) {
+        if (filter != null && !filter.apply(BlockUtils.getIdentifier(block))) {
+            reader.setCursor(i);
             throw INVALID_BLOCK_NAME_EXCEPTION.create(string);
         }
         return block;
@@ -77,8 +75,8 @@ public class BlockNameArgument implements ArgumentType<Block> {
         var string = reader.getString().substring(i, reader.getCursor());
         // 检查方块注册表中是否存在该名称
         Registries.BLOCK.forEach(block -> {
-            if (block.getName().getString().startsWith(string)) {
-                if (filter != null && filter.apply(Registries.BLOCK.getId(block))) {
+            if (block.getName().getString().contains(string)) {
+                if (filter != null && filter.apply(BlockUtils.getIdentifier(block))) {
                     // 添加建议列表
                     builder.suggest(block.getName().getString());
                 }

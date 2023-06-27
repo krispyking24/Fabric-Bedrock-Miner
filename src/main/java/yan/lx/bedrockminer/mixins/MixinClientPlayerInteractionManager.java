@@ -8,10 +8,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import yan.lx.bedrockminer.handle.TaskManager;
 
 @Mixin(ClientPlayerInteractionManager.class)
-public class ClientPlayerInteractionManagerMixin {
-    /*** 交互更新 ***/
+public class MixinClientPlayerInteractionManager {
     @Inject(at = @At("HEAD"), method = "tick")
-    private void init(CallbackInfo info) {
+    private void tick(CallbackInfo info) {
        TaskManager.tick();
     }
 }

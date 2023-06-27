@@ -26,23 +26,23 @@ public class BlockCommand extends BaseCommand {
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandRegistryAccess registryAccess) {
         builder.then(literal("whitelist")
                         .then(literal("add")
-                                .then(argument("block", new BlockIdentifierArgument(registryAccess).setFilter(this::filterWhitelist))
+                                .then(argument("block", new BlockIdentifierArgument().setFilter(this::filterWhitelist))
                                         .executes(this::addWhitelist)
                                 )
                         )
                         .then(literal("remove")
-                                .then(argument("block", new BlockIdentifierArgument(registryAccess).setFilter(this::showWhitelist))
+                                .then(argument("block", new BlockIdentifierArgument().setFilter(this::showWhitelist))
                                         .executes(this::removeWhitelist)
                                 )
                         ))
                 .then(literal("blacklist")
                         .then(literal("add")
-                                .then(argument("block", new BlockIdentifierArgument(registryAccess).setFilter(this::filterBlacklist))
+                                .then(argument("block", new BlockIdentifierArgument().setFilter(this::filterBlacklist))
                                         .executes(this::addBlacklist)
                                 )
                         )
                         .then(literal("remove")
-                                .then(argument("block", new BlockIdentifierArgument(registryAccess).setFilter(this::showBlacklist))
+                                .then(argument("block", new BlockIdentifierArgument().setFilter(this::showBlacklist))
                                         .executes(this::removeBlacklist)
                                 )
                         )
@@ -56,7 +56,7 @@ public class BlockCommand extends BaseCommand {
     }
 
     private Boolean showWhitelist(Identifier blockId) {
-        var config = Config.getInstance();
+        var config = Config.INSTANCE;
         for (var whitelist : config.blockWhitelist) {
             if (blockId.toString().equals(whitelist)) {
                 return true;
@@ -69,7 +69,7 @@ public class BlockCommand extends BaseCommand {
         if (isFilterBlock(blockId)) {
             return false;
         }
-        var config = Config.getInstance();
+        var config = Config.INSTANCE;
         for (var whitelist : config.blockWhitelist) {
             if (blockId.toString().equals(whitelist)) {
                 return false;
@@ -79,7 +79,7 @@ public class BlockCommand extends BaseCommand {
     }
 
     private Boolean showBlacklist(Identifier blockId) {
-        var config = Config.getInstance();
+        var config = Config.INSTANCE;
         for (var whitelist : config.blockBlacklist) {
             if (blockId.toString().equals(whitelist)) {
                 return true;
@@ -92,7 +92,7 @@ public class BlockCommand extends BaseCommand {
         if (isFilterBlock(blockId)) {
             return false;
         }
-        var config = Config.getInstance();
+        var config = Config.INSTANCE;
         for (var whitelist : config.blockBlacklist) {
             if (blockId.toString().equals(whitelist)) {
                 return false;
@@ -103,7 +103,7 @@ public class BlockCommand extends BaseCommand {
 
     private int addWhitelist(CommandContext<FabricClientCommandSource> context) {
         var block = BlockNameArgument.getBlock(context, "block");
-        var config = Config.getInstance();
+        var config = Config.INSTANCE;
         var id = BlockUtils.getId(block);
         if (!config.blockWhitelist.contains(id)) {
             config.blockWhitelist.add(id);
@@ -115,7 +115,7 @@ public class BlockCommand extends BaseCommand {
 
     private int removeWhitelist(CommandContext<FabricClientCommandSource> context) {
         var block = BlockNameArgument.getBlock(context, "block");
-        var config = Config.getInstance();
+        var config = Config.INSTANCE;
         var id = BlockUtils.getId(block);
         if (config.blockWhitelist.contains(id)) {
             config.blockWhitelist.remove(id);
@@ -127,7 +127,7 @@ public class BlockCommand extends BaseCommand {
 
     private int addBlacklist(CommandContext<FabricClientCommandSource> context) {
         var block = BlockNameArgument.getBlock(context, "block");
-        var config = Config.getInstance();
+        var config = Config.INSTANCE;
         var id = BlockUtils.getId(block);
         if (!config.blockBlacklist.contains(id)) {
             config.blockBlacklist.add(id);
@@ -139,7 +139,7 @@ public class BlockCommand extends BaseCommand {
 
     private int removeBlacklist(CommandContext<FabricClientCommandSource> context) {
         var block = BlockIdentifierArgument.getBlock(context, "block");
-        var config = Config.getInstance();
+        var config = Config.INSTANCE;
         var id = BlockUtils.getId(block);
         if (config.blockBlacklist.contains(id)) {
             config.blockBlacklist.remove(id);
@@ -150,6 +150,7 @@ public class BlockCommand extends BaseCommand {
     }
 
     private void sendChat(String translatableKey, Block block) {
-        MessageUtils.addMessage(Text.translatable(translatableKey).getString().replace("%BlockName%", block.getName().getString()));
+        var msg = Text.translatable(translatableKey).getString().replace("%blockName%", block.getName().getString());
+        MessageUtils.addMessage(Text.translatable(msg));
     }
 }

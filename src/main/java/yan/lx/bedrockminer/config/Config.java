@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Blocks;
-import org.jetbrains.annotations.Nullable;
 import yan.lx.bedrockminer.BedrockMinerMod;
 import yan.lx.bedrockminer.utils.BlockUtils;
 
@@ -13,25 +12,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Config {
-    private static final File file = new File(FabricLoader.getInstance().getConfigDir().toFile(), "bedrockminer.json");
-    private static Config instance = Config.load();
+    public static final File file = new File(FabricLoader.getInstance().getConfigDir().toFile(), "bedrockminer.json");
+    public static final Config INSTANCE = Config.load();
 
     public boolean debug = false;
     public int taskLimit = 1;
-    public List<String> blockWhitelist = new ArrayList<>();
+    public List<String> blockWhitelist = getDefaultBlockWhitelist();
     public List<String> blockBlacklist = new ArrayList<>();
+    public transient List<String> blockBlacklistServer = getDefaultBlockBlacklistServer();
 
-    public Config() {
-        init();
+    public static List<String> getDefaultBlockWhitelist() {
+        var list = new ArrayList<String>();
+        list.add(BlockUtils.getId(Blocks.BEDROCK));                  // 基岩
+        list.add(BlockUtils.getId(Blocks.END_PORTAL));               // 末地传送门
+        list.add(BlockUtils.getId(Blocks.END_PORTAL_FRAME));         // 末地传送门-框架
+        list.add(BlockUtils.getId(Blocks.END_GATEWAY));              // 末地折跃门
+        return list;
     }
 
-    public void init() {
-        // 方块白名单(默认)
-        blockWhitelist = new ArrayList<>();
-        blockWhitelist.add(BlockUtils.getId(Blocks.BEDROCK));                  // 基岩
-        blockWhitelist.add(BlockUtils.getId(Blocks.END_PORTAL));               // 末地传送门
-        blockWhitelist.add(BlockUtils.getId(Blocks.END_PORTAL_FRAME));         // 末地传送门-框架
-        blockWhitelist.add(BlockUtils.getId(Blocks.END_GATEWAY));              // 末地折跃门
+    public static List<String> getDefaultBlockBlacklistServer() {
+        // 默认方块黑名单 (用于限制的服务器, 与自定义黑名单分离)
+        var list = new ArrayList<String>();
+        list.add(BlockUtils.getId(Blocks.BARRIER));                    // 屏障
+        list.add(BlockUtils.getId(Blocks.COMMAND_BLOCK));              // 普通命令方块
+        list.add(BlockUtils.getId(Blocks.CHAIN_COMMAND_BLOCK));        // 连锁型命令方块
+        list.add(BlockUtils.getId(Blocks.REPEATING_COMMAND_BLOCK));    // 循环型命令方块
+        list.add(BlockUtils.getId(Blocks.STRUCTURE_VOID));             // 结构空位
+        list.add(BlockUtils.getId(Blocks.STRUCTURE_BLOCK));            // 结构方块
+        list.add(BlockUtils.getId(Blocks.JIGSAW));                     // 拼图方块
+        return list;
     }
 
     public static Config load() {
@@ -52,24 +61,20 @@ public class Config {
             }
         }
         if (config == null) {
+            BedrockMinerMod.LOGGER.info("使用默认配置");
             config = new Config();
+            save();
         }
-        instance = config;
-        save();
         return config;
     }
 
     public static void save() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try (FileWriter writer = new FileWriter(file)) {
-            gson.toJson(instance, writer);
+            gson.toJson(INSTANCE, writer);
         } catch (IOException e) {
             BedrockMinerMod.LOGGER.info("无法保存配置文件");
             e.printStackTrace();
         }
-    }
-
-    public static Config getInstance() {
-        return instance;
     }
 }

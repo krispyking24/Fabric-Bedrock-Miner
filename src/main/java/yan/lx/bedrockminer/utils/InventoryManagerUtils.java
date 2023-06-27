@@ -1,22 +1,16 @@
 package yan.lx.bedrockminer.utils;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffectUtil;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemConvertible;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.registry.tag.FluidTags;
 
@@ -24,81 +18,159 @@ import java.util.HashMap;
 
 
 public class InventoryManagerUtils {
-    public static void switchToItem(ItemConvertible item) {
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        PlayerEntity player = minecraftClient.player;
-        ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
-        ClientPlayNetworkHandler clientPlayNetworkHandler = minecraftClient.getNetworkHandler();
-        if (player == null || interactionManager == null || clientPlayNetworkHandler == null) {
-            return;
-        }
-        PlayerInventory playerInventory = player.getInventory();
-
-        int i = playerInventory.getSlotWithStack(new ItemStack(item));
-
-        if (item.equals(Items.DIAMOND_PICKAXE)) {
-            i = getEfficientTool(playerInventory);
-        }
-
-        if (i != -1) {
-            if (PlayerInventory.isValidHotbarIndex(i)) {
-                playerInventory.selectedSlot = i;
-            } else {
-                interactionManager.pickFromInventory(i);
+    /**
+     * 获取玩家物品栏中指定物品的数量和槽位
+     *
+     * @param items 要搜索的物品（可以搜索多个）
+     * @return 包含指定物品可用数量和槽位的HashMap
+     */
+    public static HashMap<Integer, ItemStack> getPlayerInventoryUsableItemSlotMap(Item... items) {
+        var map = new HashMap<Integer, ItemStack>();
+        var client = MinecraftClient.getInstance();
+        var player = client.player;
+        var interactionManager = client.interactionManager;
+        var networkHandler = client.getNetworkHandler();
+        if (player != null && interactionManager != null && networkHandler != null) {
+            var playerInventory = player.getInventory();
+            for (int i = 0; i < playerInventory.size(); i++) {
+                var itemStack = playerInventory.getStack(i);
+                for (var item : items) {
+                    if (itemStack.isOf(item)) {
+                        map.put(i, itemStack);
+                    }
+                }
             }
-            clientPlayNetworkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.selectedSlot));
+        }
+        return map;
+    }
+
+    /**
+     * 将玩家的手持物品切换到指定槽位
+     *
+     * @param slot 要切换到的槽位
+     */
+    public static void switchToSlot(int slot) {
+        var client = MinecraftClient.getInstance();
+        var player = client.player;
+        var interactionManager = client.interactionManager;
+        var networkHandler = client.getNetworkHandler();
+        if (player == null || interactionManager == null || networkHandler == null) return;
+        var inventory = player.getInventory();
+        // 如果当前槽位在热键栏中
+        if (PlayerInventory.isValidHotbarIndex(slot)) {
+            inventory.selectedSlot = slot;
+        } else {
+            interactionManager.pickFromInventory(slot); // 切换物品到热键槽位
+        }
+        networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(inventory.selectedSlot)); // 发送更新手持物品的数据包
+    }
+
+    /**
+     * 将玩家手持的物品切换为指定的物品
+     *
+     * @param item 要切换到的物品
+     */
+    public static void switchToItem(Item item) {
+        var client = MinecraftClient.getInstance();
+        var player = client.player;
+        var interactionManager = client.interactionManager;
+        var networkHandler = client.getNetworkHandler();
+        if (player == null || interactionManager == null || networkHandler == null) return;
+        var inventory = player.getInventory();
+        for (int i = 0; i < inventory.size(); i++) {
+            var stack = inventory.getStack(i);
+            if (stack.isEmpty() || !stack.isOf(item)) continue;
+            switchToSlot(i);
         }
     }
 
-    private static int getEfficientTool(PlayerInventory playerInventory) {
-        for (int i = 0; i < playerInventory.main.size(); ++i) {
-            if (getBlockBreakingSpeed(Blocks.PISTON.getDefaultState(), i) > 45f) {
-                return i;
-            }
+    /**
+     * 判断物品的耐久度是否小于等于给定的最小值
+     *
+     * @param itemStack 要检查耐久度的物品堆栈
+     * @param minDamage 最小的剩余耐久度
+     * @return 如果物品的剩余耐久度小于等于最小值则返回true，否则返回false
+     */
+    public static boolean isItemDamageWarning(ItemStack itemStack, int minDamage) {
+        int damageMax = itemStack.getMaxDamage();   // 获取物品的最大耐久度
+        if (damageMax > 0) {
+            int damage = itemStack.getDamage();     // 获取物品的已使用耐久度
+            int damageSurplus = damageMax - damage; // 计算物品的剩余耐久度
+            return damageSurplus <= minDamage;      // 如果剩余耐久度小于等于给定的最小值，则返回true
         }
-        return -1;
+        return false;   // 如果物品没有耐久度，则返回false
     }
 
-    /*** 检查是否可以立即开采活塞 ***/
+    /**
+     * 判断玩家是否可以瞬间破坏活塞方块
+     *
+     * @return 如果可以瞬间破坏活塞方块则返回true，否则返回false
+     */
     public static boolean canInstantlyMinePiston() {
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        PlayerEntity player = minecraftClient.player;
-        if (player == null) {
-            return false;
-        }
-        PlayerInventory playerInventory = player.getInventory();
+        var client = MinecraftClient.getInstance();
+        var player = client.player;
+        if (player == null) return false;
+        var playerInventory = player.getInventory();
         for (int i = 0; i < playerInventory.size(); i++) {
-            if (getBlockBreakingSpeed(Blocks.PISTON.getDefaultState(), i) > 45f) {
+            if (isInstantBreakingBlock(Blocks.PISTON.getDefaultState(), playerInventory.getStack(i))) {
                 return true;
             }
         }
         return false;
     }
 
-    /*** 获取方块破坏速度 ***/
-    private static float getBlockBreakingSpeed(BlockState block, int slot) {
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        PlayerEntity player = minecraftClient.player;
-        if (player == null) {
-            return 0;
-        }
+    /**
+     * 是否可以瞬间破坏方块
+     *
+     * @param blockState 要破坏的方块状态
+     * @param itemStack  使用工具/物品破坏方块
+     * @return true为可以瞬间破坏
+     */
+    public static boolean isInstantBreakingBlock(BlockState blockState, ItemStack itemStack) {
+        float hardness = blockState.getBlock().getHardness();       // 当前方块硬度
+        if (hardness < 0) return false;                             // 无硬度(如基岩无法破坏)
+        float speed = getBlockBreakingSpeed(blockState, itemStack); // 当前破坏速度
+        return speed > (hardness * 30);
+    }
 
-        PlayerInventory playerInventory = player.getInventory();
-        ItemStack stack = playerInventory.getStack(slot);
+    /**
+     * 获取方块破坏所需的总时间
+     *
+     * @param blockState 要破坏的方块状态
+     * @param itemStack  使用工具/物品破坏方块
+     * @return 当前物品破坏该方块所需的时间 (单位为秒)
+     */
+    public static float getBlockBreakingTotalTime(BlockState blockState, ItemStack itemStack) {
+        var hardness = blockState.getBlock().getHardness();         // 当前方块硬度
+        if (hardness < 0) return -1;
+        var speed = getBlockBreakingSpeed(blockState, itemStack);   // 当前工具的破坏速度系数
+        return (float) ((hardness * 1.5) / speed);
+    }
 
-        float f = stack.getMiningSpeedMultiplier(block);
-        if (f > 1.0F) {
-            int i = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, stack);
-            ItemStack itemStack = player.getInventory().getStack(slot);
-            if (i > 0 && !itemStack.isEmpty()) {
-                f += (float) (i * i + 1);
+    /**
+     * 获取当前物品能够破坏指定方块的破坏速度.
+     *
+     * @param blockState 要破坏的方块状态
+     * @param itemStack  使用工具/物品破坏方块
+     * @return 当前物品破坏该方块所需的时间（单位为 tick）
+     */
+    private static float getBlockBreakingSpeed(BlockState blockState, ItemStack itemStack) {
+        var client = MinecraftClient.getInstance();
+        var player = client.player;
+        if (player == null) return 0;
+        var toolSpeed = itemStack.getMiningSpeedMultiplier(blockState);  // 当前物品的破坏系数速度
+        // 根据工具的"效率"附魔增加破坏速度
+        if (toolSpeed > 1.0F) {
+            int toolLevel = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, itemStack);
+            if (toolLevel > 0 && !itemStack.isEmpty()) {
+                toolSpeed += (float) (toolLevel * toolLevel + 1);
             }
         }
-
+        // 根据玩家"急迫"状态效果增加破坏速度
         if (StatusEffectUtil.hasHaste(player)) {
-            f *= 1.0F + (float) (StatusEffectUtil.getHasteAmplifier(player) + 1) * 0.2F;
+            toolSpeed *= 1.0F + (float) (StatusEffectUtil.getHasteAmplifier(player) + 1) * 0.2F;
         }
-
+        // 根据玩家"挖掘疲劳"状态效果减缓破坏速度
         if (player.hasStatusEffect(StatusEffects.MINING_FATIGUE)) {
             float k;
             StatusEffectInstance statusEffect = player.getStatusEffect(StatusEffects.MINING_FATIGUE);   //采矿疲劳;
@@ -111,222 +183,25 @@ public class InventoryManagerUtils {
                 case 2 -> 0.0027F;
                 default -> 8.1E-4F;
             };
-
-            f *= k;
+            toolSpeed *= k;
         }
-
+        // 如果玩家在水中并且没有"水下速掘"附魔，则减缓破坏速度
         if (player.isSubmergedIn(FluidTags.WATER) && !EnchantmentHelper.hasAquaAffinity(player)) {
-            f /= 5.0F;
+            toolSpeed /= 5.0F;
         }
-
+        // 如果玩家不在地面上，则减缓破坏速度
         if (!player.isOnGround()) {
-            f /= 5.0F;
+            toolSpeed /= 5.0F;
         }
-
-        return f;
+        return toolSpeed;
     }
 
-    /*** 获取物品数量 ***/
-    public static int getInventoryItemCount(ItemConvertible item) {
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        if (minecraftClient.player == null) return 0;
-        PlayerInventory playerInventory = minecraftClient.player.getInventory();
-        return playerInventory.count(item.asItem());
-    }
-
-    public static String warningMessage() {
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        if (minecraftClient.interactionManager != null && !"survival".equals(minecraftClient.interactionManager.getCurrentGameMode().getName())) {
-            return "bedrockminer.fail.missing.survival";
-        }
-
-        if (InventoryManagerUtils.getInventoryItemCount(Blocks.PISTON) < 2) {
-            return "bedrockminer.fail.missing.piston";
-        }
-
-        if (InventoryManagerUtils.getInventoryItemCount(Blocks.REDSTONE_TORCH) < 1) {
-            return "bedrockminer.fail.missing.redstonetorch";
-        }
-
-        if (InventoryManagerUtils.getInventoryItemCount(Blocks.SLIME_BLOCK) < 1) {
-            return "bedrockminer.fail.missing.slime";
-        }
-
-        if (!InventoryManagerUtils.canInstantlyMinePiston()) {
-            return "bedrockminer.fail.missing.instantmine";
-        }
-        return null;
-    }
-
-
-    public static HashMap<Integer, ItemStack> getPlayerInventoryUsableItemSlotMap(Item... targetItem) {
-        HashMap<Integer, ItemStack> map = new HashMap<>();
-
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        PlayerEntity player = minecraftClient.player;
-        ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
-        ClientPlayNetworkHandler clientPlayNetworkHandler = minecraftClient.getNetworkHandler();
-        if (player == null || interactionManager == null || clientPlayNetworkHandler == null) {
-            return map;
-        }
-
-        PlayerInventory playerInventory = player.getInventory();
-        for (int i = 0; i < playerInventory.main.size(); i++) {
-            ItemStack itemStack = playerInventory.main.get(i);
-            for (Item item : targetItem) {
-                if (itemStack.isOf(item)) {
-                    map.put(i, itemStack);
-                }
-            }
-        }
-        return map;
-    }
-
-    public static void switchToItemSlot(int itemSlot) {
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        PlayerEntity player = minecraftClient.player;
-        ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
-        ClientPlayNetworkHandler clientPlayNetworkHandler = minecraftClient.getNetworkHandler();
-        if (player == null || interactionManager == null || clientPlayNetworkHandler == null) {
-            return;
-        }
-        PlayerInventory playerInventory = player.getInventory();
-        if (PlayerInventory.isValidHotbarIndex(itemSlot)) {
-            playerInventory.selectedSlot = itemSlot;
-        } else {
-            interactionManager.pickFromInventory(itemSlot);
-        }
-        clientPlayNetworkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.selectedSlot));
-    }
-
-    public static boolean isItemDamageWarning(ItemStack itemStack, int minDamage) {
-        int damageMax = itemStack.getMaxDamage();       // 最大值耐久
-        if (damageMax > 0) {
-            int damage = itemStack.getDamage();         // 已使用耐久
-            int damageSurplus = damageMax - damage;     // 剩余耐久
-            return damageSurplus <= minDamage;
-        }
-        return false;
-    }
-
-    public static boolean switchToItem(Item targetItem) {
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        PlayerEntity player = minecraftClient.player;
-        ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
-        ClientPlayNetworkHandler clientPlayNetworkHandler = minecraftClient.getNetworkHandler();
-        if (player == null || interactionManager == null || clientPlayNetworkHandler == null) {
-            return false;
-        }
-
-        PlayerInventory playerInventory = player.getInventory();
-        for (int i = 0; i < playerInventory.main.size(); i++) {
-            ItemStack itemStack = playerInventory.main.get(i);
-            if (itemStack.isEmpty()) {
-                continue;
-            }
-            // Debug.info();
-            // Debug.info("[%s][物品堆]: %s", i, itemStack);
-            // Debug.info("[%s][名称]: %s (%s)", i, itemStack.getTranslationKey(), itemStack.getName().getString());
-            // Debug.info("[%s][NBT]: %s", i, itemStack.getNbt());
-            // Debug.info("[%s][playerInventory.isValidHotbarIndex]: %s", i, PlayerInventory.isValidHotbarIndex(i));
-            // Debug.info("[%s][playerInventory.selectedSlot]: %s", i, playerInventory.selectedSlot);
-
-            if (itemStack.isOf(targetItem)) {
-                // Debug.info("[%s][目标物品]: 是", i);
-
-                if (PlayerInventory.isValidHotbarIndex(i)) {
-                    playerInventory.selectedSlot = i;
-                } else {
-                    interactionManager.pickFromInventory(i);
-                }
-                clientPlayNetworkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.selectedSlot));
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * 是否可以瞬间破坏方块
-     *
-     * @param block     待破坏的方块
-     * @param itemStack 使用什么物品堆来破坏方块
-     * @return true为可以瞬间破坏
-     */
-    public static boolean isInstantBreakingBlock(Block block, ItemStack itemStack) {
-        float hardness = block.getHardness();                       // 当前方块硬度
-        if (hardness < 0) return false;                             // 无硬度(如基岩无法破坏)
-        float speed = getBlockBreakingSpeed(block, itemStack);      // 当前破坏速度
-        return speed > (hardness * 30);
-    }
-
-    /**
-     * 获取方块破坏所需的总时间
-     *
-     * @param block     待破坏的方块
-     * @param itemStack 使用什么物品堆来破坏方块
-     * @return 时间 (秒)
-     */
-    public static float getBlockBreakingTotalTime(Block block, ItemStack itemStack) {
-        float hardness = block.getHardness();                       // 当前方块硬度
-        if (hardness < 0) return -1;
-        float speed = getBlockBreakingSpeed(block, itemStack);      // 当前破坏速度
-        return (float) ((hardness * 1.5) / speed);
-    }
-
-    /**
-     * 获取方块破坏速度
-     *
-     * @param block     待破坏的方块
-     * @param itemStack 使用什么物品堆来破坏方块
-     * @return 破坏的速度(可以理解为每秒能破坏多少)
-     */
-    public static float getBlockBreakingSpeed(Block block, ItemStack itemStack) {
-        // 使用的物品堆破坏方块时最小速度,最小值为1(当工具不同速度加成也不同,比1大)
-        float f = itemStack.getMiningSpeedMultiplier(block.getDefaultState());
-        if (f > 1.0F) {
-            // 获取物品堆的效率附魔等级
-            int i = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, itemStack);
-            if (i > 0 && !itemStack.isEmpty()) {
-                f += (float) (i * i + 1);
-            }
-        }
-
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        PlayerEntity player = minecraftClient.player;
-        if (player != null) {
-
-            // 急迫Buff
-            if (StatusEffectUtil.hasHaste(player)) {
-                f *= 1.0F + (float) (StatusEffectUtil.getHasteAmplifier(player) + 1) * 0.2F;
-            }
-
-            // 挖掘疲劳Buff
-            if (player.hasStatusEffect(StatusEffects.MINING_FATIGUE)) {
-                StatusEffectInstance statusEffect = player.getStatusEffect(StatusEffects.MINING_FATIGUE);
-                if (statusEffect != null) {
-                    float g = switch (statusEffect.getAmplifier()) {
-                        case 0 -> 0.3F;
-                        case 1 -> 0.09F;
-                        case 2 -> 0.0027F;
-                        default -> 8.1E-4F;
-                    };
-                    f *= g;
-                }
-
-            }
-
-            // 头部是否在水中且,没有水下速掘Buff
-            if (player.isSubmergedIn(FluidTags.WATER) && !EnchantmentHelper.hasAquaAffinity(player)) {
-                f /= 5.0F;
-            }
-
-            // 玩家在地面上
-            if (!player.isOnGround()) {
-                f /= 5.0F;
-            }
-        }
-
-        return f;
+    /*** 获取背包物品数量 ***/
+    public static int getInventoryItemCount(Item item) {
+        var client = MinecraftClient.getInstance();
+        var player = client.player;
+        if (player == null) return 0;
+        var playerInventory = player.getInventory();
+        return playerInventory.count(item);
     }
 }
