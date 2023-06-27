@@ -40,10 +40,6 @@ public class CheckingEnvironmentUtils {
 
     /**
      * 查找可能放置粘液块的位置
-     *
-     * @param world
-     * @param pistonBlockPos
-     * @return
      */
     public static List<BlockPos> findPossibleSlimeBlockPos(ClientWorld world, BlockPos pistonBlockPos) {
         var list = new ArrayList<BlockPos>();
