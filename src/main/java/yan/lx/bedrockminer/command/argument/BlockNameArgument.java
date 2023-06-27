@@ -5,28 +5,20 @@ import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.Block;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.CommandSource;
-import net.minecraft.registry.*;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
-import yan.lx.bedrockminer.BedrockMinerMod;
-import yan.lx.bedrockminer.Debug;
 import yan.lx.bedrockminer.utils.BlockUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-
-import static net.minecraft.command.argument.BlockArgumentParser.INVALID_BLOCK_ID_EXCEPTION;
 
 public class BlockNameArgument implements ArgumentType<Block> {
     private static final DynamicCommandExceptionType INVALID_BLOCK_NAME_EXCEPTION = new DynamicCommandExceptionType(blockName -> Text.translatable("bedrockminer.command.invalidBlockNameException", blockName));

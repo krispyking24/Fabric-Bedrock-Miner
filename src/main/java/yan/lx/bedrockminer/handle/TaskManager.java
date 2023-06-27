@@ -1,16 +1,18 @@
 package yan.lx.bedrockminer.handle;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import yan.lx.bedrockminer.config.Config;
-import yan.lx.bedrockminer.utils.*;
+import yan.lx.bedrockminer.utils.BlockUtils;
+import yan.lx.bedrockminer.utils.InventoryManagerUtils;
+import yan.lx.bedrockminer.utils.MessageUtils;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 import static yan.lx.bedrockminer.BedrockMinerLang.*;
 

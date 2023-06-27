@@ -9,7 +9,6 @@ import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import yan.lx.bedrockminer.command.argument.BlockNameArgument;
-import yan.lx.bedrockminer.command.argument.BlockNameArgument;
 import yan.lx.bedrockminer.config.Config;
 import yan.lx.bedrockminer.utils.BlockUtils;
 import yan.lx.bedrockminer.utils.MessageUtils;

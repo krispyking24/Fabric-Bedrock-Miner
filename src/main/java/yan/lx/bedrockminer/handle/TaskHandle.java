@@ -18,7 +18,7 @@ import static net.minecraft.block.Block.sideCoversSmallSquare;
 import static yan.lx.bedrockminer.BedrockMinerLang.*;
 
 public class TaskHandle {
-    private UUID id;
+    private final UUID id;
     private final Block block;
     private final BlockPos blockPos;
     private final ClientWorld world;
@@ -29,9 +29,6 @@ public class TaskHandle {
     private BlockPos redstoneTorchBlockPos;
     @Nullable
     private BlockPos slimeBlockPos;
-    private boolean placePiston;
-    private boolean placeRedStoneTorch;
-    private boolean placeSlimeBlock;
 
     private int timeoutCount;
     private final int timeoutCountMax;
@@ -97,9 +94,6 @@ public class TaskHandle {
                 this.hasTried = false;
                 this.retrying = false;
                 this.delayCount = 0;
-                this.placePiston = false;
-                this.placeRedStoneTorch = false;
-                this.placeSlimeBlock = false;
                 this.status = TaskStatus.WAIT_GAME_UPDATE;  // 等待更新状态
                 Debug.info("[%s][%s][状态处理][初始化]: 完成", id, timeoutCount);
             }
@@ -480,7 +474,6 @@ public class TaskHandle {
             MessageUtils.setOverlayMessage(FAIL_PLACE_PISTON);
         }
         BlockPlacerUtils.placement(pistonBlockPos, Direction.UP, Items.PISTON);
-        placePiston = true;
         status = TaskStatus.WAIT;  // 等待更新状态
         return true;
     }
@@ -497,7 +490,6 @@ public class TaskHandle {
         }
         Debug.info("[%s][%s][状态处理][放置基座方块]: 放置, %s", id, timeoutCount, slimeBlockPos);
         BlockPlacerUtils.simpleBlockPlacement(slimeBlockPos, Items.SLIME_BLOCK);
-        placeSlimeBlock = true;
         status = TaskStatus.WAIT;  // 等待更新状态
         return true;
     }
@@ -511,7 +503,6 @@ public class TaskHandle {
         }
         Debug.info("[%s][%s][状态处理][放置红石火把]: 放置红石火把, %s", id, timeoutCount, redstoneTorchBlockPos);
         BlockPlacerUtils.simpleBlockPlacement(redstoneTorchBlockPos, Items.REDSTONE_TORCH);
-        placeRedStoneTorch = true;
         status = TaskStatus.WAIT;
         return true;
     }

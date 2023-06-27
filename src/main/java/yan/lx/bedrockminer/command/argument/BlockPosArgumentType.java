@@ -15,7 +15,6 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import yan.lx.bedrockminer.Debug;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,7 +22,6 @@ import java.util.concurrent.CompletableFuture;
 
 public class BlockPosArgumentType implements ArgumentType<BlockPos> {
     private static final Collection<String> EXAMPLES = Arrays.asList("0 0 0", "~ ~ ~");
-    private static final SimpleCommandExceptionType INVALID_COORDINATE = new SimpleCommandExceptionType(Text.literal("Invalid coordinate"));
 
     public static BlockPosArgumentType xyz() {
         return new BlockPosArgumentType();
@@ -146,15 +144,6 @@ public class BlockPosArgumentType implements ArgumentType<BlockPos> {
         }
         reader.setCursor(i);
         throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.readerInvalidInt().create(reader.getRemaining());
-    }
-
-    private String formatCoordinate(double coordinate) {
-        int intCoordinate = MathHelper.floor(coordinate);
-        if ((double) intCoordinate == coordinate) {
-            return Integer.toString(intCoordinate);
-        } else {
-            return Double.toString(coordinate);
-        }
     }
 
     public static boolean isAllowedInteger(final char c) {
