@@ -20,10 +20,6 @@ import java.util.concurrent.CompletableFuture;
 public class BlockPosArgumentType implements ArgumentType<BlockPos> {
     private static final Collection<String> EXAMPLES = Arrays.asList("0 0 0", "~ ~ ~");
 
-    public static BlockPosArgumentType xyz() {
-        return new BlockPosArgumentType();
-    }
-
     public static BlockPosArgumentType blockPos() {
         return new BlockPosArgumentType();
     }
