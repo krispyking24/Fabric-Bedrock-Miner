@@ -6,6 +6,7 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import yan.lx.bedrockminer.BedrockMinerLang;
 import yan.lx.bedrockminer.config.Config;
 import yan.lx.bedrockminer.utils.BlockUtils;
 import yan.lx.bedrockminer.utils.InventoryManagerUtils;
@@ -14,28 +15,26 @@ import yan.lx.bedrockminer.utils.MessageUtils;
 import java.util.LinkedList;
 import java.util.List;
 
-import static yan.lx.bedrockminer.BedrockMinerLang.*;
-
 public class TaskManager {
     private static final List<TaskHandle> handleTaskCaches = new LinkedList<>();
     private static boolean working = false;
 
     public static void switchOnOff(Block block) {
         if (working) {
-            MessageUtils.addMessage(TOGGLE_OFF);
+            MessageUtils.addMessage(BedrockMinerLang.TOGGLE_OFF);
             working = false;
         } else {
             if (checkIsAllowBlock(block)) {
                 var client = MinecraftClient.getInstance();
                 // 检查玩家是否为创造
                 if (client.interactionManager != null && client.interactionManager.getCurrentGameMode().isCreative()) {
-                    MessageUtils.addMessage(FAIL_MISSING_SURVIVAL);
+                    MessageUtils.addMessage(BedrockMinerLang.FAIL_MISSING_SURVIVAL);
                     return;
                 }
-                MessageUtils.addMessage(TOGGLE_ON);
+                MessageUtils.addMessage(BedrockMinerLang.TOGGLE_ON);
                 // 检查是否在服务器
                 if (!client.isInSingleplayer()) {
-                    MessageUtils.addMessage(WARN_MULTIPLAYER);
+                    MessageUtils.addMessage(BedrockMinerLang.WARN_MULTIPLAYER);
                 }
                 working = true;
             }
@@ -142,19 +141,19 @@ public class TaskManager {
         var client = MinecraftClient.getInstance();
         var msg = (Text) null;
         if (client.interactionManager != null && !client.interactionManager.getCurrentGameMode().isSurvivalLike()) {
-            msg = FAIL_MISSING_SURVIVAL;
+            msg = BedrockMinerLang.FAIL_MISSING_SURVIVAL;
         }
         if (InventoryManagerUtils.getInventoryItemCount(Items.PISTON) < 2) {
-            msg = FAIL_MISSING_PISTON;
+            msg = BedrockMinerLang.FAIL_MISSING_PISTON;
         }
         if (InventoryManagerUtils.getInventoryItemCount(Items.REDSTONE_TORCH) < 1) {
-            msg = FAIL_MISSING_REDSTONETORCH;
+            msg = BedrockMinerLang.FAIL_MISSING_REDSTONETORCH;
         }
         if (InventoryManagerUtils.getInventoryItemCount(Items.SLIME_BLOCK) < 1) {
-            msg = FAIL_MISSING_SLIME;
+            msg = BedrockMinerLang.FAIL_MISSING_SLIME;
         }
         if (!InventoryManagerUtils.canInstantlyMinePiston()) {
-            msg = FAIL_MISSING_INSTANTMINE;
+            msg = BedrockMinerLang.FAIL_MISSING_INSTANTMINE;
         }
         if (msg != null) {
             MessageUtils.setOverlayMessage(msg);
@@ -169,9 +168,9 @@ public class TaskManager {
 
     public static void setWorking(boolean working) {
         if (working) {
-            MessageUtils.addMessage(TOGGLE_ON);
+            MessageUtils.addMessage(BedrockMinerLang.TOGGLE_ON);
         } else {
-            MessageUtils.addMessage(TOGGLE_OFF);
+            MessageUtils.addMessage(BedrockMinerLang.TOGGLE_OFF);
         }
         TaskManager.working = working;
     }

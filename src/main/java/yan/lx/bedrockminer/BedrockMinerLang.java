@@ -9,7 +9,6 @@ public class BedrockMinerLang {
     public static final Text DEBUG_ON = Text.translatable("bedrockminer.debug.on");
     public static final Text DEBUG_OFF = Text.translatable("bedrockminer.debug.off");
 
-
     public static final Text WARN_MULTIPLAYER = Text.translatable("bedrockminer.warn.multiplayer");
     public static final Text FAIL_MISSING_SURVIVAL = Text.translatable("bedrockminer.fail.missing.survival");
     public static final Text FAIL_MISSING_PISTON = Text.translatable("bedrockminer.fail.missing.piston");
@@ -18,5 +17,14 @@ public class BedrockMinerLang {
     public static final Text FAIL_MISSING_INSTANTMINE = Text.translatable("bedrockminer.fail.missing.instantmine");
 
     public static final Text FAIL_PLACE_PISTON = Text.translatable("bedrockminer.fail.place.piston");
+    public static final Text FAIL_PLACE_REDSTONETORCH = Text.translatable("bedrockminer.fail.place.redstonetorch");
     public static final Text FAIL_PLACE_SLIMEBLOCK = Text.translatable("bedrockminer.fail.place.slimeBlock");
+
+    public static final Text COMMAND_BLOCK_WHITELIST_ADD = Text.translatable("bedrockminer.command.block.whitelist.add");
+    public static final Text COMMAND_BLOCK_WHITELIST_REMOVE = Text.translatable("bedrockminer.command.block.whitelist.remove");
+
+    public static final Text COMMAND_BLOCK_BLACKLIST_ADD = Text.translatable("bedrockminer.command.block.blacklist.add");
+    public static final Text COMMAND_BLOCK_BLACKLIST_REMOVE = Text.translatable("bedrockminer.command.block.blacklist.remove");
+
+
 }

@@ -8,6 +8,7 @@ import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import yan.lx.bedrockminer.BedrockMinerLang;
 import yan.lx.bedrockminer.command.argument.BlockIdentifierArgument;
 import yan.lx.bedrockminer.command.argument.BlockNameArgument;
 import yan.lx.bedrockminer.config.Config;
@@ -108,7 +109,7 @@ public class BlockCommand extends BaseCommand {
         if (!config.blockWhitelist.contains(id)) {
             config.blockWhitelist.add(id);
             Config.save();
-            sendChat("bedrockminer.command.block.whitelist.add", block);
+            sendChat(BedrockMinerLang.COMMAND_BLOCK_WHITELIST_ADD, block);
         }
         return 0;
     }
@@ -120,7 +121,7 @@ public class BlockCommand extends BaseCommand {
         if (config.blockWhitelist.contains(id)) {
             config.blockWhitelist.remove(id);
             Config.save();
-            sendChat("bedrockminer.command.block.whitelist.remove", block);
+            sendChat(BedrockMinerLang.COMMAND_BLOCK_WHITELIST_REMOVE, block);
         }
         return 0;
     }
@@ -132,7 +133,7 @@ public class BlockCommand extends BaseCommand {
         if (!config.blockBlacklist.contains(id)) {
             config.blockBlacklist.add(id);
             Config.save();
-            sendChat("bedrockminer.command.block.blacklist.add", block);
+            sendChat(BedrockMinerLang.COMMAND_BLOCK_BLACKLIST_ADD, block);
         }
         return 0;
     }
@@ -144,13 +145,13 @@ public class BlockCommand extends BaseCommand {
         if (config.blockBlacklist.contains(id)) {
             config.blockBlacklist.remove(id);
             Config.save();
-            sendChat("bedrockminer.command.block.blacklist.remove", block);
+            sendChat(BedrockMinerLang.COMMAND_BLOCK_BLACKLIST_REMOVE, block);
         }
         return 0;
     }
 
-    private void sendChat(String translatableKey, Block block) {
-        var msg = Text.translatable(translatableKey).getString().replace("%blockName%", block.getName().getString());
+    private void sendChat(Text text, Block block) {
+        var msg = text.getString().replace("%blockName%", block.getName().getString());
         MessageUtils.addMessage(Text.translatable(msg));
     }
 }

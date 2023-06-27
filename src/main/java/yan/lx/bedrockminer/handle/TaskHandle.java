@@ -9,13 +9,11 @@ import net.minecraft.item.Items;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
+import yan.lx.bedrockminer.BedrockMinerLang;
 import yan.lx.bedrockminer.Debug;
 import yan.lx.bedrockminer.utils.*;
 
 import java.util.UUID;
-
-import static net.minecraft.block.Block.sideCoversSmallSquare;
-import static yan.lx.bedrockminer.BedrockMinerLang.*;
 
 public class TaskHandle {
     private final UUID id;
@@ -389,7 +387,7 @@ public class TaskHandle {
             return true;
         }
         Debug.info("[%s][%s][状态处理][查找活塞位置]: 失败", id, timeoutCount);
-        MessageUtils.setOverlayMessage(FAIL_PLACE_PISTON);   // 无法放置活塞
+        MessageUtils.setOverlayMessage(BedrockMinerLang.FAIL_PLACE_PISTON);   // 无法放置活塞
         status = TaskStatus.FAILED;    // 失败状态
         return false;
     }
@@ -415,7 +413,7 @@ public class TaskHandle {
             var redstoneTorchBlockPosList = CheckingEnvironmentUtils.findNearbyFlatBlockToPlaceRedstoneTorch(world, pistonBlockPos);
             if (redstoneTorchBlockPosList.size() > 0 && redstoneTorchBlockPos == null) {
                 for (var pos : redstoneTorchBlockPosList) {
-                    if (sideCoversSmallSquare(world, pos.down(), Direction.UP)) {
+                    if (Block.sideCoversSmallSquare(world, pos.down(), Direction.UP)) {
                         Debug.info("[%s][%s][状态处理][查找红石火把位置]: 优选1, %s", id, timeoutCount, pos);
                         redstoneTorchBlockPos = pos;
                         break;
@@ -471,7 +469,7 @@ public class TaskHandle {
         }
         if (!CheckingEnvironmentUtils.has2BlocksOfPlaceToPlacePiston(world, blockPos)) {
             Debug.info("[%s][%s][状态处理][放置活塞]: 放置失败, 该位置可能无法放置或有实体存在, %s", id, timeoutCount, pistonBlockPos);
-            MessageUtils.setOverlayMessage(FAIL_PLACE_PISTON);
+            MessageUtils.setOverlayMessage(BedrockMinerLang.FAIL_PLACE_PISTON);
         }
         BlockPlacerUtils.placement(pistonBlockPos, Direction.UP, Items.PISTON);
         status = TaskStatus.WAIT;  // 等待更新状态
@@ -486,7 +484,7 @@ public class TaskHandle {
         }
         if (!CheckingEnvironmentUtils.canPlace(slimeBlockPos, Blocks.SLIME_BLOCK, Direction.UP)) {
             Debug.info("[%s][%s][状态处理][放置基座方块]: 放置失败, 该位置可能无法放置或有实体存在, %s", id, timeoutCount, slimeBlockPos);
-            MessageUtils.setOverlayMessage(FAIL_PLACE_SLIMEBLOCK);
+            MessageUtils.setOverlayMessage(BedrockMinerLang.FAIL_PLACE_SLIMEBLOCK);
         }
         Debug.info("[%s][%s][状态处理][放置基座方块]: 放置, %s", id, timeoutCount, slimeBlockPos);
         BlockPlacerUtils.simpleBlockPlacement(slimeBlockPos, Items.SLIME_BLOCK);
