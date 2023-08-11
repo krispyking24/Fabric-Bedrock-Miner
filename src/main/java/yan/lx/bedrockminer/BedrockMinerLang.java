@@ -26,5 +26,6 @@ public class BedrockMinerLang {
     public static final Text COMMAND_BLOCK_BLACKLIST_ADD = Text.translatable("bedrockminer.command.block.blacklist.add");
     public static final Text COMMAND_BLOCK_BLACKLIST_REMOVE = Text.translatable("bedrockminer.command.block.blacklist.remove");
 
-
+    public static final Text COMMAND_TASK_LIMIT = Text.translatable("bedrockminer.command.task.limit");
+    public static final Text COMMAND_TASK_CLEAR = Text.translatable("bedrockminer.command.task.clear");
 }
