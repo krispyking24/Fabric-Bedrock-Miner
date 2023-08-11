@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.Text;
+import yan.lx.bedrockminer.BedrockMinerLang;
 import yan.lx.bedrockminer.command.argument.BlockPosArgumentType;
 import yan.lx.bedrockminer.config.Config;
 import yan.lx.bedrockminer.handle.TaskManager;
@@ -40,7 +41,7 @@ public class TaskCommand extends BaseCommand {
         if (world != null) {
             var blockState = world.getBlockState(blockPos);
             var block = blockState.getBlock();
-            
+
             TaskManager.addTask(block, blockPos, world);
         }
         return 0;
@@ -48,6 +49,7 @@ public class TaskCommand extends BaseCommand {
 
     private int clear(CommandContext<FabricClientCommandSource> context) {
         TaskManager.clearTask();
+        MessageUtils.addMessage(BedrockMinerLang.COMMAND_TASK_CLEAR);
         return 0;
     }
 
@@ -59,7 +61,7 @@ public class TaskCommand extends BaseCommand {
             config.taskLimit = limit;
             Config.save();
         }
-        var msg = Text.translatable("bedrockminer.command.limit").getString().replace("%limit%", String.valueOf(limit));
+        var msg = BedrockMinerLang.COMMAND_TASK_LIMIT.getString().replace("%limit%", String.valueOf(limit));
         MessageUtils.addMessage(Text.translatable(msg));
         return 0;
     }

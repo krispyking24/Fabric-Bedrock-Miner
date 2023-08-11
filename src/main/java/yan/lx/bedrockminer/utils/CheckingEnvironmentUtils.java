@@ -28,6 +28,7 @@ public class CheckingEnvironmentUtils {
         for (Direction direction : Direction.Type.HORIZONTAL) {
             var blockPos = pistonBlockPos.offset(direction);
             var blockState = world.getBlockState(blockPos);
+            // 检查火把下的方块是否可以放置
             if (!sideCoversSmallSquare(world, blockPos.down(), Direction.UP)) {
                 continue;
             }
@@ -60,13 +61,12 @@ public class CheckingEnvironmentUtils {
         // 获取硬度, 打掉0硬度值的方块
         var blockState1 = world.getBlockState(pos1);
         if (!blockState1.isAir() && blockState1.getBlock().getHardness() < 45f) {
-            BlockBreakerUtils.breakPistonBlock(pos1);
+            BlockBreakerUtils.usePistonBreakBlock(pos1);
         }
         var blockState2 = world.getBlockState(pos1);
         if (!blockState2.isAir() && blockState2.getBlock().getHardness() < 45f) {
-            BlockBreakerUtils.breakPistonBlock(pos2);
+            BlockBreakerUtils.usePistonBreakBlock(pos2);
         }
-
         // 实体碰撞箱
         boolean b = true;
         var state = Blocks.PISTON.getDefaultState();
@@ -82,24 +82,18 @@ public class CheckingEnvironmentUtils {
                 }
             }
         }
-
         // 判断活塞位置和活塞臂位置是否可以放置
         return world.getBlockState(pos1).isReplaceable() && world.getBlockState(pos2).isReplaceable() && b;
     }
 
     public static List<BlockPos> findNearbyRedstoneTorch(ClientWorld world, BlockPos pistonBlockPos) {
         List<BlockPos> list = new ArrayList<>();
-        if (world.getBlockState(pistonBlockPos.east()).isOf(Blocks.REDSTONE_TORCH)) {
-            list.add(pistonBlockPos.east());
-        }
-        if (world.getBlockState(pistonBlockPos.west()).isOf(Blocks.REDSTONE_TORCH)) {
-            list.add(pistonBlockPos.west());
-        }
-        if (world.getBlockState(pistonBlockPos.south()).isOf(Blocks.REDSTONE_TORCH)) {
-            list.add(pistonBlockPos.south());
-        }
-        if (world.getBlockState(pistonBlockPos.north()).isOf(Blocks.REDSTONE_TORCH)) {
-            list.add(pistonBlockPos.north());
+        for (Direction direction : Direction.Type.HORIZONTAL) {
+            BlockPos pos = pistonBlockPos.offset(direction);
+            Block block = world.getBlockState(pos).getBlock();
+            if (block == Blocks.REDSTONE_TORCH || block == Blocks.REDSTONE_WALL_TORCH) {
+                list.add(pos);
+            }
         }
         return list;
     }
@@ -113,7 +107,7 @@ public class CheckingEnvironmentUtils {
             var context = new ItemPlacementContext(player, Hand.MAIN_HAND, item.getDefaultStack(), new BlockHitResult(blockPos.toCenterPos(), direction, blockPos, false));
             // 实体碰撞箱
             boolean b = true;
-            var state = Blocks.PISTON.getDefaultState();
+            var state = block.getDefaultState();
             var shape = state.getCollisionShape(world, blockPos);
             if (!shape.isEmpty()) {
                 for (var entity : world.getEntities()) {
@@ -121,6 +115,7 @@ public class CheckingEnvironmentUtils {
                     if (entity instanceof ItemEntity) {
                         continue;
                     }
+                    // 检查实体是否在目标位置内
                     if (entity.collidesWithStateAtPos(blockPos, state)) {
                         b = false;
                     }

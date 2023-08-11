@@ -21,8 +21,7 @@ public class TaskManager {
 
     public static void switchOnOff(Block block) {
         if (working) {
-            MessageUtils.addMessage(BedrockMinerLang.TOGGLE_OFF);
-            working = false;
+            setWorking(false);
         } else {
             if (checkIsAllowBlock(block)) {
                 var client = MinecraftClient.getInstance();
@@ -31,12 +30,11 @@ public class TaskManager {
                     MessageUtils.addMessage(BedrockMinerLang.FAIL_MISSING_SURVIVAL);
                     return;
                 }
-                MessageUtils.addMessage(BedrockMinerLang.TOGGLE_ON);
+                setWorking(true);
                 // 检查是否在服务器
                 if (!client.isInSingleplayer()) {
                     MessageUtils.addMessage(BedrockMinerLang.WARN_MULTIPLAYER);
                 }
-                working = true;
             }
         }
     }
@@ -53,7 +51,7 @@ public class TaskManager {
             if (checkIsAllowBlock(block)) {
                 for (var targetBlock : handleTaskCaches) {
                     // 检查重复任务
-                    if (targetBlock.getBlockPos().getManhattanDistance(pos) == 0) {
+                    if (targetBlock.blockPos.getManhattanDistance(pos) == 0) {
                         return;
                     }
                 }
@@ -66,7 +64,6 @@ public class TaskManager {
     public static void clearTask() {
         handleTaskCaches.clear();
     }
-
 
     public static void tick() {
         if (!working) return;
@@ -93,17 +90,16 @@ public class TaskManager {
         while (iterator.hasNext()) {
             var currentTask = iterator.next();
             // 玩家切换世界,距离目标方块太远时,删除缓存任务
-            if (currentTask.getWorld() != world) {
+            if (currentTask.world != world) {
                 iterator.remove();
                 continue;
             }
             // 判断玩家与方块距离是否在处理范围内
-            if (currentTask.getBlockPos().isWithinDistance(player.getEyePos(), 3.5f)) {
-                // 为了tick内部能打印出完成状态, 所以才放在tick前面
-                if (currentTask.getStatus() == TaskStatus.FINISH) {
+            if (currentTask.blockPos.isWithinDistance(player.getEyePos(), 3.5F)) {
+                currentTask.tick();
+                if (currentTask.isFinish()) {
                     iterator.remove();
                 }
-                currentTask.tick();
                 if (++count >= Config.INSTANCE.taskLimit) {
                     return;
                 }

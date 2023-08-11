@@ -46,11 +46,17 @@ public class BlockPlacerUtils {
         var interactionManager = client.interactionManager;
         if (world == null || player == null || networkHandler == null || interactionManager == null) return;
         if (!world.getBlockState(blockPos).isReplaceable()) return;
-        var yaw = player.getYaw();
+        var yaw = switch (facing) {
+            case SOUTH -> 180F;
+            case EAST -> 90F;
+            case NORTH -> 0F;
+            case WEST -> -90F;
+            default -> player.getYaw();
+        };
         var pitch = switch (facing) {
             case UP -> 90F;
             case DOWN -> -90F;
-            default -> 0.0F;
+            default -> 0F;
         };
         // 模拟选中位置(凭空放置)
         var HitPos = blockPos.offset(facing.getOpposite());
@@ -64,5 +70,4 @@ public class BlockPlacerUtils {
             return new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, hitResult, sequence);
         });
     }
-
 }
