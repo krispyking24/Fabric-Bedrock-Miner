@@ -8,6 +8,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import yan.lx.bedrockminer.BedrockMinerLang;
 import yan.lx.bedrockminer.config.Config;
+import yan.lx.bedrockminer.model.TaskBlockInfo;
 import yan.lx.bedrockminer.utils.BlockUtils;
 import yan.lx.bedrockminer.utils.InventoryManagerUtils;
 import yan.lx.bedrockminer.utils.MessageUtils;
@@ -16,7 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class TaskManager {
-    private static final List<TaskHandle> handleTaskCaches = new LinkedList<>();
+    private static final List<TaskHandleTest> handleTaskCaches = new LinkedList<>();
     private static boolean working = false;
 
     public static void switchOnOff(Block block) {
@@ -51,11 +52,11 @@ public class TaskManager {
             if (checkIsAllowBlock(block)) {
                 for (var targetBlock : handleTaskCaches) {
                     // 检查重复任务
-                    if (targetBlock.blockPos.getManhattanDistance(pos) == 0) {
+                    if (targetBlock.targetBlock.pos.getManhattanDistance(pos) == 0) {
                         return;
                     }
                 }
-                var targetBlock = new TaskHandle(world.getBlockState(pos).getBlock(), pos, world);
+                var targetBlock = new TaskHandleTest(world.getBlockState(pos).getBlock(), pos, world);
                 handleTaskCaches.add(targetBlock);
             }
         }
@@ -90,14 +91,14 @@ public class TaskManager {
         while (iterator.hasNext()) {
             var currentTask = iterator.next();
             // 玩家切换世界,距离目标方块太远时,删除缓存任务
-            if (currentTask.world != world) {
+            if (currentTask.targetBlock.world != world) {
                 iterator.remove();
                 continue;
             }
             // 判断玩家与方块距离是否在处理范围内
-            if (currentTask.blockPos.isWithinDistance(player.getEyePos(), 3.5F)) {
+            if (currentTask.targetBlock.pos.isWithinDistance(player.getEyePos(), 3.5F)) {
                 currentTask.tick();
-                if (currentTask.isFinish()) {
+                if (currentTask.isStop()) {
                     iterator.remove();
                 }
                 if (++count >= Config.INSTANCE.taskLimit) {

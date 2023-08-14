@@ -2,7 +2,6 @@ package yan.lx.bedrockminer.utils;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.*;
-import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -64,10 +63,7 @@ public class BlockPlacerUtils {
         var hitResult = new BlockHitResult(HitVec3d, facing, blockPos, false);
         // 发送修改视角数据包
         networkHandler.sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround()));
-        // 发送交互方块数据包(同时通知客户端)
-        interactionManager.sendSequencedPacket(world, (sequence) -> {
-            interactionManager.interactBlockInternal(player, Hand.MAIN_HAND, hitResult);
-            return new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, hitResult, sequence);
-        });
+        // 发送交互方块数据包
+        interactionManager.interactBlock(player, Hand.MAIN_HAND, hitResult);
     }
 }
