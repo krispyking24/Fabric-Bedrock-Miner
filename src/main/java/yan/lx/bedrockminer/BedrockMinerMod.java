@@ -16,6 +16,7 @@ public class BedrockMinerMod implements ModInitializer {
     public static final String MOD_ID = "bedrockminer";
     public static final String COMMAND_PREFIX = "bedrockMiner";
     public static final Logger LOGGER = LoggerFactory.getLogger("Bedrock Miner");
+    public static final boolean TEST = false;
 
     @Override
     public void onInitialize() {
@@ -38,11 +39,15 @@ public class BedrockMinerMod implements ModInitializer {
                 command.register(dispatcher, registryAccess);
             }
             // 主命令执行
-            dispatcher.register(literal(COMMAND_PREFIX).executes(context -> {
-                        TaskManager.setWorking(!TaskManager.isWorking());
-                        return 0;
-                    })
-            );
+
+            var root = literal(COMMAND_PREFIX).executes(context -> {
+                TaskManager.setWorking(!TaskManager.isWorking());
+                return 0;
+            });
+            if (TEST) {
+                Test.register(root);
+            }
+            dispatcher.register(root);
         });
     }
 
