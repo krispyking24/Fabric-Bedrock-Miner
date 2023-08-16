@@ -1,6 +1,5 @@
 package yan.lx.bedrockminer.task;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
@@ -10,8 +9,6 @@ import yan.lx.bedrockminer.model.BlockInfo;
 import yan.lx.bedrockminer.model.SchemeInfo;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -24,39 +21,34 @@ public class SchemeFinder {
     public static SchemeInfo[] findAllPossible(BlockPos targetPos) {
         List<SchemeInfo> schemes = new ArrayList<>();
         // 遍历所有方向, 获取所有可能得方案 (未检验过, 初步计算)
-        BlockInfo[] pistons = findPistonPossible(targetPos);
-        for (BlockInfo piston : pistons) {
-            BlockInfo[] redstoneTorches = findRedstoneTorchPossible(piston);
-            for (BlockInfo redstoneTorch : redstoneTorches) {
-                BlockInfo slimeBlock = findSlimeBlockPossible(piston.direction, redstoneTorch);
-                schemes.add(new SchemeInfo(piston.direction, piston, redstoneTorch, slimeBlock));
+        for (Direction direction : Direction.values()) {
+            BlockInfo[] pistons = findPistonPossible(direction, targetPos);
+            for (BlockInfo piston : pistons) {
+                BlockInfo[] redstoneTorches = findRedstoneTorchPossible(piston);
+                for (BlockInfo redstoneTorch : redstoneTorches) {
+                    BlockInfo slimeBlock = findSlimeBlockPossible(piston.direction, redstoneTorch);
+                    schemes.add(new SchemeInfo(direction, piston, redstoneTorch, slimeBlock));
+                }
             }
         }
-
         return schemes.toArray(SchemeInfo[]::new);
     }
 
-    private static int getLevel(Direction direction) {
-        return switch (direction) {
-            case UP -> 0;
-            case DOWN -> 1;
-            case NORTH -> 2;
-            case SOUTH -> 3;
-            case WEST -> 4;
-            case EAST -> 5;
-        };
-    }
-
-
-    private static BlockInfo[] findPistonPossible(BlockPos targetPos) {
+    private static BlockInfo[] findPistonPossible(Direction direction, BlockPos targetPos) {
         List<BlockInfo> list = new ArrayList<>();
-        for (Direction direction : Direction.values()) {
-            BlockPos pos = targetPos.offset(direction);
-            for (Direction facing : Direction.values()) {
-                // 过滤朝着目标方块的方向
-                if (direction == facing.getOpposite()) continue;
-                list.add(new BlockInfo(direction, pos, facing, getLevel(facing)));
-            }
+        BlockPos pos = targetPos.offset(direction);
+        for (Direction facing : Direction.values()) {
+            // 过滤朝着目标方块的方向
+            if (direction == facing.getOpposite()) continue;
+            int level = switch (facing) {
+                case UP -> 0;
+                case DOWN -> 1;
+                case NORTH -> 2;
+                case SOUTH -> 3;
+                case WEST -> 4;
+                case EAST -> 5;
+            };
+            list.add(new BlockInfo(direction, pos, facing, level));
         }
         return list.toArray(BlockInfo[]::new);
     }
@@ -64,29 +56,45 @@ public class SchemeFinder {
     private static BlockInfo[] findRedstoneTorchPossible(BlockInfo pistonInfo) {
         List<BlockInfo> list = new ArrayList<>();
         for (Direction direction : Direction.values()) {
+            // 过滤与活塞臂退出的位置
+            if (direction == pistonInfo.facing) continue;
+
+            // 红石火把的方向集合, 因为红石火把没有倒着放, 所以去掉了他
+            List<Direction> facings = List.of(Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
+            BlockPos pos = pistonInfo.pos.offset(direction);
+
             // 活塞底部位置, 并且过滤活塞伸出方向位置
-            for (Direction facing : Direction.values()) {
-                // 不能倒着放红石火把
-                if (facing == Direction.DOWN) continue;
+            for (Direction facing : facings) {
                 // 方案在上活塞底下是目标方块, 所以过滤
                 if (direction == Direction.UP) continue;
-                // 活塞朝下
+                // 活塞朝下, 那么活塞下面就被活塞臂占位, 所以过滤
                 if (pistonInfo.facing == Direction.DOWN) continue;
-                BlockPos pos = pistonInfo.pos.offset(direction);
-                list.add(new BlockInfo(direction, pos, facing, getLevel(facing)));
+                int level = switch (facing) {
+                    case UP -> 0;
+                    case NORTH -> 1;
+                    case SOUTH -> 2;
+                    case WEST -> 3;
+                    case EAST -> 4;
+                    default -> throw new IllegalStateException("Unexpected value: " + facing);
+                };
+                list.add(new BlockInfo(direction, pos, facing, level));
             }
             // 常规位置
-            for (Direction facing : Direction.values()) {
-                // 不能倒着放红石火把
-                if (facing == Direction.DOWN) continue;
+            for (Direction facing : facings) {
                 // 过滤垂直方向
                 if (direction.getAxis().isVertical()) continue;
                 // 过滤红石火把附在活塞面上位置
                 if (facing == pistonInfo.facing) continue;
-                BlockPos pos1 = pistonInfo.pos.offset(facing);
-                BlockPos pos2 = pos1.up();
-                list.add(new BlockInfo(direction, pos1, facing, getLevel(facing)));
-                list.add(new BlockInfo(direction, pos2.up(), facing, getLevel(facing)));
+                int level = switch (facing) {
+                    case UP -> 0;
+                    case NORTH -> 1;
+                    case SOUTH -> 2;
+                    case WEST -> 3;
+                    case EAST -> 4;
+                    default -> throw new IllegalStateException("Unexpected value: " + facing);
+                };
+                list.add(new BlockInfo(direction, pos, facing, level));
+                list.add(new BlockInfo(direction, pos.up(), facing, level));
             }
 
 
@@ -97,28 +105,7 @@ public class SchemeFinder {
     private static BlockInfo findSlimeBlockPossible(Direction direction, BlockInfo redstoneTorchInfo) {
         BlockPos pos = redstoneTorchInfo.pos;
         Direction facing = redstoneTorchInfo.facing;
-        return new BlockInfo(direction, pos.offset(facing.getOpposite()), facing, getLevel(facing));
-    }
-
-    /**
-     * 获取所有可以执行的方案
-     */
-    public static SchemeInfo[] getAllCanExecuteScheme(ClientWorld world, Block block, BlockPos pos, SchemeInfo[] schemeInfos) {
-        //TODO: 待实现
-        for (SchemeInfo schemeInfo : schemeInfos) {
-            var piston = schemeInfo.piston;
-            var redstoneTorch = schemeInfo.redstoneTorch;
-            var slimeBlock = schemeInfo.slimeBlock;
-        }
-        return null;
-    }
-
-    /**
-     * 获取所有可以执行的方案
-     */
-    public static SchemeInfo[] getOptimalSort(SchemeInfo[] schemeInfos) {
-        //TODO: 待实现
-        return null;
+        return new BlockInfo(direction, pos.offset(facing.getOpposite()), facing, facing == Direction.UP ? 0 : 1);
     }
 
     /**
@@ -139,6 +126,4 @@ public class SchemeFinder {
         }
         return list.toArray(BlockPos[]::new);
     }
-
-
 }

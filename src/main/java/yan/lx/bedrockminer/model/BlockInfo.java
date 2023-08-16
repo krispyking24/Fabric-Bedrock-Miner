@@ -8,6 +8,9 @@ public class BlockInfo {
     public final BlockPos pos;
     public final Direction facing;
     public int level;
+    public int recycledTickCount;
+    public boolean recycledItems;
+    public boolean modifyLook;
 
     public BlockInfo(Direction direction, BlockPos pos, Direction facing, int level) {
         this.direction = direction;

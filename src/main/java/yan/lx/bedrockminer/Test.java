@@ -51,8 +51,11 @@ public class Test {
             var blockPos = blockHitResult.getBlockPos();
             var blockState = world.getBlockState(blockPos);
             var block = blockState.getBlock();
-            var pistonState = Blocks.PISTON.getDefaultState();
+
+           Debug.info(world.getWorldBorder().getMaxRadius());
         }
+
+
         //BlockPlacerUtils.placement(new BlockPos(8, -60, 8), Direction.NORTH, Items.REDSTONE_TORCH);
 //        var itemStack = player.getMainHandStack();
 //        var registry = world.getRegistryManager().get(RegistryKeys.BLOCK);

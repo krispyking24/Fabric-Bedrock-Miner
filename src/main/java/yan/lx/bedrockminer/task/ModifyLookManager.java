@@ -1,6 +1,7 @@
 package yan.lx.bedrockminer.task;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.math.Direction;
@@ -12,7 +13,7 @@ public class ModifyLookManager {
     private static float yaw = 0F;
     private static float pitch = 0F;
 
-    public static PlayerMoveC2SPacket getLookAndOnGroundPacket(ClientPlayerEntity player) {
+    private static PlayerMoveC2SPacket getLookAndOnGroundPacket(ClientPlayerEntity player) {
         var yaw = modifyYaw ? ModifyLookManager.yaw : player.getYaw();
         var pitch = modifyPitch ? ModifyLookManager.pitch : player.getPitch();
         if (modifyYaw) Debug.info(yaw);
@@ -40,6 +41,14 @@ public class ModifyLookManager {
         yaw = 0F;
         modifyPitch = false;
         pitch = 0F;
+        set(yaw, pitch);
+        // 发送一个还原视角的数据包
+        MinecraftClient client = MinecraftClient.getInstance();
+        ClientPlayerEntity player = client.player;
+        ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
+        if (networkHandler != null) {
+            networkHandler.sendPacket(getLookAndOnGroundPacket(player));
+        }
     }
 
     public static float onModifyLookYaw(float yaw) {
@@ -51,19 +60,24 @@ public class ModifyLookManager {
     }
 
     public static void set(Direction facing) {
-        var player = MinecraftClient.getInstance().player;
-        var yaw = switch (facing) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        ClientPlayerEntity player = client.player;
+        ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
+        float yaw = switch (facing) {
             case SOUTH -> 180F;
             case EAST -> 90F;
             case NORTH -> 0F;
             case WEST -> -90F;
             default -> player == null ? 0F : player.getYaw();
         };
-        var pitch = switch (facing) {
+        float pitch = switch (facing) {
             case UP -> 90F;
             case DOWN -> -90F;
             default -> 0F;
         };
         set(yaw, pitch);
+        if (networkHandler != null) {
+            networkHandler.sendPacket(getLookAndOnGroundPacket(player));
+        }
     }
 }

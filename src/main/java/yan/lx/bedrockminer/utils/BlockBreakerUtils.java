@@ -60,6 +60,7 @@ public class BlockBreakerUtils {
         if (player == null || world == null || interactionManager == null || blockPos == null) {
             return false;
         }
+        if (world.getBlockState(blockPos).isAir()) return true;
         // 获取玩家背包中可以使用的物品清单
         if (useItem.length == 0) {
             useItem = new Item[]{player.getInventory().getMainHandStack().getItem()};
@@ -80,7 +81,7 @@ public class BlockBreakerUtils {
             // 检查是否已经成功
             return world.getBlockState(blockPos).isReplaceable();
         }
-        return false;
+        return true;
     }
 
 }
