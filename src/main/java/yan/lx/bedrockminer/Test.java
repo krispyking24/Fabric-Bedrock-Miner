@@ -24,6 +24,7 @@ import yan.lx.bedrockminer.utils.BlockPlacerUtils;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import static net.minecraft.block.Block.sideCoversSmallSquare;
 
 public class Test {
 
@@ -52,8 +53,7 @@ public class Test {
             var block = blockState.getBlock();
             var pistonState = Blocks.PISTON.getDefaultState();
         }
-        BlockPlacerUtils.placement(new BlockPos(8, -60, 8), Direction.NORTH, Items.REDSTONE_TORCH);
-
+        //BlockPlacerUtils.placement(new BlockPos(8, -60, 8), Direction.NORTH, Items.REDSTONE_TORCH);
 //        var itemStack = player.getMainHandStack();
 //        var registry = world.getRegistryManager().get(RegistryKeys.BLOCK);
 //        var cachedBlockPosition = new CachedBlockPosition(world, blockPos, false);

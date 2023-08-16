@@ -13,7 +13,6 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 import yan.lx.bedrockminer.Debug;
-import yan.lx.bedrockminer.network.PacketManager;
 
 public class BlockPlacerUtils {
 
@@ -64,15 +63,10 @@ public class BlockPlacerUtils {
         if (item != null) {
             InventoryManagerUtils.switchToItem(item);
         }
-        PacketManager.write = false;
         // 发送修改视角数据包
-        PacketManager.sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround()));
+        networkHandler.sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround()));
         // 发送交互方块数据包
-        try (PendingUpdateManager pendingUpdateManager = world.getPendingUpdateManager().incrementSequence()) {
-            int sequence = pendingUpdateManager.getSequence();
-            PacketManager.sendPacket(new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, hitResult, 0));
-        }
-        PacketManager.write = true;
+        interactionManager.interactBlock(player, Hand.MAIN_HAND, hitResult);
     }
 
     public static void placement(BlockPos blockPos, Direction facing) {

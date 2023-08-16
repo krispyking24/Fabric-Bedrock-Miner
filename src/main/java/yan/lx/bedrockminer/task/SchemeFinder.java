@@ -10,6 +10,8 @@ import yan.lx.bedrockminer.model.BlockInfo;
 import yan.lx.bedrockminer.model.SchemeInfo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -22,61 +24,80 @@ public class SchemeFinder {
     public static SchemeInfo[] findAllPossible(BlockPos targetPos) {
         List<SchemeInfo> schemes = new ArrayList<>();
         // 遍历所有方向, 获取所有可能得方案 (未检验过, 初步计算)
-        for (Direction direction : Direction.values()) {
-            switch (direction) {
-                case DOWN, UP, NORTH, SOUTH, WEST, EAST -> {
-                    BlockInfo[] pistons = findPistonPossible(direction, new BlockInfo(targetPos, direction));
-                    for (BlockInfo piston : pistons) {
-                        BlockInfo[] redstoneTorches = findRedstoneTorchPossible(direction, piston);
-                        for (BlockInfo redstoneTorch : redstoneTorches) {
-                            BlockInfo slimeBlock = findSlimeBlockPossible(redstoneTorch);
-                            schemes.add(new SchemeInfo(piston, redstoneTorch, slimeBlock));
-                        }
-                    }
-                }
+        BlockInfo[] pistons = findPistonPossible(targetPos);
+        for (BlockInfo piston : pistons) {
+            BlockInfo[] redstoneTorches = findRedstoneTorchPossible(piston);
+            for (BlockInfo redstoneTorch : redstoneTorches) {
+                BlockInfo slimeBlock = findSlimeBlockPossible(piston.direction, redstoneTorch);
+                schemes.add(new SchemeInfo(piston.direction, piston, redstoneTorch, slimeBlock));
             }
         }
+
         return schemes.toArray(SchemeInfo[]::new);
     }
 
-
-    private static BlockInfo[] findPistonPossible(Direction direction, BlockInfo targetInfo) {
-        List<BlockInfo> list = new ArrayList<>();
-        // 遍历活塞所有可以放的朝向(因为技术问题, 实际可能只会采用向上朝向)
-        for (Direction facing : Direction.values()) {
-            // 过滤朝着目标方块的方向
-            if (facing == direction.getOpposite()) {
-                continue;
-            }
-            list.add(new BlockInfo(targetInfo.pos, facing));
-        }
-        return list.toArray(BlockInfo[]::new);
+    private static int getLevel(Direction direction) {
+        return switch (direction) {
+            case UP -> 0;
+            case DOWN -> 1;
+            case NORTH -> 2;
+            case SOUTH -> 3;
+            case WEST -> 4;
+            case EAST -> 5;
+        };
     }
 
-    private static BlockInfo[] findRedstoneTorchPossible(Direction direction, BlockInfo pistonInfo) {
+
+    private static BlockInfo[] findPistonPossible(BlockPos targetPos) {
         List<BlockInfo> list = new ArrayList<>();
-        for (Direction offsetFacing : Direction.values()) {
-            // 常规位置1
-            BlockPos pos = pistonInfo.pos.offset(offsetFacing);
-            list.add(new BlockInfo(pos, offsetFacing.getOpposite()));
-            list.add(new BlockInfo(pos, Direction.UP));
-            // 常规位置2
-            BlockPos posUp = pos.up();
-            list.add(new BlockInfo(posUp, offsetFacing.getOpposite()));
-            list.add(new BlockInfo(posUp, Direction.UP));
-            // 活塞底部位置(方案向上的话,活塞底下是目标方块,需要过滤且过滤活塞臂伸出位置)
-            if (direction != Direction.UP && pistonInfo.facing != Direction.DOWN) {
-                BlockPos posDown = pos.down();
-                list.add(new BlockInfo(posDown, Direction.UP));
-                list.add(new BlockInfo(posDown, offsetFacing.getOpposite()));
+        for (Direction direction : Direction.values()) {
+            BlockPos pos = targetPos.offset(direction);
+            for (Direction facing : Direction.values()) {
+                // 过滤朝着目标方块的方向
+                if (direction == facing.getOpposite()) continue;
+                list.add(new BlockInfo(direction, pos, facing, getLevel(facing)));
             }
         }
         return list.toArray(BlockInfo[]::new);
     }
 
-    private static BlockInfo findSlimeBlockPossible(BlockInfo redstoneTorchInfo) {
-        BlockPos pos = redstoneTorchInfo.pos.offset(redstoneTorchInfo.facing);
-        return new BlockInfo(pos, Direction.UP);
+    private static BlockInfo[] findRedstoneTorchPossible(BlockInfo pistonInfo) {
+        List<BlockInfo> list = new ArrayList<>();
+        for (Direction direction : Direction.values()) {
+            // 活塞底部位置, 并且过滤活塞伸出方向位置
+            for (Direction facing : Direction.values()) {
+                // 不能倒着放红石火把
+                if (facing == Direction.DOWN) continue;
+                // 方案在上活塞底下是目标方块, 所以过滤
+                if (direction == Direction.UP) continue;
+                // 活塞朝下
+                if (pistonInfo.facing == Direction.DOWN) continue;
+                BlockPos pos = pistonInfo.pos.offset(direction);
+                list.add(new BlockInfo(direction, pos, facing, getLevel(facing)));
+            }
+            // 常规位置
+            for (Direction facing : Direction.values()) {
+                // 不能倒着放红石火把
+                if (facing == Direction.DOWN) continue;
+                // 过滤垂直方向
+                if (direction.getAxis().isVertical()) continue;
+                // 过滤红石火把附在活塞面上位置
+                if (facing == pistonInfo.facing) continue;
+                BlockPos pos1 = pistonInfo.pos.offset(facing);
+                BlockPos pos2 = pos1.up();
+                list.add(new BlockInfo(direction, pos1, facing, getLevel(facing)));
+                list.add(new BlockInfo(direction, pos2.up(), facing, getLevel(facing)));
+            }
+
+
+        }
+        return list.toArray(BlockInfo[]::new);
+    }
+
+    private static BlockInfo findSlimeBlockPossible(Direction direction, BlockInfo redstoneTorchInfo) {
+        BlockPos pos = redstoneTorchInfo.pos;
+        Direction facing = redstoneTorchInfo.facing;
+        return new BlockInfo(direction, pos.offset(facing.getOpposite()), facing, getLevel(facing));
     }
 
     /**

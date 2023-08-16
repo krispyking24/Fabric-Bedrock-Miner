@@ -70,7 +70,6 @@ public class TaskManager {
         var player = minecraftClient.player;
         var interactionManager = minecraftClient.interactionManager;
         if (world == null || player == null || interactionManager == null) return;
-
         if (handleTaskCaches.isEmpty()) return;
         if (reverseCheckInventoryItemConditionsAllow()) return;    // 检查物品条件
         if (interactionManager.getCurrentGameMode().isCreative()) return;   // 检查玩家模式

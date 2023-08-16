@@ -10,7 +10,11 @@ public class Debug {
     }
 
     public static void info(String msgFormat, Object... args) {
-        info(String.format(msgFormat, args));
+        try {
+            info(String.format(msgFormat, args));
+        } catch (Exception ignored) {
+            Debug.info("LOGGER错误");
+        }
     }
 
     public static void info(Object obj) {

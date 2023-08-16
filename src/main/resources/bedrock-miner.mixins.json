@@ -4,8 +4,7 @@
   "package": "yan.lx.bedrockminer.mixins",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "MixinPlayerMoveC2SPacket",
-    "MixinServerPlayNetworkHandler"
+    "MixinPlayerMoveC2SPacket"
   ],
   "client": [
     "MixinClientPlayerInteractionManager",
