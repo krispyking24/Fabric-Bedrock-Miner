@@ -41,7 +41,6 @@ public class ModifyLookManager {
         yaw = 0F;
         modifyPitch = false;
         pitch = 0F;
-        set(yaw, pitch);
         // 发送一个还原视角的数据包
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
