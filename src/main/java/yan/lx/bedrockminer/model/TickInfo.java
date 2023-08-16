@@ -1,14 +1,14 @@
 package yan.lx.bedrockminer.model;
 
-public class TaskTickInfo {
+public class TickInfo {
     private final int maxValue;
     private int value;
 
-    public TaskTickInfo(int maxValue) {
+    public TickInfo(int maxValue) {
         this.maxValue = maxValue;
     }
 
-    public TaskTickInfo() {
+    public TickInfo() {
         this(Integer.MAX_VALUE);
     }
 

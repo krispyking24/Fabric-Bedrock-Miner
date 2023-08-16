@@ -1,4 +1,4 @@
-package yan.lx.bedrockminer.handle;
+package yan.lx.bedrockminer.task;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
@@ -8,7 +8,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import yan.lx.bedrockminer.BedrockMinerLang;
 import yan.lx.bedrockminer.config.Config;
-import yan.lx.bedrockminer.model.TaskBlockInfo;
 import yan.lx.bedrockminer.utils.BlockUtils;
 import yan.lx.bedrockminer.utils.InventoryManagerUtils;
 import yan.lx.bedrockminer.utils.MessageUtils;
@@ -17,7 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class TaskManager {
-    private static final List<TaskHandleTest> handleTaskCaches = new LinkedList<>();
+    private static final List<TaskHandler> handleTaskCaches = new LinkedList<>();
     private static boolean working = false;
 
     public static void switchOnOff(Block block) {
@@ -42,22 +41,20 @@ public class TaskManager {
 
     public static void addTask(Block block, BlockPos pos, ClientWorld world) {
         if (!working) return;
-        var client = MinecraftClient.getInstance();
-        var interactionManager = client.interactionManager;
-        if (interactionManager == null) return;
-        if (reverseCheckInventoryItemConditionsAllow()) return;
-
-        // 仅生存执行
-        if (interactionManager.getCurrentGameMode().isSurvivalLike()) {
-            if (checkIsAllowBlock(block)) {
-                for (var targetBlock : handleTaskCaches) {
-                    // 检查重复任务
-                    if (targetBlock.targetBlock.pos.getManhattanDistance(pos) == 0) {
-                        return;
+        var interactionManager = MinecraftClient.getInstance().interactionManager;
+        if (interactionManager != null) {
+            if (reverseCheckInventoryItemConditionsAllow()) return;
+            // 仅生存执行
+            if (interactionManager.getCurrentGameMode().isSurvivalLike()) {
+                if (checkIsAllowBlock(block)) {
+                    for (var targetBlock : handleTaskCaches) {
+                        // 检查重复任务
+                        if (targetBlock.pos.getManhattanDistance(pos) == 0) {
+                            return;
+                        }
                     }
+                    handleTaskCaches.add(new TaskHandler(world, world.getBlockState(pos).getBlock(), pos));
                 }
-                var targetBlock = new TaskHandleTest(world.getBlockState(pos).getBlock(), pos, world);
-                handleTaskCaches.add(targetBlock);
             }
         }
     }
@@ -91,14 +88,14 @@ public class TaskManager {
         while (iterator.hasNext()) {
             var currentTask = iterator.next();
             // 玩家切换世界,距离目标方块太远时,删除缓存任务
-            if (currentTask.targetBlock.world != world) {
+            if (currentTask.world != world) {
                 iterator.remove();
                 continue;
             }
             // 判断玩家与方块距离是否在处理范围内
-            if (currentTask.targetBlock.pos.isWithinDistance(player.getEyePos(), 3.5F)) {
-                currentTask.tick();
-                if (currentTask.isStop()) {
+            if (currentTask.pos.isWithinDistance(player.getEyePos(), 3.5F)) {
+                currentTask.onTick();
+                if (currentTask.isSucceed()) {
                     iterator.remove();
                 }
                 if (++count >= Config.INSTANCE.taskLimit) {

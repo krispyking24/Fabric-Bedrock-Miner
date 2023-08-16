@@ -10,7 +10,7 @@ import net.minecraft.text.Text;
 import yan.lx.bedrockminer.BedrockMinerLang;
 import yan.lx.bedrockminer.command.argument.BlockPosArgumentType;
 import yan.lx.bedrockminer.config.Config;
-import yan.lx.bedrockminer.handle.TaskManager;
+import yan.lx.bedrockminer.task.TaskManager;
 import yan.lx.bedrockminer.utils.MessageUtils;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;

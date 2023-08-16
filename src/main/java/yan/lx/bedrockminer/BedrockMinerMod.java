@@ -5,7 +5,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yan.lx.bedrockminer.command.*;
-import yan.lx.bedrockminer.handle.TaskManager;
+import yan.lx.bedrockminer.task.TaskManager;
 
 import java.util.ArrayList;
 
