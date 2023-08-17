@@ -183,20 +183,20 @@ public class TaskHandler {
         }
         Debug.info("查找方案, 已查找到%s个可执行方案", list.size());
         schemeQueues.addAll(list);
-//        for (var l : list) {
-//            Debug.info("%s, (%s, %s, %s), (%s, %s, %s), (%s), (%s), (%s)",
-//                    l.direction,
-//                    l.piston.level,
-//                    l.redstoneTorch.level,
-//                    l.slimeBlock.level,
-//                    l.piston.facing,
-//                    l.redstoneTorch.facing,
-//                    l.slimeBlock.facing,
-//                    l.piston.pos.toShortString(),
-//                    l.redstoneTorch.pos.toShortString(),
-//                    l.slimeBlock.pos.toShortString()
-//            );
-//        }
+        for (var l : list) {
+            Debug.info("%s, (%s, %s, %s), (%s, %s, %s), (%s), (%s), (%s)",
+                    l.direction,
+                    l.piston.level,
+                    l.redstoneTorch.level,
+                    l.slimeBlock.level,
+                    l.piston.facing,
+                    l.redstoneTorch.facing,
+                    l.slimeBlock.facing,
+                    l.piston.pos.toShortString(),
+                    l.redstoneTorch.pos.toShortString(),
+                    l.slimeBlock.pos.toShortString()
+            );
+        }
         if (!schemeQueues.isEmpty()) {
             state = TaskState.PLACE_SCHEME_BLOCK;
         }

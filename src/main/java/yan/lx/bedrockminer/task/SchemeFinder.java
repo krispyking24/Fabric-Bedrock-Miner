@@ -58,13 +58,12 @@ public class SchemeFinder {
         for (Direction direction : Direction.values()) {
             // 过滤与活塞臂退出的位置
             if (direction == pistonInfo.facing) continue;
-
             // 红石火把的方向集合, 因为红石火把没有倒着放, 所以去掉了他
             List<Direction> facings = List.of(Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
             BlockPos pos = pistonInfo.pos.offset(direction);
-
             // 活塞底部位置, 并且过滤活塞伸出方向位置
             for (Direction facing : facings) {
+                if (direction == facing) continue;
                 // 方案在上活塞底下是目标方块, 所以过滤
                 if (direction == Direction.UP) continue;
                 // 活塞朝下, 那么活塞下面就被活塞臂占位, 所以过滤
@@ -81,6 +80,8 @@ public class SchemeFinder {
             }
             // 常规位置
             for (Direction facing : facings) {
+                // 过滤活塞测方向
+                if (direction == facing) continue;
                 // 过滤垂直方向
                 if (direction.getAxis().isVertical()) continue;
                 // 过滤红石火把附在活塞面上位置
@@ -95,6 +96,7 @@ public class SchemeFinder {
                 };
                 list.add(new BlockInfo(direction, pos, facing, level));
                 list.add(new BlockInfo(direction, pos.up(), facing, level));
+
             }
 
 
