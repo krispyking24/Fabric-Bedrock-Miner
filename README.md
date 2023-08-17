@@ -59,3 +59,7 @@ https://www.bilibili.com/video/BV1Fv411P7Vc
 再次空手右键基岩关闭 mod。
 
 如果本 mod 帮你节省了大量时间的话，给个 Star 呗 qwq。
+
+## Q群
+
+![群二维码](https://github.com/Bunnui/Fabric-Bedrock-Miner/assets/37466008/7f1c2bc7-876b-4d34-9534-c72a3b555a2a)
