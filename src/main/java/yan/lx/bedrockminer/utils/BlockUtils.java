@@ -6,8 +6,8 @@ import net.minecraft.util.Identifier;
 
 public class BlockUtils {
 
-    public static String getName(Block block) {
-        return block.getName().toString();
+    public static String getBlockName(Block block) {
+        return block.getName().getString();
     }
 
     public static Identifier getIdentifier(Block block) {

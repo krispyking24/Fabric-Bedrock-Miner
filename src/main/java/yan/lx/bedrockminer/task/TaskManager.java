@@ -1,5 +1,6 @@
-package yan.lx.bedrockminer.handle;
+package yan.lx.bedrockminer.task;
 
+import com.google.common.collect.Queues;
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
@@ -14,9 +15,10 @@ import yan.lx.bedrockminer.utils.MessageUtils;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class TaskManager {
-    private static final List<TaskHandle> handleTaskCaches = new LinkedList<>();
+    private static final List<TaskHandler> handleTaskCaches = new LinkedList<>();
     private static boolean working = false;
 
     public static void switchOnOff(Block block) {
@@ -41,22 +43,20 @@ public class TaskManager {
 
     public static void addTask(Block block, BlockPos pos, ClientWorld world) {
         if (!working) return;
-        var client = MinecraftClient.getInstance();
-        var interactionManager = client.interactionManager;
-        if (interactionManager == null) return;
-        if (reverseCheckInventoryItemConditionsAllow()) return;
-
-        // 仅生存执行
-        if (interactionManager.getCurrentGameMode().isSurvivalLike()) {
-            if (checkIsAllowBlock(block)) {
-                for (var targetBlock : handleTaskCaches) {
-                    // 检查重复任务
-                    if (targetBlock.blockPos.getManhattanDistance(pos) == 0) {
-                        return;
+        var interactionManager = MinecraftClient.getInstance().interactionManager;
+        if (interactionManager != null) {
+            if (reverseCheckInventoryItemConditionsAllow()) return;
+            // 仅生存执行
+            if (interactionManager.getCurrentGameMode().isSurvivalLike()) {
+                if (checkIsAllowBlock(block)) {
+                    for (var targetBlock : handleTaskCaches) {
+                        // 检查重复任务
+                        if (targetBlock.pos.getManhattanDistance(pos) == 0) {
+                            return;
+                        }
                     }
+                    handleTaskCaches.add(new TaskHandler(world, world.getBlockState(pos).getBlock(), pos));
                 }
-                var targetBlock = new TaskHandle(world.getBlockState(pos).getBlock(), pos, world);
-                handleTaskCaches.add(targetBlock);
             }
         }
     }
@@ -72,21 +72,12 @@ public class TaskManager {
         var player = minecraftClient.player;
         var interactionManager = minecraftClient.interactionManager;
         if (world == null || player == null || interactionManager == null) return;
-
         if (handleTaskCaches.isEmpty()) return;
         if (reverseCheckInventoryItemConditionsAllow()) return;    // 检查物品条件
         if (interactionManager.getCurrentGameMode().isCreative()) return;   // 检查玩家模式
-
-//        // 从新根据玩家距离进行排序
-//        handleTaskCaches.sort((o1, o2) -> {
-//            var distanceA = player.getPos().distanceTo(o1.getBlockPos().toCenterPos());
-//            var distanceB = player.getPos().distanceTo(o2.getBlockPos().toCenterPos());
-//            return Double.compare(distanceA, distanceB);
-//        });
-
         // 使用迭代器, 安全删除列表
         var iterator = handleTaskCaches.iterator();
-        var count = 0;
+        var tick = 0;
         while (iterator.hasNext()) {
             var currentTask = iterator.next();
             // 玩家切换世界,距离目标方块太远时,删除缓存任务
@@ -95,14 +86,12 @@ public class TaskManager {
                 continue;
             }
             // 判断玩家与方块距离是否在处理范围内
-            if (currentTask.blockPos.isWithinDistance(player.getEyePos(), 3.5F)) {
-                currentTask.tick();
-                if (currentTask.isFinish()) {
+            if (currentTask.pos.isWithinDistance(player.getEyePos(), 3.5F)) {
+                currentTask.onTick();
+                if (currentTask.isSucceed()) {
                     iterator.remove();
                 }
-                if (++count >= Config.INSTANCE.taskLimit) {
-                    return;
-                }
+                return;
             }
         }
     }

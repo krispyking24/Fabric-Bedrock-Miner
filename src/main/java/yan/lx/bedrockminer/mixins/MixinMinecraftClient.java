@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-import yan.lx.bedrockminer.handle.TaskManager;
+import yan.lx.bedrockminer.task.TaskManager;
 
 @Mixin(MinecraftClient.class)
 public class MixinMinecraftClient {

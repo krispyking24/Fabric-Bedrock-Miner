@@ -10,7 +10,7 @@ import net.minecraft.text.Text;
 import yan.lx.bedrockminer.BedrockMinerLang;
 import yan.lx.bedrockminer.command.argument.BlockPosArgumentType;
 import yan.lx.bedrockminer.config.Config;
-import yan.lx.bedrockminer.handle.TaskManager;
+import yan.lx.bedrockminer.task.TaskManager;
 import yan.lx.bedrockminer.utils.MessageUtils;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
@@ -28,10 +28,10 @@ public class TaskCommand extends BaseCommand {
         builder
                 .then(literal("add")
                         .then(argument("blockPos", BlockPosArgumentType.blockPos()).executes(this::add)))
-                .then(literal("clear").executes(this::clear))
-                .then(literal("limit")
-                        .then(argument("limit", IntegerArgumentType.integer(1, 5))
-                                .executes(this::toggleSwitch)));
+                .then(literal("clear").executes(this::clear));
+//                .then(literal("limit")
+//                        .then(argument("limit", IntegerArgumentType.integer(1, 5))
+//                                .executes(this::toggleSwitch)));
     }
 
     private int add(CommandContext<FabricClientCommandSource> context) {

@@ -1,5 +1,8 @@
 package yan.lx.bedrockminer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Debug {
     public static void info(String msg) {
         BedrockMinerMod.LOGGER.info(msg);

@@ -5,7 +5,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yan.lx.bedrockminer.command.*;
-import yan.lx.bedrockminer.handle.TaskManager;
+import yan.lx.bedrockminer.task.TaskManager;
 
 import java.util.ArrayList;
 
@@ -15,7 +15,8 @@ public class BedrockMinerMod implements ModInitializer {
     public static final String MOD_NAME = "Bedrock Miner";
     public static final String MOD_ID = "bedrockminer";
     public static final String COMMAND_PREFIX = "bedrockMiner";
-    public static final Logger LOGGER = LoggerFactory.getLogger("Bedrock Miner");
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
+    public static final boolean TEST = false;
 
     @Override
     public void onInitialize() {
@@ -38,11 +39,14 @@ public class BedrockMinerMod implements ModInitializer {
                 command.register(dispatcher, registryAccess);
             }
             // 主命令执行
-            dispatcher.register(literal(COMMAND_PREFIX).executes(context -> {
-                        TaskManager.setWorking(!TaskManager.isWorking());
-                        return 0;
-                    })
-            );
+            var root = literal(COMMAND_PREFIX).executes(context -> {
+                TaskManager.setWorking(!TaskManager.isWorking());
+                return 0;
+            });
+            if (TEST) {
+                Test.register(root);
+            }
+            dispatcher.register(root);
         });
     }
 
