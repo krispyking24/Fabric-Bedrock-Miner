@@ -28,10 +28,10 @@ public class TaskCommand extends BaseCommand {
         builder
                 .then(literal("add")
                         .then(argument("blockPos", BlockPosArgumentType.blockPos()).executes(this::add)))
-                .then(literal("clear").executes(this::clear))
-                .then(literal("limit")
-                        .then(argument("limit", IntegerArgumentType.integer(1, 5))
-                                .executes(this::toggleSwitch)));
+                .then(literal("clear").executes(this::clear));
+//                .then(literal("limit")
+//                        .then(argument("limit", IntegerArgumentType.integer(1, 5))
+//                                .executes(this::toggleSwitch)));
     }
 
     private int add(CommandContext<FabricClientCommandSource> context) {
