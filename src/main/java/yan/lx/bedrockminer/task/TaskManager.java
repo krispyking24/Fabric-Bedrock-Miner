@@ -1,5 +1,6 @@
 package yan.lx.bedrockminer.task;
 
+import com.google.common.collect.Queues;
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
@@ -14,6 +15,7 @@ import yan.lx.bedrockminer.utils.MessageUtils;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class TaskManager {
     private static final List<TaskHandler> handleTaskCaches = new LinkedList<>();
@@ -73,17 +75,9 @@ public class TaskManager {
         if (handleTaskCaches.isEmpty()) return;
         if (reverseCheckInventoryItemConditionsAllow()) return;    // 检查物品条件
         if (interactionManager.getCurrentGameMode().isCreative()) return;   // 检查玩家模式
-
-//        // 从新根据玩家距离进行排序
-//        handleTaskCaches.sort((o1, o2) -> {
-//            var distanceA = player.getPos().distanceTo(o1.getBlockPos().toCenterPos());
-//            var distanceB = player.getPos().distanceTo(o2.getBlockPos().toCenterPos());
-//            return Double.compare(distanceA, distanceB);
-//        });
-
         // 使用迭代器, 安全删除列表
         var iterator = handleTaskCaches.iterator();
-        var count = 0;
+        var tick = 0;
         while (iterator.hasNext()) {
             var currentTask = iterator.next();
             // 玩家切换世界,距离目标方块太远时,删除缓存任务
@@ -97,9 +91,7 @@ public class TaskManager {
                 if (currentTask.isSucceed()) {
                     iterator.remove();
                 }
-                if (++count >= Config.INSTANCE.taskLimit) {
-                    return;
-                }
+                return;
             }
         }
     }

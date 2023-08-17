@@ -16,8 +16,6 @@ public class ModifyLookManager {
     private static PlayerMoveC2SPacket getLookAndOnGroundPacket(ClientPlayerEntity player) {
         var yaw = modifyYaw ? ModifyLookManager.yaw : player.getYaw();
         var pitch = modifyPitch ? ModifyLookManager.pitch : player.getPitch();
-        if (modifyYaw) Debug.info(yaw);
-        if (modifyPitch) Debug.info(pitch);
         return new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround());
     }
 

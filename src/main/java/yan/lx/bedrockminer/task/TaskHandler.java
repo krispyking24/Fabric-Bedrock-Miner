@@ -7,6 +7,7 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.Items;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.math.BlockPos;
@@ -33,8 +34,6 @@ public class TaskHandler {
     public final SchemeInfo[] schemeInfos;
     public final Queue<SchemeInfo> schemeQueues;
     public TaskState state;
-    private boolean init;
-    private int recycledTick;
     private int retryCount;
 
     private boolean timeout;
@@ -47,11 +46,11 @@ public class TaskHandler {
 
 
     private int totalTick;
-    private final int totalMaxTick = 40;
+    private final int totalMaxTick = 60;
     private int waitCount;
     private int waitCustom;
     private @Nullable TaskState waitNextState;
-    private final int recycledItemsTickMaxCount = 40;
+    private final int recycledItemsTickMaxCount = 20;
     private boolean recycledItems;
 
 
@@ -84,7 +83,7 @@ public class TaskHandler {
     }
 
     private void onWait() {
-        int waitTick = waitCustom;
+        int waitTick = 1 + waitCustom;
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
         ClientPlayerEntity player = client.player;
@@ -104,6 +103,7 @@ public class TaskHandler {
                 state = TaskState.WAIT_GAME_UPDATE;
             }
             waitCount = 0;
+            waitCustom = 0;
         } else {
             state = TaskState.WAIT;
         }
@@ -115,9 +115,26 @@ public class TaskHandler {
         this.timeout = false;
         this.recycledItems = false;
         this.succeed = false;
-        this.init = true;
-        this.state = TaskState.SELECT_SCHEME;
+        this.state = TaskState.WAIT_GAME_UPDATE;
         Debug.info("初始化");
+    }
+
+    private boolean canPlaceEntity(BlockState blockState, BlockPos blockPos) {
+        boolean b = true;
+        var shape = blockState.getCollisionShape(world, blockPos);
+        if (!shape.isEmpty()) {
+            for (var entity : world.getEntities()) {
+                // 过滤掉落物实体
+                if (entity instanceof ItemEntity) {
+                    continue;
+                }
+                // 检查实体是否在目标位置内
+                if (entity.collidesWithStateAtPos(blockPos, blockState)) {
+                    b = false;
+                }
+            }
+        }
+        return b;
     }
 
     private void onSelectScheme() {
@@ -153,7 +170,10 @@ public class TaskHandler {
                 continue;
             }
             if (world.getBlockState(slimeBlock.pos).isReplaceable()) {
-                ++slimeBlock.level;  // 要放置就降级
+                if (!canPlaceEntity(Blocks.SLIME_BLOCK.getDefaultState(), slimeBlock.pos)) {
+                    continue;
+                }
+                slimeBlock.level += 1;
             }
             list.add(schemeInfo);
         }
@@ -214,6 +234,7 @@ public class TaskHandler {
                     BlockPlacerUtils.placement(piston.pos, piston.facing, Items.PISTON);
                     piston.recycledItems = true;
                 } else {
+                    waitCustom = 1;
                     piston.modifyLook = true;
                     onModifyLook(piston, TaskState.PLACE_SCHEME_BLOCK);
                 }
@@ -224,6 +245,7 @@ public class TaskHandler {
                     BlockPlacerUtils.placement(slimeBlock.pos, slimeBlock.facing, Items.SLIME_BLOCK);
                     slimeBlock.recycledItems = true;
                 } else {
+                    waitCustom = 1;
                     slimeBlock.modifyLook = true;
                     onModifyLook(slimeBlock, TaskState.PLACE_SCHEME_BLOCK);
                 }
@@ -234,6 +256,7 @@ public class TaskHandler {
                     BlockPlacerUtils.placement(redstoneTorch.pos, redstoneTorch.facing, Items.REDSTONE_TORCH);
                     redstoneTorch.recycledItems = true;
                 } else {
+                    waitCustom = 1;
                     redstoneTorch.modifyLook = true;
                     onModifyLook(redstoneTorch, TaskState.PLACE_SCHEME_BLOCK);
                 }
@@ -247,6 +270,7 @@ public class TaskHandler {
     }
 
     private void onExecute() {
+        Debug.info("准备执行");
         if (executed) {
             onWaitGameUpdate();
         } else {
@@ -256,15 +280,27 @@ public class TaskHandler {
                 BlockInfo redstoneTorch = schemeInfo.redstoneTorch;
                 if (!executedModifyLook) {
                     executedModifyLook = true;
+                    waitCustom = 1;
                     onModifyLook(schemeInfo.direction.getOpposite(), TaskState.EXECUTE);
                     return;
                 }
+                // 打掉附近红石火把
                 BlockPos[] nearbyRedstoneTorch = SchemeFinder.findPistonNearbyRedstoneTorch(piston.pos, world);
                 for (BlockPos pos : nearbyRedstoneTorch) {
-                    BlockBreakerUtils.usePistonBreakBlock(pos);
+                    if (world.getBlockState(pos).isOf(Blocks.REDSTONE_TORCH) ||
+                            world.getBlockState(pos).isOf(Blocks.REDSTONE_WALL_TORCH)) {
+                        Debug.info("打掉红石火把");
+                        BlockBreakerUtils.usePistonBreakBlock(pos);
+                    }
                 }
-                BlockBreakerUtils.usePistonBreakBlock(redstoneTorch.pos);
+                if (world.getBlockState(redstoneTorch.pos).isOf(Blocks.REDSTONE_TORCH) ||
+                        world.getBlockState(redstoneTorch.pos).isOf(Blocks.REDSTONE_WALL_TORCH)) {
+                    Debug.info("打掉红石火把");
+                    BlockBreakerUtils.usePistonBreakBlock(redstoneTorch.pos);
+                }
+                Debug.info("打掉活塞");
                 BlockBreakerUtils.usePistonBreakBlock(piston.pos);
+                Debug.info("放置活塞");
                 BlockPlacerUtils.placement(piston.pos, schemeInfo.direction.getOpposite(), Items.PISTON);
                 piston.recycledItems = true;
                 executed = true;
@@ -275,10 +311,12 @@ public class TaskHandler {
     }
 
     private void onTimeoutHandle() {
+        Debug.info("超时处理");
         state = TaskState.FAIL;
     }
 
     private void onFail() {
+        Debug.info("失败");
         fail = true;
         state = TaskState.RECYCLED_ITEMS;
     }
@@ -292,7 +330,7 @@ public class TaskHandler {
     }
 
     private void onRecycledItems() {
-        Debug.info("回收");
+        Debug.info("回收物品");
         var schemeInfo = schemeQueues.peek();
         if (schemeInfo != null) {
             BlockInfo piston = schemeInfo.piston;
@@ -320,8 +358,8 @@ public class TaskHandler {
                 return;
             }
         }
-        if (fail && retryCount < 0) {
-            ++retryCount;
+        if (fail && retryCount++ < 1) {
+            schemeQueues.clear();
             state = TaskState.INITIALIZE;
         } else {
             onSucceed();
@@ -329,6 +367,12 @@ public class TaskHandler {
     }
 
     private void onWaitGameUpdate() {
+        Debug.info("等待更新");
+        if (schemeQueues.isEmpty()) {
+            Debug.info("没有课方案, 准备查找");
+            state = TaskState.SELECT_SCHEME;
+            return;
+        }
         var schemeInfo = schemeQueues.peek();
         if (schemeInfo == null) {
             Debug.info("没有可行性方案, 待实现");
@@ -339,7 +383,7 @@ public class TaskHandler {
         BlockInfo redstoneTorch = schemeInfo.redstoneTorch;
         BlockInfo slimeBlock = schemeInfo.slimeBlock;
         // 优先检查
-        if (world.getBlockState(piston.pos).isAir()) {
+        if (world.getBlockState(pos).isAir()) {
             Debug.info("执行成功, 目标方块()不存在", BlockUtils.getBlockName(block));
             state = TaskState.RECYCLED_ITEMS;
             return;
@@ -401,7 +445,6 @@ public class TaskHandler {
     }
 
     public void onTick() {
-        // Debug.info(totalTick);
         if (succeed) {
             return;
         }
