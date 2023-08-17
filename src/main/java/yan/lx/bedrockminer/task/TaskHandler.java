@@ -24,6 +24,7 @@ import yan.lx.bedrockminer.utils.BlockUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.UUID;
 
 import static net.minecraft.block.Block.sideCoversSmallSquare;
 
@@ -35,9 +36,7 @@ public class TaskHandler {
     public final Queue<SchemeInfo> schemeQueues;
     public TaskState state;
     private int retryCount;
-
     private boolean timeout;
-
     private boolean fail;
     private boolean succeed;
     private boolean modifyLook;
@@ -62,10 +61,11 @@ public class TaskHandler {
         this.schemeQueues = Queues.newConcurrentLinkedQueue();
         this.state = TaskState.INITIALIZE;
         this.waitNextState = null;
+        Debug.info();
     }
 
     private void onModifyLook(Direction facing, TaskState nextState) {
-        Debug.info("修改视角, 下一个状态: %s", nextState);
+        Debug.info("[%s] 修改视角, 下一个状态: %s", totalTick, nextState);
         modifyLook = true;
         ModifyLookManager.set(facing);
         state = TaskState.WAIT;
@@ -77,7 +77,7 @@ public class TaskHandler {
     }
 
     private void onRevertLook() {
-        Debug.info("还原视角");
+        Debug.info("[%s] 还原视角", totalTick);
         modifyLook = false;
         ModifyLookManager.reset();
     }
@@ -94,7 +94,7 @@ public class TaskHandler {
                 waitTick += latency / 50;
             }
         }
-        Debug.info("等待 %stick, 当前tick: %s, 下一个状态: %s", waitTick, waitCount, waitNextState);
+        Debug.info("[%s] 等待 %stick, 当前tick: %s, 下一个状态: %s", totalTick, waitTick, waitTick, waitCount, waitNextState);
         if (waitCount++ > waitTick) {
             if (waitNextState != null) {
                 state = waitNextState;
@@ -116,7 +116,7 @@ public class TaskHandler {
         this.recycledItems = false;
         this.succeed = false;
         this.state = TaskState.WAIT_GAME_UPDATE;
-        Debug.info("初始化");
+        Debug.info("[%s] 初始化", totalTick);
     }
 
     private boolean canPlaceEntity(BlockState blockState, BlockPos blockPos) {
@@ -145,15 +145,15 @@ public class TaskHandler {
             BlockInfo slimeBlock = schemeInfo.slimeBlock;
             // 边界检查
             if (!World.isValid(piston.pos)) {
-                Debug.info("活塞超出世界边界");
+                Debug.info("[%s] 活塞超出世界边界", totalTick);
                 continue;
             }
             if (!World.isValid(redstoneTorch.pos)) {
-                Debug.info("红石火把超出世界边界");
+                Debug.info("[%s] 红石火把超出世界边界", totalTick);
                 continue;
             }
             if (!World.isValid(slimeBlock.pos)) {
-                Debug.info("底座超出世界边界");
+                Debug.info("[%s] 底座超出世界边界", totalTick);
                 continue;
             }
             // 检查活塞
@@ -197,40 +197,57 @@ public class TaskHandler {
             return cr;
         });
         if (list.size() == 0) {
-            Debug.info("没有可以执行的方案");
+            Debug.info("[%s] 没有可以执行的方案", totalTick);
             onSucceed();
             return;
         }
-        Debug.info("查找方案, 已查找到%s个可执行方案", list.size());
+        Debug.info("[%s] 查找方案, 已查找到%s个可执行方案", totalTick, list.size());
         schemeQueues.addAll(list);
-        for (var l : list) {
-            Debug.info("%s, (%s, %s, %s), (%s, %s, %s), (%s), (%s), (%s)",
-                    l.direction,
-                    l.piston.level,
-                    l.redstoneTorch.level,
-                    l.slimeBlock.level,
-                    l.piston.facing,
-                    l.redstoneTorch.facing,
-                    l.slimeBlock.facing,
-                    l.piston.pos.toShortString(),
-                    l.redstoneTorch.pos.toShortString(),
-                    l.slimeBlock.pos.toShortString()
-            );
-        }
+//        for (var l : list) {
+//            Debug.info("[%s] %s, (%s, %s, %s), (%s, %s, %s), (%s), (%s), (%s)",
+//                    totalTick,
+//                    l.direction,
+//                    l.piston.level,
+//                    l.redstoneTorch.level,
+//                    l.slimeBlock.level,
+//                    l.piston.facing,
+//                    l.redstoneTorch.facing,
+//                    l.slimeBlock.facing,
+//                    l.piston.pos.toShortString(),
+//                    l.redstoneTorch.pos.toShortString(),
+//                    l.slimeBlock.pos.toShortString()
+//            );
+//        }
         if (!schemeQueues.isEmpty()) {
             state = TaskState.PLACE_SCHEME_BLOCK;
         }
     }
 
     private void onPlaceSchemeBlocks() {
+        Debug.info("[%s] 放置方案方块", totalTick);
         var schemeInfo = schemeQueues.peek();
         if (schemeInfo != null) {
             BlockInfo piston = schemeInfo.piston;
             BlockInfo redstoneTorch = schemeInfo.redstoneTorch;
             BlockInfo slimeBlock = schemeInfo.slimeBlock;
+            Debug.info("[%s] [%s] [%s, %s, %s] [%s, %s, %s] (%s), (%s), (%s)",
+                    totalTick,
+                    schemeInfo.direction,
+                    schemeInfo.piston.level,
+                    schemeInfo.redstoneTorch.level,
+                    schemeInfo.slimeBlock.level,
+                    schemeInfo.piston.facing,
+                    schemeInfo.redstoneTorch.facing,
+                    schemeInfo.slimeBlock.facing,
+                    schemeInfo.piston.pos.toShortString(),
+                    schemeInfo.redstoneTorch.pos.toShortString(),
+                    schemeInfo.slimeBlock.pos.toShortString()
+            );
+
             // 放置
             if (world.getBlockState(piston.pos).isReplaceable()) {
                 if (piston.modifyLook) {
+                    Debug.info("[%s] 放置活塞", totalTick);
                     BlockPlacerUtils.placement(piston.pos, piston.facing, Items.PISTON);
                     piston.recycledItems = true;
                 } else {
@@ -242,6 +259,7 @@ public class TaskHandler {
             }
             if (world.getBlockState(slimeBlock.pos).isReplaceable()) {
                 if (slimeBlock.modifyLook) {
+                    Debug.info("[%s] 放置粘液块", totalTick);
                     BlockPlacerUtils.placement(slimeBlock.pos, slimeBlock.facing, Items.SLIME_BLOCK);
                     slimeBlock.recycledItems = true;
                 } else {
@@ -253,6 +271,7 @@ public class TaskHandler {
             }
             if (world.getBlockState(redstoneTorch.pos).isReplaceable()) {
                 if (redstoneTorch.modifyLook) {
+                    Debug.info("[%s] 放置红石火把", totalTick);
                     BlockPlacerUtils.placement(redstoneTorch.pos, redstoneTorch.facing, Items.REDSTONE_TORCH);
                     redstoneTorch.recycledItems = true;
                 } else {
@@ -265,12 +284,12 @@ public class TaskHandler {
             state = TaskState.WAIT;
             waitNextState = TaskState.WAIT_GAME_UPDATE;
         } else {
-            //TODO: 没有可行性方案, 待实现
+            state = TaskState.FAIL;
         }
     }
 
     private void onExecute() {
-        Debug.info("准备执行");
+        Debug.info("[%s] 准备执行", totalTick);
         if (executed) {
             onWaitGameUpdate();
         } else {
@@ -289,18 +308,18 @@ public class TaskHandler {
                 for (BlockPos pos : nearbyRedstoneTorch) {
                     if (world.getBlockState(pos).isOf(Blocks.REDSTONE_TORCH) ||
                             world.getBlockState(pos).isOf(Blocks.REDSTONE_WALL_TORCH)) {
-                        Debug.info("打掉红石火把");
+                        Debug.info("[%s] 打掉红石火把", totalTick);
                         BlockBreakerUtils.usePistonBreakBlock(pos);
                     }
                 }
                 if (world.getBlockState(redstoneTorch.pos).isOf(Blocks.REDSTONE_TORCH) ||
                         world.getBlockState(redstoneTorch.pos).isOf(Blocks.REDSTONE_WALL_TORCH)) {
-                    Debug.info("打掉红石火把");
+                    Debug.info("[%s] 打掉红石火把", totalTick);
                     BlockBreakerUtils.usePistonBreakBlock(redstoneTorch.pos);
                 }
-                Debug.info("打掉活塞");
+                Debug.info("[%s] 打掉活塞", totalTick);
                 BlockBreakerUtils.usePistonBreakBlock(piston.pos);
-                Debug.info("放置活塞");
+                Debug.info("[%s] 放置活塞", totalTick);
                 BlockPlacerUtils.placement(piston.pos, schemeInfo.direction.getOpposite(), Items.PISTON);
                 piston.recycledItems = true;
                 executed = true;
@@ -311,12 +330,12 @@ public class TaskHandler {
     }
 
     private void onTimeoutHandle() {
-        Debug.info("超时处理");
+        Debug.info("[%s] 超时处理", totalTick);
         state = TaskState.FAIL;
     }
 
     private void onFail() {
-        Debug.info("失败");
+        Debug.info("[%s] 失败", totalTick);
         fail = true;
         state = TaskState.RECYCLED_ITEMS;
     }
@@ -325,18 +344,19 @@ public class TaskHandler {
         if (modifyLook) {
             onRevertLook();
         }
-        Debug.info("成功");
+        Debug.info("[%s] 成功", totalTick);
         succeed = true;
     }
 
     private void onRecycledItems() {
-        Debug.info("回收物品");
+        Debug.info("[%s] 回收物品", totalTick);
         var schemeInfo = schemeQueues.peek();
         if (schemeInfo != null) {
             BlockInfo piston = schemeInfo.piston;
             BlockInfo redstoneTorch = schemeInfo.redstoneTorch;
             BlockInfo slimeBlock = schemeInfo.slimeBlock;
             if (piston.recycledItems && piston.recycledTickCount < recycledItemsTickMaxCount) {
+                Debug.info("[%s] 回收活塞", totalTick);
                 if (BlockBreakerUtils.usePistonBreakBlock(piston.pos)) {
                     piston.recycledItems = false;
                 }
@@ -344,6 +364,7 @@ public class TaskHandler {
                 return;
             }
             if (redstoneTorch.recycledItems && redstoneTorch.recycledTickCount < recycledItemsTickMaxCount) {
+                Debug.info("[%s] 回收红石火把", totalTick);
                 if (BlockBreakerUtils.usePistonBreakBlock(redstoneTorch.pos)) {
                     redstoneTorch.recycledItems = false;
                 }
@@ -351,6 +372,7 @@ public class TaskHandler {
                 return;
             }
             if (slimeBlock.recycledItems && slimeBlock.recycledTickCount < recycledItemsTickMaxCount) {
+                Debug.info("[%s] 回收粘液块", totalTick);
                 if (BlockBreakerUtils.usePistonBreakBlock(slimeBlock.pos)) {
                     slimeBlock.recycledItems = false;
                 }
@@ -367,15 +389,15 @@ public class TaskHandler {
     }
 
     private void onWaitGameUpdate() {
-        Debug.info("等待更新");
+        Debug.info("[%s] 等待更新", totalTick);
         if (schemeQueues.isEmpty()) {
-            Debug.info("没有课方案, 准备查找");
+            Debug.info("[%s] 没有课方案, 准备查找", totalTick);
             state = TaskState.SELECT_SCHEME;
             return;
         }
         var schemeInfo = schemeQueues.peek();
         if (schemeInfo == null) {
-            Debug.info("没有可行性方案, 待实现");
+            Debug.info("[%s] 没有可行性方案, 待实现", totalTick);
             state = TaskState.FAIL;
             return;
         }
@@ -384,20 +406,21 @@ public class TaskHandler {
         BlockInfo slimeBlock = schemeInfo.slimeBlock;
         // 优先检查
         if (world.getBlockState(pos).isAir()) {
-            Debug.info("执行成功, 目标方块()不存在", BlockUtils.getBlockName(block));
+            Debug.info("[%s] 执行成功, 目标方块()不存在", totalTick, BlockUtils.getBlockName(block));
             state = TaskState.RECYCLED_ITEMS;
             return;
         }
         if (executed) {
             if (world.getBlockState(piston.pos).isOf(Blocks.MOVING_PISTON)) {
-                Debug.info("活塞正在移动处理");
+                Debug.info("[%s] 活塞正在移动处理", totalTick);
             }
             return;
         }
         // 底座检查
         BlockState slimeBlockState = world.getBlockState(slimeBlock.pos);
         if (!(slimeBlockState.isOf(Blocks.SLIME_BLOCK) || Block.sideCoversSmallSquare(world, slimeBlock.pos, slimeBlock.facing))) {
-            Debug.info("状态错误, 目标方块(%s)不正确, 目标方块应为 %s 或其他完整方块",
+            Debug.info("[%s] 状态错误, 目标方块(%s)不正确, 目标方块应为 %s 或其他完整方块",
+                    totalTick,
                     BlockUtils.getBlockName(slimeBlockState.getBlock()),
                     BlockUtils.getBlockName(Blocks.SLIME_BLOCK)
             );
@@ -406,7 +429,8 @@ public class TaskHandler {
         // 红石火把检查
         BlockState redstoneTorchState = world.getBlockState(redstoneTorch.pos);
         if (!(redstoneTorchState.isOf(Blocks.REDSTONE_TORCH) || redstoneTorchState.isOf(Blocks.REDSTONE_WALL_TORCH))) {
-            Debug.info("状态错误, 目标方块(%s)不正确, 目标方块应为 %s 或 %s 方块",
+            Debug.info("[%s] 状态错误, 目标方块(%s)不正确, 目标方块应为 %s 或 %s 方块",
+                    totalTick,
                     BlockUtils.getBlockName(redstoneTorchState.getBlock()),
                     BlockUtils.getBlockName(Blocks.REDSTONE_BLOCK),
                     BlockUtils.getBlockName(Blocks.REDSTONE_WALL_TORCH)
@@ -416,7 +440,8 @@ public class TaskHandler {
         // 活塞检查
         BlockState pistonState = world.getBlockState(piston.pos);
         if (!(pistonState.isOf(Blocks.PISTON) || pistonState.isOf(Blocks.STICKY_PISTON))) {
-            Debug.info("状态错误, 目标方块(%s)不正确, 目标方块应为 %s 或 %s 方块",
+            Debug.info("[%s] 状态错误, 目标方块(%s)不正确, 目标方块应为 %s 或 %s 方块",
+                    totalTick,
                     BlockUtils.getBlockName(pistonState.getBlock()),
                     BlockUtils.getBlockName(Blocks.PISTON),
                     BlockUtils.getBlockName(Blocks.STICKY_PISTON)
@@ -431,16 +456,16 @@ public class TaskHandler {
             if (redstoneTorchState.isOf(Blocks.REDSTONE_WALL_TORCH)) {
                 Direction redstoneTorchFacing = redstoneTorchState.get(WallRedstoneTorchBlock.FACING);
                 if (redstoneTorchFacing != redstoneTorch.facing) {
-                    Debug.info("状态错误, 红石火把方向与方案方向不一致");
+                    Debug.info("[%s] 状态错误, 红石火把方向与方案方向不一致", totalTick);
                 }
             } else if (redstoneTorchState.isOf(Blocks.REDSTONE_TORCH)) {
                 if (redstoneTorch.facing == Direction.UP) {
-                    Debug.info("状态错误, 红石火把方向与方案方向不一致");
+                    Debug.info("[%s] 状态错误, 红石火把方向与方案方向不一致", totalTick);
                 }
             }
         } else if (facing == piston.facing) {
             state = TaskState.EXECUTE;
-            Debug.info("条件充足, 准备执行");
+            Debug.info("[%s] 条件充足, 准备执行", totalTick);
         }
     }
 
