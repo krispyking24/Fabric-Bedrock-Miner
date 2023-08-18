@@ -5,9 +5,11 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import yan.lx.bedrockminer.Debug;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 任务方案查找器
@@ -117,9 +119,9 @@ public class TaskSchemeFinder {
         int range = 2;
         for (Direction direction : Direction.values()) {
             for (int i = 0; i < range; i++) {
-                BlockPos pos = pistonPos.offset(direction);
+                BlockPos pos = pistonPos.offset(direction, i);
                 BlockState blockState = world.getBlockState(pos);
-                if (blockState.isOf(Blocks.REDSTONE_BLOCK) || blockState.isOf(Blocks.REDSTONE_WALL_TORCH)) {
+                if (blockState.isOf(Blocks.REDSTONE_TORCH) || blockState.isOf(Blocks.REDSTONE_WALL_TORCH)) {
                     list.add(pos);
                 }
             }
