@@ -1,8 +1,8 @@
 {
   "bedrockminer": "Bedrock Miner",
-  "bedrockminer.debug.on": "启动调适模式成功!",
-  "bedrockminer.debug.off": "关闭调适模式成功!",
-  "bedrockminer.toggle.on": "§2Bedrock Miner 启动成功！作者：Bunny_i, 原作者：LXYan (当前项目已重构部分处理逻辑代码)",
+  "bedrockminer.debug.on": "§2启动调适模式成功!",
+  "bedrockminer.debug.off": "§7关闭调适模式成功!",
+  "bedrockminer.toggle.on": "§2Bedrock Miner 启动成功！",
   "bedrockminer.toggle.off": "§7Bedrock Miner 关闭成功。",
   "bedrockminer.warn.multiplayer": "§7看起来你好像是在服务器使用Bedrock Miner？§r\n§7在使用本mod前请先征询其他玩家的意见。§r",
   "bedrockminer.fail.place.piston": "无法放置活塞！（该位置没有放置条件或放置点有实体或玩家）",
@@ -17,7 +17,9 @@
   "bedrockminer.command.block.whitelist.remove": "§7删除白名单方块 \"%blockName%\" 成功!",
   "bedrockminer.command.block.blacklist.add": "§7添加黑名单方块 \"%blockName%\" 成功!",
   "bedrockminer.command.block.blacklist.remove": "§7删除黑名单方块 \"%blockName%\" 成功!",
-  "bedrockminer.command.invalidBlockNameException": "输入的 \"%s\" 名称错误或该方块已经被添加！",
-  "bedrockminer.command.task.limit": "成功将任务执行上限调整为: %limit%",
-  "bedrockminer.command.task.clear": "成功将任务缓存清空！"
+  "bedrockminer.command.invalidBlockNameException": "§7输入的 \"%s\" 名称错误或该方块已经被添加！",
+  "bedrockminer.command.task.limit": "§2成功将任务执行上限调整为: %limit%",
+  "bedrockminer.command.task.clear": "§2成功将任务缓存清空！",
+  "bedrockminer.command.disable.on": "§2禁用成功！",
+  "bedrockminer.command.disable.off": "§7启用成功！"
 }

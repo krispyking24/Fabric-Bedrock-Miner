@@ -28,4 +28,7 @@ public class BedrockMinerLang {
 
     public static final Text COMMAND_TASK_LIMIT = Text.translatable("bedrockminer.command.task.limit");
     public static final Text COMMAND_TASK_CLEAR = Text.translatable("bedrockminer.command.task.clear");
+
+    public static final Text COMMAND_DISABLE_ON = Text.translatable("bedrockminer.command.disable.on");
+    public static final Text COMMAND_DISABLE_OFF = Text.translatable("bedrockminer.command.disable.off");
 }

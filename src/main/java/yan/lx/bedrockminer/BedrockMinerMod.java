@@ -31,6 +31,7 @@ public class BedrockMinerMod implements ModInitializer {
         commands.add(new BlockNameCommand());
         commands.add(new DebugCommand());
         commands.add(new TaskCommand());
+        commands.add(new DisableCommand());
 
         // 开始注册
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {

@@ -1,8 +1,8 @@
 {
   "bedrockminer": "Bedrock Miner",
-  "bedrockminer.debug.on": "Startup debug mode successful!",
-  "bedrockminer.debug.off": "Closed debug mode successful!",
-  "bedrockminer.toggle.on": "§2Bedrock Miner Successful startup! Author: Bunny_i. Original author: LXYan (the current project has reconstructed part of the processing logic code)",
+  "bedrockminer.debug.on": "§2Startup debug mode successful!",
+  "bedrockminer.debug.off": "§2Closed debug mode successful!",
+  "bedrockminer.toggle.on": "§2Bedrock Miner Successful startup! ",
   "bedrockminer.toggle.off": "§7Bedrock Miner Closed successfully.",
   "bedrockminer.warn.multiplayer": "§7It seems that you are playing on a server? §r\n§7Please ask other players' opinions first.§r",
   "bedrockminer.fail.place.piston": "Failed to place piston! (There are no placement conditions or there are entities or players at the placement point)",
@@ -17,7 +17,9 @@
   "bedrockminer.command.block.whitelist.remove": "§7Remove whitelist block \"%blockName%\" success!",
   "bedrockminer.command.block.blacklist.add": "§7Add blacklist block \"%blockName%\" succeeded!",
   "bedrockminer.command.block.blacklist.remove": "§7Remove blacklist Block \"%blockName%\" succeeded!",
-  "bedrockminer.command.invalidBlockNameException": "The entered \"%s\" block name is incorrect or the block has already been added!",
-  "bedrockminer.command.task.limit": "The task limit has been successfully adjusted to %limit%.",
-  "bedrockminer.command.task.clear": "Successfully cleared task cache！"
+  "bedrockminer.command.invalidBlockNameException": "§2The entered \"%s\" block name is incorrect or the block has already been added!",
+  "bedrockminer.command.task.limit": "§7The task limit has been successfully adjusted to %limit%.",
+  "bedrockminer.command.task.clear": "§7Successfully cleared task cache！",
+  "bedrockminer.command.disable.on": "§2disable Successfully！",
+  "bedrockminer.command.disable.off": "§7enable Successfully！"
 }

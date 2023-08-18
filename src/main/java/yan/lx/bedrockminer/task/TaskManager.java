@@ -22,6 +22,7 @@ public class TaskManager {
     private static boolean working = false;
 
     public static void switchOnOff(Block block) {
+        if (Config.INSTANCE.disable) return;
         if (working) {
             setWorking(false);
         } else {
@@ -42,6 +43,7 @@ public class TaskManager {
     }
 
     public static void addTask(Block block, BlockPos pos, ClientWorld world) {
+        if (Config.INSTANCE.disable) return;
         if (!working) return;
         var interactionManager = MinecraftClient.getInstance().interactionManager;
         if (interactionManager != null) {
@@ -63,9 +65,11 @@ public class TaskManager {
 
     public static void clearTask() {
         handleTaskCaches.clear();
+        MessageUtils.addMessage(BedrockMinerLang.COMMAND_TASK_CLEAR);
     }
 
     public static void tick() {
+        if (Config.INSTANCE.disable) return;
         if (!working) return;
         var minecraftClient = MinecraftClient.getInstance();
         var world = minecraftClient.world;
