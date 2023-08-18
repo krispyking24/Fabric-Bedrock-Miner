@@ -121,7 +121,7 @@ public class TaskSchemeFinder {
             for (int i = 0; i < range; i++) {
                 BlockPos pos = pistonPos.offset(direction, i);
                 BlockState blockState = world.getBlockState(pos);
-                if (blockState.isOf(Blocks.REDSTONE_TORCH) || blockState.isOf(Blocks.REDSTONE_WALL_TORCH)) {
+                if (blockState.isOf(Blocks.REDSTONE_BLOCK) || blockState.isOf(Blocks.REDSTONE_WALL_TORCH)) {
                     list.add(pos);
                 }
             }
