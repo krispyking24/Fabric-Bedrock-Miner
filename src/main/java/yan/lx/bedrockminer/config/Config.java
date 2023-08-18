@@ -24,9 +24,9 @@ public class Config {
     public static List<String> getDefaultBlockWhitelist() {
         var list = new ArrayList<String>();
         list.add(BlockUtils.getId(Blocks.BEDROCK));                  // 基岩
-        list.add(BlockUtils.getId(Blocks.END_PORTAL));               // 末地传送门
-        list.add(BlockUtils.getId(Blocks.END_PORTAL_FRAME));         // 末地传送门-框架
-        list.add(BlockUtils.getId(Blocks.END_GATEWAY));              // 末地折跃门
+//        list.add(BlockUtils.getId(Blocks.END_PORTAL));               // 末地传送门
+//        list.add(BlockUtils.getId(Blocks.END_PORTAL_FRAME));         // 末地传送门-框架
+//        list.add(BlockUtils.getId(Blocks.END_GATEWAY));              // 末地折跃门
         return list;
     }
 
