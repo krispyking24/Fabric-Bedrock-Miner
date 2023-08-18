@@ -10,9 +10,6 @@ This project fork modified from [LXYan2333/Fabric-Bedrock-Miner](https://github.
 
 #### Block whitelist (break supported)
 - Bedrock
-- End Portal
-- End Portal Frame
-- End gateway
 
 #### Block blacklist (Break is not supported)
 - None
@@ -20,7 +17,7 @@ This project fork modified from [LXYan2333/Fabric-Bedrock-Miner](https://github.
 #### Server block blacklist (Break is not supported, cannot be changed by command, built-in filter)
 - Command Block
 - Chain Command Block
-- Repeating Command Block~~~~
+- Repeating Command Block
 - Structure Void
 - Structure Block
 - Jigsaw Block
@@ -30,11 +27,16 @@ This project fork modified from [LXYan2333/Fabric-Bedrock-Miner](https://github.
 - Replaceable blocks
 
 ### Command description
-- `/bedrockMiner` enable/disable
+- `/bedrockMiner` on/off
+- `/bedrockMiner disable` disable the mod (the mod will not continue to process after it is turned on)
 - `/bedrockMiner block whitelist add <block>` add whitelist block list
 - `/bedrockMiner block whitelist remove <block>` remove whitelist block list
 - `/bedrockMiner block blacklist add <block>` add blacklist block list
 - `/bedrockMiner block blacklist remove <block>` remove blacklist block list
+- `/bedrockMiner block blockName add <blockName>` add blacklist block list
+- `/bedrockMiner block blockName remove <blockName>` remove blacklist block list
+- `/bedrockMiner task add <x, y, z>` add a task
+- `/bedrockMiner task clear` clear the task
 - `/bedrockMiner debug true` enables debug mode
 - `/bedrockMiner debug false` turn off debug mode
 
@@ -58,3 +60,11 @@ If my mod saves you tons of time, please considering leave me a star.
 
 # Compile
 Checkout to the corresponding Minecraft version and compile following the Fabric wiki.
+
+## Q群
+
+![群二维码](https://github.com/Bunnui/Fabric-Bedrock-Miner/assets/37466008/7f1c2bc7-876b-4d34-9534-c72a3b555a2a)
+
+## 爱发电
+
+https://afdian.net/a/bunny_i

@@ -10,9 +10,6 @@
 
 #### 方块白名单（支持破坏）
 - 基岩
-- 末地传送门
-- 末地传送门框架
-- 末地折跃门
 
 #### 方块黑名单 (不支持破坏)
 - 无
@@ -32,10 +29,15 @@
 
 ## 客户端命令说明
 - `/bedrockMiner` 开启/关闭
+- `/bedrockMiner disable` 禁用模组（开启后模组将不会继续处理）
 - `/bedrockMiner block whitelist add <block>` 添加白名单方块列表
 - `/bedrockMiner block whitelist remove <block>` 移除白名单方块列表
 - `/bedrockMiner block blacklist add <block>` 添加黑名单方块列表
 - `/bedrockMiner block blacklist remove <block>` 移除黑名单方块列表
+- `/bedrockMiner blockName blacklist add <blockName>` 添加黑名单方块列表
+- `/bedrockMiner blockName blacklist remove <blockName>` 移除黑名单方块列表
+- `/bedrockMiner task add <x, y, z>` 添加任务
+- `/bedrockMiner task clear` 清理任务
 - `/bedrockMiner debug true` 开启调试模式
 - `/bedrockMiner debug false` 关闭调试模式
 
