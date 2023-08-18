@@ -13,6 +13,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
+import yan.lx.bedrockminer.BedrockMinerLang;
 import yan.lx.bedrockminer.utils.BlockUtils;
 
 import java.util.Arrays;
@@ -21,7 +22,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class BlockNameArgument implements ArgumentType<Block> {
-    private static final DynamicCommandExceptionType INVALID_BLOCK_NAME_EXCEPTION = new DynamicCommandExceptionType(blockName -> Text.translatable("bedrockminer.command.invalidBlockNameException", blockName));
+    private static final DynamicCommandExceptionType INVALID_STRING_EXCEPTION = new DynamicCommandExceptionType(input
+            -> Text.literal(BedrockMinerLang.EXCEPTION_INVALID_STRING.getString().replace("%input%", input.toString())));
     private static final Collection<String> EXAMPLES = Arrays.asList("Stone", "Bedrock", "石头", "基岩");
     @Nullable
     private Function<Identifier, Boolean> filter;
@@ -42,14 +44,14 @@ public class BlockNameArgument implements ArgumentType<Block> {
         var optionalBlock = Registries.BLOCK.stream().filter(block -> block.getName().getString().equals(string)).findFirst();
         if (optionalBlock.isEmpty()) {
             reader.setCursor(i);
-            throw INVALID_BLOCK_NAME_EXCEPTION.create(string);
+            throw INVALID_STRING_EXCEPTION.create(string);
         }
         // 已获取到方块信息
         var block = optionalBlock.get();
         // 检查过滤器
         if (filter != null && !filter.apply(BlockUtils.getIdentifier(block))) {
             reader.setCursor(i);
-            throw INVALID_BLOCK_NAME_EXCEPTION.create(string);
+            throw INVALID_STRING_EXCEPTION.create(string);
         }
         return block;
     }

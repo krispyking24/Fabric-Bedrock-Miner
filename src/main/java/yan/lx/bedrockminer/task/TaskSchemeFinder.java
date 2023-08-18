@@ -5,8 +5,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import yan.lx.bedrockminer.model.BlockInfo;
-import yan.lx.bedrockminer.model.SchemeInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,28 +12,28 @@ import java.util.List;
 /**
  * 任务方案查找器
  */
-public class SchemeFinder {
+public class TaskSchemeFinder {
     /**
      * 查找所有可能放置情况(假设性的，未检查游戏中的环境)
      */
-    public static SchemeInfo[] findAllPossible(BlockPos targetPos) {
-        List<SchemeInfo> schemes = new ArrayList<>();
+    public static TaskSchemeInfo[] findAllPossible(BlockPos targetPos) {
+        List<TaskSchemeInfo> schemes = new ArrayList<>();
         // 遍历所有方向, 获取所有可能得方案 (未检验过, 初步计算)
         for (Direction direction : Direction.values()) {
-            BlockInfo[] pistons = findPistonPossible(direction, targetPos);
-            for (BlockInfo piston : pistons) {
-                BlockInfo[] redstoneTorches = findRedstoneTorchPossible(piston);
-                for (BlockInfo redstoneTorch : redstoneTorches) {
-                    BlockInfo slimeBlock = findSlimeBlockPossible(piston.direction, redstoneTorch);
-                    schemes.add(new SchemeInfo(direction, piston, redstoneTorch, slimeBlock));
+            TaskBlockInfo[] pistons = findPistonPossible(direction, targetPos);
+            for (TaskBlockInfo piston : pistons) {
+                TaskBlockInfo[] redstoneTorches = findRedstoneTorchPossible(piston);
+                for (TaskBlockInfo redstoneTorch : redstoneTorches) {
+                    TaskBlockInfo slimeBlock = findSlimeBlockPossible(piston.direction, redstoneTorch);
+                    schemes.add(new TaskSchemeInfo(direction, piston, redstoneTorch, slimeBlock));
                 }
             }
         }
-        return schemes.toArray(SchemeInfo[]::new);
+        return schemes.toArray(TaskSchemeInfo[]::new);
     }
 
-    private static BlockInfo[] findPistonPossible(Direction direction, BlockPos targetPos) {
-        List<BlockInfo> list = new ArrayList<>();
+    private static TaskBlockInfo[] findPistonPossible(Direction direction, BlockPos targetPos) {
+        List<TaskBlockInfo> list = new ArrayList<>();
         BlockPos pos = targetPos.offset(direction);
         for (Direction facing : Direction.values()) {
             // 过滤朝着目标方块的方向
@@ -48,13 +46,13 @@ public class SchemeFinder {
                 case WEST -> 4;
                 case EAST -> 5;
             };
-            list.add(new BlockInfo(direction, pos, facing, level));
+            list.add(new TaskBlockInfo(direction, pos, facing, level));
         }
-        return list.toArray(BlockInfo[]::new);
+        return list.toArray(TaskBlockInfo[]::new);
     }
 
-    private static BlockInfo[] findRedstoneTorchPossible(BlockInfo pistonInfo) {
-        List<BlockInfo> list = new ArrayList<>();
+    private static TaskBlockInfo[] findRedstoneTorchPossible(TaskBlockInfo pistonInfo) {
+        List<TaskBlockInfo> list = new ArrayList<>();
         for (Direction direction : Direction.values()) {
             // 过滤与活塞臂退出的位置
             if (direction == pistonInfo.facing) continue;
@@ -76,7 +74,7 @@ public class SchemeFinder {
                     case EAST -> 4;
                     default -> throw new IllegalStateException("Unexpected value: " + facing);
                 };
-                list.add(new BlockInfo(direction, pos, facing, level));
+                list.add(new TaskBlockInfo(direction, pos, facing, level));
             }
             // 常规位置
             for (Direction facing : facings) {
@@ -94,20 +92,20 @@ public class SchemeFinder {
                     case EAST -> 4;
                     default -> throw new IllegalStateException("Unexpected value: " + facing);
                 };
-                list.add(new BlockInfo(direction, pos, facing, level));
-                list.add(new BlockInfo(direction, pos.up(), facing, level));
+                list.add(new TaskBlockInfo(direction, pos, facing, level));
+                list.add(new TaskBlockInfo(direction, pos.up(), facing, level));
 
             }
 
 
         }
-        return list.toArray(BlockInfo[]::new);
+        return list.toArray(TaskBlockInfo[]::new);
     }
 
-    private static BlockInfo findSlimeBlockPossible(Direction direction, BlockInfo redstoneTorchInfo) {
+    private static TaskBlockInfo findSlimeBlockPossible(Direction direction, TaskBlockInfo redstoneTorchInfo) {
         BlockPos pos = redstoneTorchInfo.pos;
         Direction facing = redstoneTorchInfo.facing;
-        return new BlockInfo(direction, pos.offset(facing.getOpposite()), facing, facing == Direction.UP ? 0 : 1);
+        return new TaskBlockInfo(direction, pos.offset(facing.getOpposite()), facing, facing == Direction.UP ? 0 : 1);
     }
 
     /**

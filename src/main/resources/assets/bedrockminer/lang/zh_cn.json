@@ -17,9 +17,11 @@
   "bedrockminer.command.block.whitelist.remove": "§7删除白名单方块 \"%blockName%\" 成功!",
   "bedrockminer.command.block.blacklist.add": "§7添加黑名单方块 \"%blockName%\" 成功!",
   "bedrockminer.command.block.blacklist.remove": "§7删除黑名单方块 \"%blockName%\" 成功!",
-  "bedrockminer.command.invalidBlockNameException": "§7输入的 \"%s\" 名称错误或该方块已经被添加！",
+  "bedrockminer.command.exception.invalidString": "§7输入的 \"%input%\" 字符串错误！",
   "bedrockminer.command.task.limit": "§2成功将任务执行上限调整为: %limit%",
   "bedrockminer.command.task.clear": "§2成功将任务缓存清空！",
   "bedrockminer.command.disable.on": "§2禁用成功！",
-  "bedrockminer.command.disable.off": "§7启用成功！"
+  "bedrockminer.command.disable.off": "§7启用成功！",
+  "bedrockminer.command.task.mode.set": "§7设置 %mode% 成功！",
+  "bedrockminer.handle.seek": "当前位置(%BlockPos%)没有可以执行的放置方案"
 }

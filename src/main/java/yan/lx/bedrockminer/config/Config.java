@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Blocks;
+import net.minecraft.util.math.Direction;
 import yan.lx.bedrockminer.BedrockMinerMod;
 import yan.lx.bedrockminer.utils.BlockUtils;
 
@@ -77,4 +78,6 @@ public class Config {
             e.printStackTrace();
         }
     }
+
+
 }

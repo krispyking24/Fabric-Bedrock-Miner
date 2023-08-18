@@ -31,4 +31,8 @@ public class BedrockMinerLang {
 
     public static final Text COMMAND_DISABLE_ON = Text.translatable("bedrockminer.command.disable.on");
     public static final Text COMMAND_DISABLE_OFF = Text.translatable("bedrockminer.command.disable.off");
+
+    public static final Text COMMAND_TASK_MODE_SET = Text.translatable("bedrockminer.command.task.mode.set");
+    public static final Text EXCEPTION_INVALID_STRING = Text.translatable("bedrockminer.command.exception.invalidString");
+    public static final Text HANDLE_SEEK = Text.translatable("bedrockminer.handle.seek");
 }

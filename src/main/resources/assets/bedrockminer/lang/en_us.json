@@ -17,9 +17,11 @@
   "bedrockminer.command.block.whitelist.remove": "§7Remove whitelist block \"%blockName%\" success!",
   "bedrockminer.command.block.blacklist.add": "§7Add blacklist block \"%blockName%\" succeeded!",
   "bedrockminer.command.block.blacklist.remove": "§7Remove blacklist Block \"%blockName%\" succeeded!",
-  "bedrockminer.command.invalidBlockNameException": "§2The entered \"%s\" block name is incorrect or the block has already been added!",
+  "bedrockminer.command.exception.invalidString": "§2The input string \"%s\" is incorrect.",
   "bedrockminer.command.task.limit": "§7The task limit has been successfully adjusted to %limit%.",
   "bedrockminer.command.task.clear": "§7Successfully cleared task cache！",
   "bedrockminer.command.disable.on": "§2disable Successfully！",
-  "bedrockminer.command.disable.off": "§7enable Successfully！"
+  "bedrockminer.command.disable.off": "§7enable Successfully！",
+  "bedrockminer.command.task.mode.set": "§set %mode% Successfully！",
+  "bedrockminer.handle.seek": "There is no placement scheme that can be executed at the current location(%BlockPos%)"
 }
