@@ -1,22 +1,23 @@
 package yan.lx.bedrockminer;
 
-import java.util.ArrayList;
-import java.util.List;
+import yan.lx.bedrockminer.config.Config;
 
 public class Debug {
-    public static void info(String msg) {
-        BedrockMinerMod.LOGGER.info(msg);
+    public static void info(String var1, Object... var2) {
+        if (Config.INSTANCE.debug) {
+            BedrockMinerMod.LOGGER.info(var1, var2);
+        }
+    }
+
+    public static void info(Object obj) {
+        if (Config.INSTANCE.debug) {
+            BedrockMinerMod.LOGGER.info(obj.toString());
+        }
     }
 
     public static void info() {
         info("");
     }
 
-    public static void info(String msgFormat, Object... args) {
-        info(String.format(msgFormat, args));
-    }
 
-    public static void info(Object obj) {
-        info(obj.toString());
-    }
 }

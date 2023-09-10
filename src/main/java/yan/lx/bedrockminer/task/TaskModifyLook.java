@@ -6,9 +6,8 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
-import yan.lx.bedrockminer.Debug;
 
-public class TaskModifyLookInfo {
+public class TaskModifyLook {
     private static boolean modifyYaw = false;
     private static boolean modifyPitch = false;
     private static float yaw = 0F;
@@ -16,40 +15,25 @@ public class TaskModifyLookInfo {
     private static int ticks = 0;
     private static @Nullable TaskHandler taskHandler = null;
 
+    public static float onModifyLookYaw(float yaw) {
+        return modifyYaw ? TaskModifyLook.yaw : yaw;
+    }
+
+    public static float onModifyLookPitch(float pitch) {
+        return modifyPitch ? TaskModifyLook.pitch : pitch;
+    }
+
     private static PlayerMoveC2SPacket getLookAndOnGroundPacket(ClientPlayerEntity player) {
-        var yaw = modifyYaw ? TaskModifyLookInfo.yaw : player.getYaw();
-        var pitch = modifyPitch ? TaskModifyLookInfo.pitch : player.getPitch();
+        var yaw = modifyYaw ? TaskModifyLook.yaw : player.getYaw();
+        var pitch = modifyPitch ? TaskModifyLook.pitch : player.getPitch();
         return new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround());
     }
 
     public static void set(float yaw, float pitch) {
-        TaskModifyLookInfo.modifyYaw = true;
-        TaskModifyLookInfo.yaw = yaw;
-        TaskModifyLookInfo.modifyPitch = true;
-        TaskModifyLookInfo.pitch = pitch;
-    }
-
-    public static void reset() {
-        modifyYaw = false;
-        yaw = 0F;
-        modifyPitch = false;
-        pitch = 0F;
-        taskHandler = null;
-        // 发送一个还原视角的数据包
-        MinecraftClient client = MinecraftClient.getInstance();
-        ClientPlayerEntity player = client.player;
-        ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
-        if (networkHandler != null && player != null) {
-            networkHandler.sendPacket(getLookAndOnGroundPacket(player));
-        }
-    }
-
-    public static float onModifyLookYaw(float yaw) {
-        return modifyYaw ? TaskModifyLookInfo.yaw : yaw;
-    }
-
-    public static float onModifyLookPitch(float pitch) {
-        return modifyPitch ? TaskModifyLookInfo.pitch : pitch;
+        TaskModifyLook.modifyYaw = true;
+        TaskModifyLook.yaw = yaw;
+        TaskModifyLook.modifyPitch = true;
+        TaskModifyLook.pitch = pitch;
     }
 
     public static void set(Direction facing, TaskHandler handler) {
@@ -74,6 +58,22 @@ public class TaskModifyLookInfo {
             networkHandler.sendPacket(getLookAndOnGroundPacket(player));
         }
     }
+
+    public static void reset() {
+        modifyYaw = false;
+        yaw = 0F;
+        modifyPitch = false;
+        pitch = 0F;
+        taskHandler = null;
+        // 发送一个还原视角的数据包
+        MinecraftClient client = MinecraftClient.getInstance();
+        ClientPlayerEntity player = client.player;
+        ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
+        if (networkHandler != null && player != null) {
+            networkHandler.sendPacket(getLookAndOnGroundPacket(player));
+        }
+    }
+
 
     public static void onTick() {
         // 自动重置视角

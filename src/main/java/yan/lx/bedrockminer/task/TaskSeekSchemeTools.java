@@ -1,41 +1,60 @@
 package yan.lx.bedrockminer.task;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import yan.lx.bedrockminer.Debug;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * 任务方案查找器
  */
-public class TaskSchemeFinder {
+public class TaskSeekSchemeTools {
+    public static Direction[] directions = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+
     /**
      * 查找所有可能放置情况(假设性的，未检查游戏中的环境)
      */
-    public static TaskSchemeInfo[] findAllPossible(BlockPos targetPos) {
-        List<TaskSchemeInfo> schemes = new ArrayList<>();
-        // 遍历所有方向, 获取所有可能得方案 (未检验过, 初步计算)
-        for (Direction direction : Direction.values()) {
-            TaskBlockInfo[] pistons = findPistonPossible(direction, targetPos);
-            for (TaskBlockInfo piston : pistons) {
-                TaskBlockInfo[] redstoneTorches = findRedstoneTorchPossible(piston);
-                for (TaskBlockInfo redstoneTorch : redstoneTorches) {
-                    TaskBlockInfo slimeBlock = findSlimeBlockPossible(piston.direction, redstoneTorch);
-                    schemes.add(new TaskSchemeInfo(direction, piston, redstoneTorch, slimeBlock));
+    public static TaskSeekSchemeInfo[] findAllPossible(BlockPos targetPos, ClientWorld world) {
+        List<TaskSeekSchemeInfo> schemes = new ArrayList<>();
+        for (Direction direction : directions) {
+            TaskSeekBlockInfo[] pistons = findPistonPossible(direction, targetPos);
+            for (TaskSeekBlockInfo piston : pistons) {
+                TaskSeekBlockInfo[] redstoneTorches = findRedstoneTorchPossible(piston);
+                for (TaskSeekBlockInfo redstoneTorch : redstoneTorches) {
+                    TaskSeekBlockInfo slimeBlock = findSlimeBlockPossible(redstoneTorch);
+                    schemes.add(new TaskSeekSchemeInfo(direction, piston, redstoneTorch, slimeBlock));
                 }
             }
         }
-        return schemes.toArray(TaskSchemeInfo[]::new);
+        // 重新排序
+        schemes.sort((o1, o2) -> {
+            int cr = 0;
+            int a = o1.piston.level - o2.piston.level;
+            if (a != 0) {
+                cr = (a > 0) ? 3 : -1;
+            } else {
+                a = o1.redstoneTorch.level - o2.redstoneTorch.level;
+                if (a != 0) {
+                    cr = (a > 0) ? 2 : -2;
+                } else {
+                    a = o1.slimeBlock.level - o2.slimeBlock.level;
+                    if (a != 0) {
+                        cr = (a > 0) ? 1 : -3;
+                    }
+                }
+            }
+            return cr;
+        });
+        return schemes.toArray(TaskSeekSchemeInfo[]::new);
     }
 
-    private static TaskBlockInfo[] findPistonPossible(Direction direction, BlockPos targetPos) {
-        List<TaskBlockInfo> list = new ArrayList<>();
+    private static TaskSeekBlockInfo[] findPistonPossible(Direction direction, BlockPos targetPos) {
+        List<TaskSeekBlockInfo> list = new ArrayList<>();
         BlockPos pos = targetPos.offset(direction);
         for (Direction facing : Direction.values()) {
             // 过滤朝着目标方块的方向
@@ -48,13 +67,13 @@ public class TaskSchemeFinder {
                 case WEST -> 4;
                 case EAST -> 5;
             };
-            list.add(new TaskBlockInfo(direction, pos, facing, level));
+            list.add(new TaskSeekBlockInfo(pos, facing, level));
         }
-        return list.toArray(TaskBlockInfo[]::new);
+        return list.toArray(TaskSeekBlockInfo[]::new);
     }
 
-    private static TaskBlockInfo[] findRedstoneTorchPossible(TaskBlockInfo pistonInfo) {
-        List<TaskBlockInfo> list = new ArrayList<>();
+    private static TaskSeekBlockInfo[] findRedstoneTorchPossible(TaskSeekBlockInfo pistonInfo) {
+        List<TaskSeekBlockInfo> list = new ArrayList<>();
         for (Direction direction : Direction.values()) {
             // 过滤与活塞臂退出的位置
             if (direction == pistonInfo.facing) continue;
@@ -76,7 +95,7 @@ public class TaskSchemeFinder {
                     case EAST -> 4;
                     default -> throw new IllegalStateException("Unexpected value: " + facing);
                 };
-                list.add(new TaskBlockInfo(direction, pos, facing, level));
+                list.add(new TaskSeekBlockInfo(pos, facing, level));
             }
             // 常规位置
             for (Direction facing : facings) {
@@ -94,20 +113,20 @@ public class TaskSchemeFinder {
                     case EAST -> 4;
                     default -> throw new IllegalStateException("Unexpected value: " + facing);
                 };
-                list.add(new TaskBlockInfo(direction, pos, facing, level));
-                list.add(new TaskBlockInfo(direction, pos.up(), facing, level));
+                list.add(new TaskSeekBlockInfo(pos, facing, level));
+                list.add(new TaskSeekBlockInfo(pos.up(), facing, level));
 
             }
 
 
         }
-        return list.toArray(TaskBlockInfo[]::new);
+        return list.toArray(TaskSeekBlockInfo[]::new);
     }
 
-    private static TaskBlockInfo findSlimeBlockPossible(Direction direction, TaskBlockInfo redstoneTorchInfo) {
+    private static TaskSeekBlockInfo findSlimeBlockPossible(TaskSeekBlockInfo redstoneTorchInfo) {
         BlockPos pos = redstoneTorchInfo.pos;
         Direction facing = redstoneTorchInfo.facing;
-        return new TaskBlockInfo(direction, pos.offset(facing.getOpposite()), facing, facing == Direction.UP ? 0 : 1);
+        return new TaskSeekBlockInfo(pos.offset(facing.getOpposite()), facing, facing == Direction.UP ? 0 : 1);
     }
 
     /**
@@ -128,4 +147,5 @@ public class TaskSchemeFinder {
         }
         return list.toArray(BlockPos[]::new);
     }
+
 }

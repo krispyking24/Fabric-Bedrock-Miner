@@ -68,9 +68,9 @@ public class InventoryManagerUtils {
     /**
      * 将玩家手持的物品切换为指定的物品
      *
-     * @param item 要切换到的物品
+     * @param items 要切换到的物品
      */
-    public static void switchToItem(Item item) {
+    public static void switchToItem(Item... items) {
         var client = MinecraftClient.getInstance();
         var player = client.player;
         var interactionManager = client.interactionManager;
@@ -79,8 +79,13 @@ public class InventoryManagerUtils {
         var inventory = player.getInventory();
         for (int i = 0; i < inventory.size(); i++) {
             var stack = inventory.getStack(i);
-            if (stack.isEmpty() || !stack.isOf(item)) continue;
-            switchToSlot(i);
+            for (Item item : items) {
+                if (stack.isEmpty() || !stack.isOf(item)) {
+                    continue;
+                }
+                switchToSlot(i);
+                return;
+            }
         }
     }
 

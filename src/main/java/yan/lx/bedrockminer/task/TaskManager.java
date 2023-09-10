@@ -58,22 +58,17 @@ public class TaskManager {
                             return;
                         }
                     }
-                    handleTasks.add(new TaskHandler(world, world.getBlockState(pos).getBlock(), pos, false));
+                    handleTasks.add(new TaskHandler(handleTasks, world, world.getBlockState(pos).getBlock(), pos, 2));
                 }
             }
         }
     }
 
     public static void clearTask() {
-        if (TaskModifyLookInfo.isModify()) {
-            TaskModifyLookInfo.reset();
+        if (TaskModifyLook.isModify()) {
+            TaskModifyLook.reset();
         }
-        synchronized (handleTasks) {
-            for (TaskHandler handler : handleTasks) {
-                handler.onClear();
-            }
-            handleTasks.clear();
-        }
+        handleTasks.clear();
         MessageUtils.addMessage(BedrockMinerLang.COMMAND_TASK_CLEAR);
     }
 
@@ -94,46 +89,16 @@ public class TaskManager {
             for (int x = -range; x < range + 1; x++) {
                 for (int z = -range; z < range + 1; z++) {
                     BlockPos blockPos = player.getBlockPos().add(new BlockPos(x, y, z));
-//                    // 选区模式
-//                    for (TaskSelectionInfo selectionInfo : selectionInfos) {
-//                        int x1 = selectionInfo.pos1.getX();
-//                        int y1 = selectionInfo.pos1.getY();
-//                        int z1 = selectionInfo.pos1.getZ();
-//                        int x2 = selectionInfo.pos2.getX();
-//                        int y2 = selectionInfo.pos2.getY();
-//                        int z2 = selectionInfo.pos2.getZ();
-//                        int minX = Math.min(x1, x2);
-//                        int minY = Math.min(y1, y2);
-//                        int minZ = Math.min(z1, z2);
-//                        int maxX = Math.max(x1, x2);
-//                        int maxY = Math.max(y1, y2);
-//                        int maxZ = Math.max(z1, z2);
-//                        if (blockPos.getX() > minX && blockPos.getX() < maxX
-//                                || blockPos.getY() > minY && blockPos.getY() < maxY
-//                                || blockPos.getZ() > minZ && blockPos.getZ() < maxZ) {
-//                            if (checkIsAllowBlock(world.getBlockState(blockPos).getBlock())) {
-//                                for (var targetBlock : handleTasks) {
-//                                    // 检查重复任务
-//                                    if (targetBlock.pos.getManhattanDistance(blockPos) == 0) {
-//                                        return;
-//                                    }
-//                                }
-//                                handleTasks.add(new TaskHandler(world, world.getBlockState(blockPos).getBlock(), blockPos, false));
-//                            }
-//                        }
-//                    }
-
                     // 普通模式
                     var iterator = handleTasks.iterator();
                     while (iterator.hasNext()) {
                         var handler = iterator.next();
-                        var pos = handler.pos;
                         // 检查是否有其他任务正在修改视角且不是那个任务
-                        if (TaskModifyLookInfo.isModify() && TaskModifyLookInfo.getTaskHandler() != handler) {
+                        if (TaskModifyLook.isModify() && TaskModifyLook.getTaskHandler() != handler) {
                             continue;
                         }
                         // 检查正在执行的目标位置是否与任务坐标一致
-                        if (blockPos.getX() != pos.getX() || blockPos.getY() != pos.getY() || blockPos.getZ() != pos.getZ()) {
+                        if (blockPos.getX() != handler.pos.getX() || blockPos.getY() != handler.pos.getY() || blockPos.getZ() != handler.pos.getZ()) {
                             continue;
                         }
                         // 玩家切换世界,距离目标方块太远时,删除缓存任务

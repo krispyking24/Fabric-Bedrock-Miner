@@ -1,9 +1,7 @@
 package yan.lx.bedrockminer.utils;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.PendingUpdateManager;
 import net.minecraft.item.*;
-import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.util.Hand;
@@ -21,9 +19,9 @@ public class BlockPlacerUtils {
      *
      * @param blockPos 活塞放置坐标
      * @param facing   活塞放置方向
-     * @param item     使用的物品
+     * @param items     使用的物品
      */
-    public static void placement(BlockPos blockPos, Direction facing, @Nullable Item item) {
+    public static void placement(BlockPos blockPos, Direction facing, @Nullable Item... items) {
         if (blockPos == null || facing == null) return;
         var client = MinecraftClient.getInstance();
         var world = client.world;
@@ -60,8 +58,8 @@ public class BlockPlacerUtils {
             Debug.info("选中放置面与目标方块中心位置的间距超过限制%s！%s, %s", maxRange, blockPos.toShortString(), hitVec3d);
             return;
         }
-        if (item != null) {
-            InventoryManagerUtils.switchToItem(item);
+        if (items != null) {
+            InventoryManagerUtils.switchToItem(items);
         }
         // 发送修改视角数据包
         networkHandler.sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround()));
@@ -70,14 +68,14 @@ public class BlockPlacerUtils {
     }
 
     public static void placement(BlockPos blockPos, Direction facing) {
-        placement(blockPos, facing, null);
+        placement(blockPos, facing, (Item) null);
     }
 
     public static void simpleBlockPlacement(BlockPos blockPos) {
-        simpleBlockPlacement(blockPos, null);
+        simpleBlockPlacement(blockPos, (Item) null);
     }
 
-    public static void simpleBlockPlacement(BlockPos blockPos, @Nullable Item item) {
-        placement(blockPos, Direction.UP, item);
+    public static void simpleBlockPlacement(BlockPos blockPos, @Nullable Item... items) {
+        placement(blockPos, Direction.UP, items);
     }
 }

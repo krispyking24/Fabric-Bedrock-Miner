@@ -16,7 +16,6 @@ import yan.lx.bedrockminer.task.TaskManager;
 import yan.lx.bedrockminer.utils.MessageUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
@@ -32,6 +31,20 @@ public class TaskCommand extends BaseCommand {
     @Override
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandRegistryAccess registryAccess) {
         builder
+                .then(literal("vertical")
+                        .then(argument("bool", BoolArgumentType.bool()).executes(context -> {
+                            Config.INSTANCE.vertical = BoolArgumentType.getBool(context, "bool");
+                            MessageUtils.addMessage(Text.translatable(String.valueOf(Config.INSTANCE.vertical)));
+                            Config.save();
+                            return 0;
+                        })))
+                .then(literal("horizontal")
+                        .then(argument("bool", BoolArgumentType.bool()).executes(context -> {
+                            Config.INSTANCE.horizontal = BoolArgumentType.getBool(context, "bool");
+                            MessageUtils.addMessage(Text.translatable(String.valueOf(Config.INSTANCE.horizontal)));
+                            Config.save();
+                            return 0;
+                        })))
                 .then(literal("add")
                         .then(argument("blockPos", BlockPosArgumentType.blockPos())
                                         .executes(this::add)

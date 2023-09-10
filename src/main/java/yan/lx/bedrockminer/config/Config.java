@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Blocks;
-import net.minecraft.util.math.Direction;
 import yan.lx.bedrockminer.BedrockMinerMod;
 import yan.lx.bedrockminer.utils.BlockUtils;
 
@@ -17,6 +16,8 @@ public class Config {
     public static final Config INSTANCE = Config.load();
     public boolean disable = false;
     public boolean debug = false;
+    public boolean vertical = true;
+    public boolean horizontal = true;
     public int taskLimit = 1;
     public List<String> blockWhitelist = getDefaultBlockWhitelist();
     public List<String> blockBlacklist = new ArrayList<>();
