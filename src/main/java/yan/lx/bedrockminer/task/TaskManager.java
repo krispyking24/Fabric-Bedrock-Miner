@@ -65,8 +65,8 @@ public class TaskManager {
     }
 
     public static void clearTask() {
-        if (TaskModifyLook.isModify()) {
-            TaskModifyLook.reset();
+        if (TaskModifyLookHandle.isModify()) {
+            TaskModifyLookHandle.reset();
         }
         handleTasks.clear();
         MessageUtils.addMessage(BedrockMinerLang.COMMAND_TASK_CLEAR);
@@ -94,7 +94,7 @@ public class TaskManager {
                     while (iterator.hasNext()) {
                         var handler = iterator.next();
                         // 检查是否有其他任务正在修改视角且不是那个任务
-                        if (TaskModifyLook.isModify() && TaskModifyLook.getTaskHandler() != handler) {
+                        if (TaskModifyLookHandle.isModify() && TaskModifyLookHandle.getTaskHandler() != handler) {
                             continue;
                         }
                         // 检查正在执行的目标位置是否与任务坐标一致

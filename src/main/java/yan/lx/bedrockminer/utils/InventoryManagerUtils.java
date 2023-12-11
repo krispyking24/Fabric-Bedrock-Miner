@@ -1,8 +1,12 @@
 package yan.lx.bedrockminer.utils;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -11,82 +15,68 @@ import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.PickFromInventoryC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.registry.tag.FluidTags;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
 
 public class InventoryManagerUtils {
-    /**
-     * 获取玩家物品栏中指定物品的数量和槽位
-     *
-     * @param items 要搜索的物品（可以搜索多个）
-     * @return 包含指定物品可用数量和槽位的HashMap
-     */
-    public static HashMap<Integer, ItemStack> getPlayerInventoryUsableItemSlotMap(Item... items) {
-        var map = new HashMap<Integer, ItemStack>();
-        var client = MinecraftClient.getInstance();
-        var player = client.player;
-        var interactionManager = client.interactionManager;
-        var networkHandler = client.getNetworkHandler();
-        if (player != null && interactionManager != null && networkHandler != null) {
-            var playerInventory = player.getInventory();
-            for (int i = 0; i < playerInventory.size(); i++) {
-                var itemStack = playerInventory.getStack(i);
-                for (var item : items) {
-                    if (itemStack.isOf(item)) {
-                        map.put(i, itemStack);
-                    }
-                }
-            }
-        }
-        return map;
-    }
 
-    /**
-     * 将玩家的手持物品切换到指定槽位
-     *
-     * @param slot 要切换到的槽位
-     */
     public static void switchToSlot(int slot) {
-        var client = MinecraftClient.getInstance();
-        var player = client.player;
-        var interactionManager = client.interactionManager;
-        var networkHandler = client.getNetworkHandler();
-        if (player == null || interactionManager == null || networkHandler == null) return;
-        var inventory = player.getInventory();
-        // 如果当前槽位在热键栏中
-        if (PlayerInventory.isValidHotbarIndex(slot)) {
-            inventory.selectedSlot = slot;
-        } else {
-            interactionManager.pickFromInventory(slot); // 切换物品到热键槽位
+        if (slot <= -1) {
+            return;
         }
-        networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(inventory.selectedSlot)); // 发送更新手持物品的数据包
+        MinecraftClient client = MinecraftClient.getInstance();
+        ClientPlayerEntity player = client.player;
+        ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
+        if (player == null || networkHandler == null) {
+            return;
+        }
+        PlayerInventory playerInventory = player.getInventory();
+        // 背包中没有指定的物品
+        if (PlayerInventory.isValidHotbarIndex(slot)) {
+            playerInventory.selectedSlot = slot;
+        } else {
+            networkHandler.sendPacket(new PickFromInventoryC2SPacket(slot));    // 从背包中选取
+        }
+        networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.selectedSlot)); // 发送更新手持物品的数据包
     }
 
-    /**
-     * 将玩家手持的物品切换为指定的物品
-     *
-     * @param items 要切换到的物品
-     */
-    public static void switchToItem(Item... items) {
-        var client = MinecraftClient.getInstance();
-        var player = client.player;
-        var interactionManager = client.interactionManager;
-        var networkHandler = client.getNetworkHandler();
-        if (player == null || interactionManager == null || networkHandler == null) return;
-        var inventory = player.getInventory();
-        for (int i = 0; i < inventory.size(); i++) {
-            var stack = inventory.getStack(i);
+    public static void switchToItem(int minDamage, Item... items) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        ClientPlayerEntity player = client.player;
+        ClientPlayerInteractionManager interactionManager = client.interactionManager;
+        ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
+        if (player == null || interactionManager == null || networkHandler == null) {
+            return;
+        }
+        PlayerInventory playerInventory = player.getInventory();
+
+        // 遍历主背包
+        for (int i = 0; i < playerInventory.main.size(); i++) {
+            ItemStack stack = playerInventory.main.get(i);
+            if (stack.isEmpty()) {
+                continue;
+            }
             for (Item item : items) {
-                if (stack.isEmpty() || !stack.isOf(item)) {
-                    continue;
+                if (stack.isOf(item)) {
+                    // 检查耐久是否发起警告(剩余耐久<=检查值)
+                    if (minDamage > 0 && InventoryManagerUtils.isItemDamageWarning(stack, minDamage)) {
+                        continue;
+                    }
+                    switchToSlot(i);
+                    return;
                 }
-                switchToSlot(i);
-                return;
             }
         }
+    }
+
+
+    public static void switchToItem(Item... items) {
+        switchToItem(-1, items);
     }
 
     /**

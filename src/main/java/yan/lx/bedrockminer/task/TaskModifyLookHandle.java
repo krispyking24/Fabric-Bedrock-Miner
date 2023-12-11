@@ -7,7 +7,7 @@ import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
 
-public class TaskModifyLook {
+public class TaskModifyLookHandle {
     private static boolean modifyYaw = false;
     private static boolean modifyPitch = false;
     private static float yaw = 0F;
@@ -16,24 +16,24 @@ public class TaskModifyLook {
     private static @Nullable TaskHandler taskHandler = null;
 
     public static float onModifyLookYaw(float yaw) {
-        return modifyYaw ? TaskModifyLook.yaw : yaw;
+        return modifyYaw ? TaskModifyLookHandle.yaw : yaw;
     }
 
     public static float onModifyLookPitch(float pitch) {
-        return modifyPitch ? TaskModifyLook.pitch : pitch;
+        return modifyPitch ? TaskModifyLookHandle.pitch : pitch;
     }
 
     private static PlayerMoveC2SPacket getLookAndOnGroundPacket(ClientPlayerEntity player) {
-        var yaw = modifyYaw ? TaskModifyLook.yaw : player.getYaw();
-        var pitch = modifyPitch ? TaskModifyLook.pitch : player.getPitch();
+        var yaw = modifyYaw ? TaskModifyLookHandle.yaw : player.getYaw();
+        var pitch = modifyPitch ? TaskModifyLookHandle.pitch : player.getPitch();
         return new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround());
     }
 
     public static void set(float yaw, float pitch) {
-        TaskModifyLook.modifyYaw = true;
-        TaskModifyLook.yaw = yaw;
-        TaskModifyLook.modifyPitch = true;
-        TaskModifyLook.pitch = pitch;
+        TaskModifyLookHandle.modifyYaw = true;
+        TaskModifyLookHandle.yaw = yaw;
+        TaskModifyLookHandle.modifyPitch = true;
+        TaskModifyLookHandle.pitch = pitch;
     }
 
     public static void set(Direction facing, TaskHandler handler) {

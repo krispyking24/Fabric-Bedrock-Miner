@@ -5,7 +5,10 @@ import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Items;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
@@ -20,6 +23,7 @@ import net.minecraft.util.math.Direction;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import yan.lx.bedrockminer.command.argument.BlockPosArgumentType;
+import yan.lx.bedrockminer.utils.BlockBreakerUtils;
 import yan.lx.bedrockminer.utils.BlockPlacerUtils;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
@@ -45,17 +49,22 @@ public class Test {
         var player = client.player;
         var hitResult = client.crosshairTarget;
         var interactionManager = client.interactionManager;
-        if (world == null || player == null || hitResult == null) return 0;
+        ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
+        if (world == null || player == null || hitResult == null || networkHandler == null) return 0;
         if (hitResult.getType() == HitResult.Type.BLOCK) {
             var blockHitResult = (BlockHitResult) hitResult;
             var blockPos = blockHitResult.getBlockPos();
             var blockState = world.getBlockState(blockPos);
             var block = blockState.getBlock();
-
-           Debug.info(world.getWorldBorder().getMaxRadius());
+            BlockBreakerUtils.simpleBreakBlock(blockPos);
+            // Debug.info(world.getWorldBorder().getMaxRadius());
         }
 
-
+        PlayerInventory playerInventory = player.getInventory();
+        // 遍历主背包
+        for (int i = 0; i < playerInventory.main.size(); i++) {
+            BedrockMinerMod.LOGGER.info("[" + i + "] " + playerInventory.main.get(i).getName().getString());
+        }
         //BlockPlacerUtils.placement(new BlockPos(8, -60, 8), Direction.NORTH, Items.REDSTONE_TORCH);
 //        var itemStack = player.getMainHandStack();
 //        var registry = world.getRegistryManager().get(RegistryKeys.BLOCK);

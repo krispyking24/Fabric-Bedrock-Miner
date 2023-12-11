@@ -87,11 +87,11 @@ public class TaskHandler {
     }
 
     private void setModifyLook(Direction facing) {
-        TaskModifyLook.set(facing, this);
+        TaskModifyLookHandle.set(facing, this);
     }
 
     private void resetModifyLook() {
-        TaskModifyLook.reset();
+        TaskModifyLookHandle.reset();
     }
 
     private void onInit() {

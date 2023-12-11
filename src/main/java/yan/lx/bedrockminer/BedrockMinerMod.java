@@ -16,7 +16,7 @@ public class BedrockMinerMod implements ModInitializer {
     public static final String MOD_ID = "bedrockminer";
     public static final String COMMAND_PREFIX = "bedrockMiner";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
-    public static final boolean TEST = false;
+    public static final boolean TEST = true;
 
     @Override
     public void onInitialize() {
