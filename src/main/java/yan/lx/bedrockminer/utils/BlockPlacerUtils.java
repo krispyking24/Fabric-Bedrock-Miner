@@ -8,12 +8,13 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 import yan.lx.bedrockminer.Debug;
 
 public class BlockPlacerUtils {
-
+    public static final double MAX_BREAK_SQUARED_DISTANCE = MathHelper.square(6.0);
     /**
      * 活塞放置
      *
@@ -48,8 +49,8 @@ public class BlockPlacerUtils {
         var hitVec3d = hitPos.toCenterPos().offset(facing, 0.5F);   // 放置面中心坐标
         var hitResult = new BlockHitResult(hitVec3d, facing, blockPos, false);
         var distance = player.getEyePos().squaredDistanceTo(blockCenterPos);
-        if (distance > ServerPlayNetworkHandler.MAX_BREAK_SQUARED_DISTANCE) {
-            Debug.info("玩家位置离目标方块位置超过限制%s, 当前距离目标方块：%s", ServerPlayNetworkHandler.MAX_BREAK_SQUARED_DISTANCE, distance);
+        if (distance > MAX_BREAK_SQUARED_DISTANCE) {
+            Debug.info("玩家位置离目标方块位置超过限制%s, 当前距离目标方块：%s", MAX_BREAK_SQUARED_DISTANCE, distance);
             return;
         }
         var spacing = hitVec3d.subtract(blockCenterPos); // 选中放置面与目标方块中心位置的间距
