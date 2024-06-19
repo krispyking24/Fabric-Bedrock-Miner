@@ -111,7 +111,7 @@ public class TaskManager {
                         if (handler.isSucceed()) {
                             iterator.remove();
                         }
-                        break;
+                        return;
 
                     }
                 }

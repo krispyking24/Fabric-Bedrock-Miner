@@ -9,6 +9,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
+import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffectUtil;
 import net.minecraft.entity.effect.StatusEffects;
@@ -21,18 +22,47 @@ import net.minecraft.registry.tag.FluidTags;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 
 public class InventoryManagerUtils {
 
-    public static void switchToSlot(int slot) {
-        if (slot <= -1) {
+    public static void autoSwitch() {
+        var player = MinecraftClient.getInstance().player;
+        if (player == null) {
             return;
         }
+        var playerInventory = player.getInventory();
+        // 选取最优工具
+        float lastTime = -1;
+        int lastSlot = -1;
+        for (int i = 0; i < playerInventory.size(); i++) {
+            var itemStack = playerInventory.getStack(i);
+            // 检查耐久是否发起警告(剩余耐久<=检查值)
+            if (InventoryManagerUtils.isItemDamageWarning(itemStack, 5)) {
+                continue;
+            }
+            // 选取最快工具
+            float blockBreakingTotalTime = InventoryManagerUtils.getBlockBreakingTotalTime(Blocks.PISTON.getDefaultState(), itemStack);
+
+            if (blockBreakingTotalTime != -1) {
+                if (lastTime == -1 || lastTime > blockBreakingTotalTime) {
+                    lastTime = blockBreakingTotalTime;
+                    lastSlot = i;
+                }
+            }
+        }
+        if (lastSlot != -1) {
+            InventoryManagerUtils.switchToSlot(lastSlot);
+        }
+    }
+
+    public static void switchToSlot(int slot) {
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
         ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
-        if (player == null || networkHandler == null) {
+        ClientPlayerInteractionManager interactionManager = client.interactionManager;
+        if (slot <= -1 || player == null || networkHandler == null || interactionManager == null) {
             return;
         }
         PlayerInventory playerInventory = player.getInventory();
@@ -40,9 +70,10 @@ public class InventoryManagerUtils {
         if (PlayerInventory.isValidHotbarIndex(slot)) {
             playerInventory.selectedSlot = slot;
         } else {
-            networkHandler.sendPacket(new PickFromInventoryC2SPacket(slot));    // 从背包中选取
+            interactionManager.pickFromInventory(slot);
         }
         networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.selectedSlot)); // 发送更新手持物品的数据包
+
     }
 
     public static void switchToItem(int minDamage, Item... items) {
@@ -153,41 +184,56 @@ public class InventoryManagerUtils {
         var client = MinecraftClient.getInstance();
         var player = client.player;
         if (player == null) return 0;
+
         var toolSpeed = itemStack.getMiningSpeedMultiplier(blockState);  // 当前物品的破坏系数速度
+        // Debug.info("[1]" + toolSpeed);
+
         // 根据工具的"效率"附魔增加破坏速度
         if (toolSpeed > 1.0F) {
-            int toolLevel = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, itemStack);
-            if (toolLevel > 0 && !itemStack.isEmpty()) {
-                toolSpeed += (float) (toolLevel * toolLevel + 1);
+            // 获取itemStack的附魔集合
+            for (var enchantment : itemStack.getEnchantments().getEnchantments()) {
+                var enchantmentKey = enchantment.getKey();
+                if (enchantmentKey.isPresent()) {
+                    // 获取效率附魔等级
+                    if (enchantmentKey.get() == Enchantments.EFFICIENCY) {
+                        int toolLevel = EnchantmentHelper.getLevel(enchantment, itemStack);
+                        if (toolLevel > 0 && !itemStack.isEmpty()) {
+                            toolSpeed += (float) (toolLevel * toolLevel + 1);
+                        }
+                    }
+                }
             }
+            // Debug.info("[2]" + toolSpeed);
         }
+
         // 根据玩家"急迫"状态效果增加破坏速度
         if (StatusEffectUtil.hasHaste(player)) {
             toolSpeed *= 1.0F + (float) (StatusEffectUtil.getHasteAmplifier(player) + 1) * 0.2F;
         }
+
         // 根据玩家"挖掘疲劳"状态效果减缓破坏速度
         if (player.hasStatusEffect(StatusEffects.MINING_FATIGUE)) {
-            float k;
-            StatusEffectInstance statusEffect = player.getStatusEffect(StatusEffects.MINING_FATIGUE);   //采矿疲劳;
-            if (statusEffect == null) {
-                return 0;
-            }
-            k = switch (statusEffect.getAmplifier()) {
+            float g = switch (Objects.requireNonNull(player.getStatusEffect(StatusEffects.MINING_FATIGUE)).getAmplifier()) {
                 case 0 -> 0.3F;
                 case 1 -> 0.09F;
                 case 2 -> 0.0027F;
                 default -> 8.1E-4F;
             };
-            toolSpeed *= k;
+            toolSpeed *= g;
         }
+
+
         // 如果玩家在水中并且没有"水下速掘"附魔，则减缓破坏速度
-        if (player.isSubmergedIn(FluidTags.WATER) && !EnchantmentHelper.hasAquaAffinity(player)) {
-            toolSpeed /= 5.0F;
+        toolSpeed *= (float) player.getAttributeValue(EntityAttributes.PLAYER_BLOCK_BREAK_SPEED);
+        if (player.isSubmergedIn(FluidTags.WATER)) {
+            toolSpeed *= (float) Objects.requireNonNull(player.getAttributeInstance(EntityAttributes.PLAYER_SUBMERGED_MINING_SPEED)).getValue();
         }
+
         // 如果玩家不在地面上，则减缓破坏速度
         if (!player.isOnGround()) {
             toolSpeed /= 5.0F;
         }
+        // Debug.info("[3]" + toolSpeed);
         return toolSpeed;
     }
 

@@ -60,11 +60,6 @@ public class Test {
             // Debug.info(world.getWorldBorder().getMaxRadius());
         }
 
-        PlayerInventory playerInventory = player.getInventory();
-        // 遍历主背包
-        for (int i = 0; i < playerInventory.main.size(); i++) {
-            BedrockMinerMod.LOGGER.info("[" + i + "] " + playerInventory.main.get(i).getName().getString());
-        }
         //BlockPlacerUtils.placement(new BlockPos(8, -60, 8), Direction.NORTH, Items.REDSTONE_TORCH);
 //        var itemStack = player.getMainHandStack();
 //        var registry = world.getRegistryManager().get(RegistryKeys.BLOCK);
