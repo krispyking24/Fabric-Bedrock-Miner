@@ -1,4 +1,4 @@
-**English** | [中文](./README.md)
+[繁體中文](./README_TW.md) | [简体中文](./README.md) | **English**
 
 # Fabric-Bedrock-Miner
 A Fabric client mod to "mine" bedrock!
