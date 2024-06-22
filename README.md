@@ -1,4 +1,4 @@
-**中文** | [English](./README_EN.md) 
+[繁體中文](./README_TW.md) | **簡體中文** | [English](./README_EN.md) 
 
 # Fabric-Bedrock-Miner
 帮你 "挖掘" 基岩的客户端 Fabric mod！
