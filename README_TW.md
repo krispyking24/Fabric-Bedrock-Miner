@@ -1,4 +1,4 @@
-**繁體中文** | [簡體中文](./README.md) | [English](./README_EN.md) 
+**繁體中文** | [简体中文](./README.md) | [English](./README_EN.md) 
 
 # Fabric-Bedrock-Miner
 幫你 "挖掘" 基岩的Fabric使用者端模組！
