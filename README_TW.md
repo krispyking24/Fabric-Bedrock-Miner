@@ -27,7 +27,7 @@
 - 空氣
 - 可替換方塊
 
-## 客户端命令说明
+## 使用者端指令說明
 - `/bedrockMiner` 開啟/關閉
 - `/bedrockMiner disable` 停用模組（開啟後模組將不會繼續處理）
 - `/bedrockMiner block whitelist add <block>` 增加白名單方塊
