@@ -37,7 +37,7 @@ public class BlockIdentifierArgument implements ArgumentType<Block> {
         // 获取用户输入的字符串内容
         var string = reader.getString().substring(i, reader.getCursor());
         // 检查方块注册表中是否存在该名称
-        var blockId = new Identifier(string);
+        var blockId = Identifier.of(string);
         var optionalBlock = Registries.BLOCK.stream().filter(block -> BlockUtils.getIdentifier(block).equals(blockId)).findFirst();
         if (optionalBlock.isEmpty()) {
             reader.setCursor(i);

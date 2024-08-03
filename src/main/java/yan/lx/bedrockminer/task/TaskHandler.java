@@ -13,10 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import yan.lx.bedrockminer.BedrockMinerLang;
 import yan.lx.bedrockminer.Debug;
 import yan.lx.bedrockminer.config.Config;
-import yan.lx.bedrockminer.utils.BlockBreakerUtils;
-import yan.lx.bedrockminer.utils.BlockPlacerUtils;
-import yan.lx.bedrockminer.utils.CheckingEnvironmentUtils;
-import yan.lx.bedrockminer.utils.MessageUtils;
+import yan.lx.bedrockminer.utils.*;
 
 import java.util.List;
 import java.util.Queue;
@@ -87,11 +84,11 @@ public class TaskHandler {
     }
 
     private void setModifyLook(Direction facing) {
-        TaskModifyLook.set(facing, this);
+        TaskModifyLookHandle.set(facing, this);
     }
 
     private void resetModifyLook() {
-        TaskModifyLook.reset();
+        TaskModifyLookHandle.reset();
     }
 
     private void onInit() {
@@ -244,6 +241,12 @@ public class TaskHandler {
                         executeModify = true;
                         return false;
                     } else {
+                        var mainHandStack = player.getInventory().getMainHandStack();
+                        if (InventoryManagerUtils.getBlockBreakingTotalTime(world.getBlockState(piston.pos), mainHandStack) > 1) {
+                            InventoryManagerUtils.autoSwitch();
+                            setWait(TaskState.EXECUTE, 1);
+                            return false;
+                        }
                         // 打掉附近红石火把
                         BlockPos[] nearbyRedstoneTorch = TaskSeekSchemeTools.findPistonNearbyRedstoneTorch(piston.pos, world);
                         for (BlockPos pos : nearbyRedstoneTorch) {
@@ -336,12 +339,12 @@ public class TaskHandler {
                 TaskSeekBlockInfo redstoneTorch = taskSchemeInfo.redstoneTorch;
                 TaskSeekBlockInfo slimeBlock = taskSchemeInfo.slimeBlock;
                 if (direction.getAxis().isHorizontal()) {
-                    if (!Config.INSTANCE.horizontal){
+                    if (!Config.INSTANCE.horizontal) {
                         continue;
                     }
                 }
                 if (direction.getAxis().isVertical()) {
-                    if (!Config.INSTANCE.vertical){
+                    if (!Config.INSTANCE.vertical) {
                         continue;
                     }
                 }
@@ -372,12 +375,12 @@ public class TaskHandler {
                         continue;
                     }
                     if (piston.facing.getAxis().isHorizontal()) {
-                        if (!Config.INSTANCE.horizontal){
+                        if (!Config.INSTANCE.horizontal) {
                             continue;
                         }
                     }
                     if (piston.facing.getAxis().isVertical()) {
-                        if (!Config.INSTANCE.vertical){
+                        if (!Config.INSTANCE.vertical) {
                             continue;
                         }
                     }
@@ -432,12 +435,12 @@ public class TaskHandler {
                             continue;
                         }
                         if (redstoneTorch.facing.getAxis().isHorizontal()) {
-                            if (!Config.INSTANCE.horizontal){
+                            if (!Config.INSTANCE.horizontal) {
                                 continue;
                             }
                         }
                         if (redstoneTorch.facing.getAxis().isVertical()) {
-                            if (!Config.INSTANCE.vertical){
+                            if (!Config.INSTANCE.vertical) {
                                 continue;
                             }
                         }
@@ -494,12 +497,12 @@ public class TaskHandler {
                                 continue;
                             }
                             if (slimeBlock.facing.getAxis().isHorizontal()) {
-                                if (!Config.INSTANCE.horizontal){
+                                if (!Config.INSTANCE.horizontal) {
                                     continue;
                                 }
                             }
                             if (slimeBlock.facing.getAxis().isVertical()) {
-                                if (!Config.INSTANCE.vertical){
+                                if (!Config.INSTANCE.vertical) {
                                     continue;
                                 }
                             }
