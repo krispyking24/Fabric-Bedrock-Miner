@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -26,24 +26,36 @@ jobs:
       - name: Install unzip
         run: sudo apt-get update && sudo apt-get install -y unzip
 
-      - name: Find and Extract .jar from ZIP
-        run: |
-          # Find the ZIP file
-          ZIP_FILE=$(find . -type f -name "*.zip")
-          echo "Found ZIP file: $ZIP_FILE"
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: Artifacts
+          path: ./build/libs
 
-          # Extract the .jar file from the ZIP
-          unzip -j "$ZIP_FILE" "*.jar" -d ./extracted
+      - name: Unzip Artifact
+        run: |
+          echo "Unzipping artifact..."
+          unzip -d ./extracted ./build/libs/Artifacts.zip
           ls -l ./extracted
+
+      - name: Create and Push Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="v${{ github.run_number }}"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
 
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ steps.create_and_push_tag.outputs.tag }}
+          release_name: "Release ${{ steps.create_and_push_tag.outputs.tag }}"
           body: |
             Changes in this release:
             - Add your changes here
@@ -53,7 +65,7 @@ jobs:
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./extracted/*.jar
