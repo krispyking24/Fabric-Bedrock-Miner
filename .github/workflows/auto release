@@ -1,0 +1,2 @@
+- name: Automatic Release
+uses: marvinpinto/action-automatic-releases@v1.2.1
