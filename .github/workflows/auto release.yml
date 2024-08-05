@@ -1,7 +1,6 @@
 name: AutoRelease
 
 on:
-  workflow_dispatch: # Allows manual triggering
   push:
     branches: [ master ]
 
@@ -12,7 +11,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -27,11 +26,16 @@ jobs:
       - name: Install unzip
         run: sudo apt-get update && sudo apt-get install -y unzip
 
-      - name: Find and Extract .jar from ZIP
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: Artifacts
+          path: ./build/libs
+
+      - name: Unzip Artifact
         run: |
-          ZIP_FILE=$(find . -type f -name "*.zip")
-          echo "Found ZIP file: $ZIP_FILE"
-          unzip -j "$ZIP_FILE" "*.jar" -d ./extracted
+          echo "Unzipping artifact..."
+          unzip -d ./extracted ./build/libs/Artifacts.zip
           ls -l ./extracted
 
       - name: Create GitHub Release
@@ -40,7 +44,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          tag_name: "latest" # You can use a fixed name or format
+          tag_name: "latest" # or use a dynamic tag if applicable
           release_name: "Release latest"
           body: |
             Changes in this release:
