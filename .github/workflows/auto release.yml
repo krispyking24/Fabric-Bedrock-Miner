@@ -1,6 +1,7 @@
 name: AutoRelease
 
 on:
+  workflow_dispatch: # Allows manual triggering
   push:
     branches: [ master ]
 
@@ -28,11 +29,8 @@ jobs:
 
       - name: Find and Extract .jar from ZIP
         run: |
-          # Find the ZIP file
           ZIP_FILE=$(find . -type f -name "*.zip")
           echo "Found ZIP file: $ZIP_FILE"
-
-          # Extract the .jar file from the ZIP
           unzip -j "$ZIP_FILE" "*.jar" -d ./extracted
           ls -l ./extracted
 
@@ -42,8 +40,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: "latest" # You can use a fixed name or format
+          release_name: "Release latest"
           body: |
             Changes in this release:
             - Add your changes here
