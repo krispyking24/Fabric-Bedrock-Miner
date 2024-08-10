@@ -11,6 +11,11 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+
       - name: Checkout code
         uses: actions/checkout@v4.1.7
       
