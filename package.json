@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "a fabric mod",
   "main": "release.config.js",
-  "devDependencies": {},
+  "devDependencies": {
+    "@semantic-release/commit-analyzer": "^15.0.0",
+    "@semantic-release/release-notes-generator": "^11.0.0",
+    "@semantic-release/git": "^12.0.0",
+    "@semantic-release/github": "^11.0.0"
+  },
   "scripts": {
     "test": "test",
     "build": "gradlew.bat build"
