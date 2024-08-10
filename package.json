@@ -5,7 +5,7 @@
   "main": "release.config.js",
   "devDependencies": {},
   "scripts": {
-    "test": "test"
+    "test": "test",
     "build": "./gradlew build"
   },
   "repository": {
