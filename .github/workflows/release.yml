@@ -29,7 +29,7 @@ jobs:
         run: npm ci
       
       - name: Build project
-        run: npm run build
+        run: ./gradlew build
       
       - name: Run semantic-release
         run: npx semantic-release
