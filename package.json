@@ -1,11 +1,12 @@
 {
   "name": "fabric-bedrock-miner",
   "version": "1.0.0",
-  "description": "a fabic mod",
+  "description": "a fabric mod",
   "main": "release.config.js",
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "test"
+    "build": "./gradlew build"
   },
   "repository": {
     "type": "git",
