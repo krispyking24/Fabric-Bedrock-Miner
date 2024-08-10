@@ -14,8 +14,8 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
-          distribution: 'temurin'  # Specify the JDK distribution
+          java-version: '21'  # Set to Java 21
+          distribution: 'temurin'  # Use the Temurin JDK distribution
 
       - name: Checkout code
         uses: actions/checkout@v4.1.7
