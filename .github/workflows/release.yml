@@ -12,14 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.7
-
       - uses: actions/setup-node@v4.0.3
         with:
           node-version: '20'
 
       - name: Install npm 5 or later
-        run: npm install -g npm@10.8.1
-
+      - run: npm install -g npm@10.8.1
+      - run: chmod +x gradlew
       - run: npm ci
       - run: npm run build
       - run: npx semantic-release
