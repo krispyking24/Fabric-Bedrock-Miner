@@ -22,7 +22,7 @@ public class TaskManager {
     private static boolean working = false;
 
     public static void switchOnOff(Block block) {
-        if (Config.INSTANCE.disable) return;
+        if (isDisabled()) return;
         if (checkIsAllowBlock(block)) {
             if (working) {
                 clearTask();
@@ -44,7 +44,7 @@ public class TaskManager {
     }
 
     public static void addTask(Block block, BlockPos pos, ClientWorld world) {
-        if (Config.INSTANCE.disable) return;
+        if (isDisabled()) return;
         if (!working) return;
         var interactionManager = MinecraftClient.getInstance().interactionManager;
         if (interactionManager != null) {
@@ -58,7 +58,7 @@ public class TaskManager {
                             return;
                         }
                     }
-                    handleTasks.add(new TaskHandler(handleTasks, world, world.getBlockState(pos).getBlock(), pos, 2));
+                    handleTasks.add(new TaskHandler(world, world.getBlockState(pos).getBlock(), pos));
                 }
             }
         }
@@ -73,7 +73,7 @@ public class TaskManager {
     }
 
     public static void tick() {
-        if (Config.INSTANCE.disable) return;
+        if (isDisabled()) return;
         if (!working) return;
         var minecraftClient = MinecraftClient.getInstance();
         var world = minecraftClient.world;
@@ -98,7 +98,7 @@ public class TaskManager {
                             continue;
                         }
                         // 检查正在执行的目标位置是否与任务坐标一致
-                        if (blockPos.getX() != handler.pos.getX() || blockPos.getY() != handler.pos.getY() || blockPos.getZ() != handler.pos.getZ()) {
+                        if (blockPos.equals(handler.pos)) {
                             continue;
                         }
                         // 玩家切换世界,距离目标方块太远时,删除缓存任务
@@ -107,8 +107,8 @@ public class TaskManager {
                             continue;
                         }
                         // 判断玩家与方块距离是否在处理范围内
-                        handler.onTick();
-                        if (handler.isSucceed()) {
+                        handler.tick();
+                        if (handler.isComplete()) {
                             iterator.remove();
                         }
                         return;
@@ -183,5 +183,9 @@ public class TaskManager {
             MessageUtils.addMessage(BedrockMinerLang.TOGGLE_OFF);
         }
         TaskManager.working = working;
+    }
+
+    private static boolean isDisabled() {
+        return Config.INSTANCE.disable;
     }
 }

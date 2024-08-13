@@ -3,7 +3,7 @@ package yan.lx.bedrockminer.task;
 public enum TaskState {
     INITIALIZE,
     WAIT_GAME_UPDATE,
-    WAIT,
+    WAIT_CUSTOM,
     FIND_PISTON,
     FIND_REDSTONE_TORCH,
     FIND_SLIME_BLOCK,
@@ -15,5 +15,5 @@ public enum TaskState {
     TIMEOUT,
     FAIL,
     RECYCLED_ITEMS,
-    SUCCESS
+    COMPLETE
 }

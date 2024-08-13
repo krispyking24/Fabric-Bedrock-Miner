@@ -31,13 +31,13 @@ public class BlockBreakerUtils {
         if (world.getBlockState(blockPos).isReplaceable()) return true;
         if (world.getBlockState(blockPos).getBlock().getHardness() < 0) return false;
 
-        InventoryManagerUtils.autoSwitch();
+        // InventoryManagerUtils.autoSwitch();
 
-        interactionManager.attackBlock(blockPos, direction);
-//        // 更新方块正在破坏进程
-//        if (interactionManager.updateBlockBreakingProgress(blockPos, direction)) {
-//            client.particleManager.addBlockBreakingParticles(blockPos, direction);
-//        }
+        // interactionManager.attackBlock(blockPos, direction);
+        // 更新方块正在破坏进程
+        if (interactionManager.updateBlockBreakingProgress(blockPos, direction)) {
+            client.particleManager.addBlockBreakingParticles(blockPos, direction);
+        }
         // 检查是否已经成功
         return world.getBlockState(blockPos).isReplaceable();
     }
