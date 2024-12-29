@@ -56,7 +56,7 @@ public class InventoryManagerUtils {
         if (PlayerInventory.isValidHotbarIndex(slot)) {
             playerInventory.selectedSlot = slot;
         } else {
-            interactionManager.pickItemFromBlock(BlockPos.fromLong(slot), true);
+            interactionManager.pickFromInventory(slot);
         }
         networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.selectedSlot)); // 发送更新手持物品的数据包
     }
@@ -190,16 +190,11 @@ public class InventoryManagerUtils {
             f *= g;
         }
         // 如果玩家在水中并且没有"水下速掘"附魔，则减缓破坏速度
-        f *= (float) player.getAttributeValue(EntityAttributes.BLOCK_BREAK_SPEED);
+        f *= (float) player.getAttributeValue(EntityAttributes.PLAYER_BLOCK_BREAK_SPEED);
         if (player.isSubmergedIn(FluidTags.WATER)) {
-            var submergedMiningSpeed = player.getAttributeInstance(EntityAttributes.SUBMERGED_MINING_SPEED);
-            if (submergedMiningSpeed != null) {
-                f *= (float) submergedMiningSpeed.getValue();
-            }
+            f *= (float) Objects.requireNonNull(player.getAttributeInstance(EntityAttributes.PLAYER_SUBMERGED_MINING_SPEED)).getValue();
         }
-        if (!player.isOnGround()) { // 如果玩家不在地面上，则减缓破坏速度
-            f /= 5.0F;
-        }
+
         // 如果玩家不在地面上，则减缓破坏速度
         if (!player.isOnGround()) {
             f /= 5.0F;
