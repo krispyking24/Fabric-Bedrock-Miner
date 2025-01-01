@@ -39,6 +39,9 @@ public class BehaviorCommand extends CommandBase {
                                         .executes(this::removeFloor)
                                 )
                         )
+
+                        .then(literal("list").executes(this::listFloor)
+                        )
                 )
 
                 .then(literal("block")
@@ -66,6 +69,25 @@ public class BehaviorCommand extends CommandBase {
                                 )
                         )
                 );
+    }
+
+    private int listFloor(CommandContext<FabricClientCommandSource> context) {
+        var config = Config.INSTANCE;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < config.floorsBlacklist.size(); i++) {
+            Integer floor = config.floorsBlacklist.get(i);
+            if (i == config.floorsBlacklist.size() - 1) {
+                sb.append(floor);
+            } else {
+                sb.append(floor).append(",");
+            }
+        }
+        MessageUtils.addMessage(
+                Text.literal(LanguageText.FLOOR_BLACK_LIST_SHOW.getString()
+                        .replace("%listFloor%", sb.toString())
+                )
+        );
+        return 0;
     }
 
     private int addFloor(CommandContext<FabricClientCommandSource> context) {
