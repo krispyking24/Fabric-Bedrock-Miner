@@ -38,20 +38,8 @@ public class BlockPlacerUtils {
             case DOWN -> -90F;
             default -> 0F;
         };
-        // 模拟选中位置(凭空放置)
-        var blockCenterPos = Vec3d.ofCenter(blockPos);
-        var hitPos = blockPos.offset(facing.getOpposite());
-        var hitVec3d = hitPos.toCenterPos().offset(facing, 0.5F);   // 放置面中心坐标
-        var hitResult = new BlockHitResult(hitVec3d, facing, blockPos, false);
-        var distance = player.getEyePos().squaredDistanceTo(blockCenterPos);
-        if (distance > MAX_BREAK_SQUARED_DISTANCE) {
-            Debug.write("玩家位置离目标方块位置超过限制%s, 当前距离目标方块：%s", MAX_BREAK_SQUARED_DISTANCE, distance);
-            return;
-        }
-        var spacing = hitVec3d.subtract(blockCenterPos); // 选中放置面与目标方块中心位置的间距
-        var maxRange = 1.0000001D;
-        if (!(Math.abs(spacing.getX()) < maxRange && Math.abs(spacing.getY()) < maxRange && Math.abs(spacing.getZ()) < maxRange)) {
-            Debug.write("选中放置面与目标方块中心位置的间距超过限制%s！%s, %s", maxRange, blockPos.toShortString(), hitVec3d);
+
+        if (!InteractionUtils.isBlockWithinReach(blockPos, facing)) {
             return;
         }
         if (items != null) {
@@ -60,6 +48,12 @@ public class BlockPlacerUtils {
 
         // 发送修改视角数据包
         networkHandler.sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround()));
+
+        // 模拟选中位置(凭空放置)
+        var hitPos = blockPos.offset(facing.getOpposite());
+        var hitVec3d = hitPos.toCenterPos().offset(facing, 0.5F);   // 放置面中心坐标
+        var hitResult = new BlockHitResult(hitVec3d, facing, blockPos, false);
+
         // 发送交互方块数据包
         interactionManager.interactBlock(player, Hand.MAIN_HAND, hitResult);
     }

@@ -39,35 +39,21 @@ public class BehaviorCommand extends CommandBase {
                                         .executes(this::removeFloor)
                                 )
                         )
-
                         .then(literal("list").executes(this::listFloor)
                         )
                 )
-
                 .then(literal("block")
                         .then(literal("whitelist")
                                 .then(literal("add")
-                                        .then(argument("block", new BlockArgument(this::filterWhitelist))
-                                                .executes(context -> addBlock(context, true))
+                                        .then(argument("block", new BlockArgument(this::filterBlockWhitelist))
+                                                .executes(this::addBlockWhitelist)
                                         )
                                 )
                                 .then(literal("remove")
-                                        .then(argument("block", new BlockArgument(this::showWhitelist))
-                                                .executes(context -> removeBlock(context, true))
+                                        .then(argument("block", new BlockArgument(this::showBlockWhitelist))
+                                                .executes(this::removeBlockWhitelist)
                                         )
                                 ))
-                        .then(literal("blacklist")
-                                .then(literal("add")
-                                        .then(argument("block", new BlockArgument(this::filterBlacklist))
-                                                .executes(context -> addBlock(context, false))
-                                        )
-                                )
-                                .then(literal("remove")
-                                        .then(argument("block", new BlockArgument(this::showBlacklist))
-                                                .executes(context -> removeBlock(context, false))
-                                        )
-                                )
-                        )
                 );
     }
 
@@ -120,34 +106,26 @@ public class BehaviorCommand extends CommandBase {
         return 0;
     }
 
-    private int addBlock(CommandContext<FabricClientCommandSource> context, boolean whitelist) {
+    private int addBlockWhitelist(CommandContext<FabricClientCommandSource> context) {
         var block = BlockArgument.getBlock(context, "block");
         var config = Config.INSTANCE;
         var blockId = getBlockId(block);
-        if (whitelist && !config.blockWhitelist.contains(blockId)) {
+        if (!config.blockWhitelist.contains(blockId)) {
             config.blockWhitelist.add(blockId);
             Config.save();
             sendChat(LanguageText.COMMAND_BLOCK_WHITELIST_ADD, block);
-        } else if (!config.blockBlacklist.contains(blockId)) {
-            config.blockBlacklist.add(blockId);
-            Config.save();
-            sendChat(LanguageText.COMMAND_BLOCK_BLACKLIST_ADD, block);
         }
         return 0;
     }
 
-    private int removeBlock(CommandContext<FabricClientCommandSource> context, boolean whitelist) {
+    private int removeBlockWhitelist(CommandContext<FabricClientCommandSource> context) {
         var block = BlockArgument.getBlock(context, "block");
         var config = Config.INSTANCE;
         var blockId = getBlockId(block);
-        if (whitelist && config.blockWhitelist.contains(blockId)) {
+        if (config.blockWhitelist.contains(blockId)) {
             config.blockWhitelist.remove(blockId);
             Config.save();
             sendChat(LanguageText.COMMAND_BLOCK_WHITELIST_REMOVE, block);
-        } else if (config.blockBlacklist.contains(blockId)) {
-            config.blockBlacklist.remove(blockId);
-            Config.save();
-            sendChat(LanguageText.COMMAND_BLOCK_BLACKLIST_REMOVE, block);
         }
         return 0;
     }
@@ -156,44 +134,17 @@ public class BehaviorCommand extends CommandBase {
         return block.getDefaultState().isAir() || block.getDefaultState().isReplaceable();
     }
 
-    private Boolean filterBlocks(Block block, boolean isWhitelist, boolean isBlacklist) {
+    private Boolean filterBlockWhitelist(Block block) {
         if (isFilterBlock(block)) {
             return true;
         }
-        if (isWhitelist) {
-            return Config.INSTANCE.blockWhitelist.contains(getBlockId(block));
-        }
-        if (isBlacklist) {
-            return Config.INSTANCE.blockBlacklist.contains(getBlockId(block));
-        }
-        return false;
+        return Config.INSTANCE.blockWhitelist.contains(getBlockId(block));
     }
 
-    private Boolean showBlocks(Block block, boolean isWhitelist, boolean isBlacklist) {
-        if (isWhitelist) {
-            return !Config.INSTANCE.blockWhitelist.contains(getBlockId(block));
-        }
-        if (isBlacklist) {
-            return !Config.INSTANCE.blockBlacklist.contains(getBlockId(block));
-        }
-        return false;
+    private Boolean showBlockWhitelist(Block block) {
+        return !Config.INSTANCE.blockWhitelist.contains(getBlockId(block));
     }
 
-    private Boolean filterWhitelist(Block block) {
-        return filterBlocks(block, true, false);
-    }
-
-    private Boolean filterBlacklist(Block block) {
-        return filterBlocks(block, false, true);
-    }
-
-    private Boolean showWhitelist(Block block) {
-        return showBlocks(block, true, false);
-    }
-
-    private Boolean showBlacklist(Block block) {
-        return showBlocks(block, false, true);
-    }
 
     private void sendChat(Text text, Block block) {
         var msg = text.getString().replace("#blockName#", getBlockName(block));

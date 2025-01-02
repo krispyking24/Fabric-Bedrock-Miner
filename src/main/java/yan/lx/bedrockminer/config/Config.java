@@ -19,10 +19,8 @@ public class Config {
     public boolean vertical = true;
     public boolean horizontal = true;
     public boolean taskShortWait = false;
-    public int taskLimit = 1;
     public List<Integer> floorsBlacklist = new ArrayList<>();
     public List<String> blockWhitelist = getDefaultBlockWhitelist();
-    public List<String> blockBlacklist = new ArrayList<>();
     public transient List<String> blockBlacklistServer = getDefaultBlockBlacklistServer();
 
     public static List<String> getDefaultBlockWhitelist() {

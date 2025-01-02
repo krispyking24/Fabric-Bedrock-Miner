@@ -6,6 +6,7 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import org.jetbrains.annotations.Nullable;
 import yan.lx.bedrockminer.Debug;
 import yan.lx.bedrockminer.LanguageText;
 import yan.lx.bedrockminer.config.Config;
@@ -16,15 +17,16 @@ import yan.lx.bedrockminer.utils.MessageUtils;
 import java.util.LinkedList;
 import java.util.List;
 
-import static yan.lx.bedrockminer.BedrockMiner.gameMode;
-import static yan.lx.bedrockminer.BedrockMiner.world;
+import static yan.lx.bedrockminer.BedrockMiner.*;
 import static yan.lx.bedrockminer.LanguageText.*;
-import static yan.lx.bedrockminer.utils.BlockUtils.getBlockName;
-import static yan.lx.bedrockminer.utils.InteractionUtils.getClosestFace;
-import static yan.lx.bedrockminer.utils.InteractionUtils.isBlockWithinReach;
+import static yan.lx.bedrockminer.utils.BlockUtils.*;
+import static yan.lx.bedrockminer.utils.InteractionUtils.*;
 
 public class TaskManager {
     private static final List<TaskHandler> handleTasks = new LinkedList<>();
+    private static @Nullable TaskHandler lastTask = null;
+    private static int lastTaskTick = 0;
+    private static final int lastTaskTickMax = 40;
     private static boolean working = false;
 
     public static void switchOnOff(Block block) {
@@ -38,15 +40,14 @@ public class TaskManager {
             clearTask();
             setWorking(false);
         } else {
-            var client = MinecraftClient.getInstance();
             // 检查玩家是否为创造
-            if (client.interactionManager != null && client.interactionManager.getCurrentGameMode().isCreative()) {
+            if (mc.interactionManager != null && mc.interactionManager.getCurrentGameMode().isCreative()) {
                 MessageUtils.addMessage(FAIL_MISSING_SURVIVAL);
                 return;
             }
             setWorking(true);
             // 检查是否在服务器
-            if (!client.isInSingleplayer()) {
+            if (!mc.isInSingleplayer()) {
                 MessageUtils.addMessage(WARN_MULTIPLAYER);
             }
         }
@@ -97,9 +98,36 @@ public class TaskManager {
         }
         if (handleTasks.isEmpty()
                 || gameMode.isCreative() // 检查玩家模式
-                || reverseCheckInventoryItemConditionsAllow() // 检查物品条件
-        )
-            return;
+                || (reverseCheckInventoryItemConditionsAllow()) // 检查物品条件
+        ) {
+
+            if (!(lastTask != null && (lastTask.getState() == TaskState.RECYCLED_ITEMS || world.getBlockState(lastTask.pos).isAir()))) {
+                return;
+            }
+        }
+
+        // 检查任务是否完成, 重置任务
+        if (lastTask != null && !handleTasks.contains(lastTask)) {
+            lastTask = null;
+        }
+        if (lastTask != null) {
+            // 检查与目标方块距离
+            if (isBlockWithinReach(lastTask.pos, getClosestFace(lastTask.pos), 1F)) {
+                // 玩家切换世界
+                if (lastTask.world == world) {
+                    // 执行任务
+                    lastTask.tick();
+                    // 任务完成, 删除当前任务
+                    if (lastTask.isComplete()) {
+                        handleTasks.remove(lastTask);
+                        lastTask = null;
+                    }
+                }
+            } else if (lastTaskTick++ >= lastTaskTickMax) {
+                lastTask = null;
+                lastTaskTick = 0;
+            }
+        }
 
         // 使用迭代器, 安全删除列表
         var iterator = handleTasks.iterator();
@@ -110,7 +138,7 @@ public class TaskManager {
                 continue;
             }
             // 检查与目标方块距离
-            if (!isBlockWithinReach(handler.pos, getClosestFace(handler.pos), -1.4)) {
+            if (!isBlockWithinReach(handler.pos, getClosestFace(handler.pos), -1)) {
                 continue;
             }
             // 玩家切换世界,距离目标方块太远时,删除缓存任务
@@ -118,11 +146,7 @@ public class TaskManager {
                 iterator.remove();
                 continue;
             }
-            // 判断玩家与方块距离是否在处理范围内
-            handler.tick();
-            if (handler.isComplete()) {
-                iterator.remove();
-            }
+            lastTask = handler;
             return;
         }
     }
@@ -136,12 +160,6 @@ public class TaskManager {
                 if (BlockUtils.getBlockId(block).equals(defaultBlockBlack)) {
                     return false;
                 }
-            }
-        }
-        // 方块黑名单检查(用户自定义)
-        for (var blockBlack : config.blockBlacklist) {
-            if (BlockUtils.getBlockId(block).equals(blockBlack)) {
-                return false;
             }
         }
         // 方块白名单检查(用户自定义)

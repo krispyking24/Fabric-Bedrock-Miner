@@ -2,7 +2,6 @@ package yan.lx.bedrockminer.task;
 
 import com.google.common.collect.Queues;
 import net.minecraft.block.*;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
@@ -18,7 +17,7 @@ import yan.lx.bedrockminer.utils.*;
 import java.util.Queue;
 
 import static net.minecraft.block.Block.sideCoversSmallSquare;
-import static yan.lx.bedrockminer.BedrockMiner.player;
+import static yan.lx.bedrockminer.BedrockMiner.*;
 
 public class TaskHandler {
     public final ClientWorld world;
@@ -34,6 +33,8 @@ public class TaskHandler {
     public final Queue<BlockPos> recycledQueue;
     public boolean executeModify;
     private int ticks;
+    private int ticksPrivateInvoke;
+    private int ticksPrivateInvokeMax;
     private int ticksTotalMax;
     private int ticksTimeoutMax;
     private int tickWaitMax;
@@ -52,7 +53,7 @@ public class TaskHandler {
         this.recycledQueue = Queues.newConcurrentLinkedQueue();
         this.retryCount = 0;
         this.retryCountMax = 1;
-        this.init();
+        this.init(false);
         this.debug("[构造函数] 结束\r\n");
     }
 
@@ -83,14 +84,19 @@ public class TaskHandler {
         this.tick(false);
     }
 
-    private void tick(boolean internalCallbacks) {
-        if (internalCallbacks) {
+    private void tick(boolean privateInvoke) {
+        if (this.state == TaskState.COMPLETE) {
+            return;
+        }
+        if (privateInvoke && this.ticksPrivateInvoke++ >= ticksPrivateInvokeMax)   // 防止无限死循环
+        {
+            this.ticksPrivateInvoke = 0;
+            return;
+        }
+        if (privateInvoke) {
             debug("内部调用开始");
         } else {
             debug("开始");
-        }
-        if (this.state == TaskState.COMPLETE) {
-            return;
         }
         if (this.ticks >= this.ticksTotalMax) {
             this.state = TaskState.COMPLETE;
@@ -99,9 +105,8 @@ public class TaskHandler {
             this.timeout = true;
             this.state = TaskState.TIMEOUT;
         }
-
         switch (this.state) {
-            case INITIALIZE -> this.init();
+            case INITIALIZE -> this.init(true);
             case WAIT_GAME_UPDATE -> this.updateStates();
             case WAIT_CUSTOM -> this.waitCustom();
             case FIND_PISTON -> this.findPiston();
@@ -116,9 +121,9 @@ public class TaskHandler {
             case RECYCLED_ITEMS -> this.recycledItems();
             case COMPLETE -> complete();
         }
-
-        if (internalCallbacks) {
+        if (privateInvoke) {
             debug("内部调用结束");
+            ++ticksPrivateInvokeMax;
         } else {
             debug("结束\r\n");
             ++ticks;
@@ -158,14 +163,20 @@ public class TaskHandler {
         if (piston == null) {
             findPiston();
         }
-        if (piston.isNeedModify() && !piston.modify) {
-            setModifyLook(piston);
-            return;
+        if (CheckingEnvironmentUtils.canPlace(piston.pos, Blocks.PISTON, piston.facing)) {
+            if (piston.isNeedModify() && !piston.modify) {
+                setModifyLook(piston);
+                return;
+            }
+            BlockPlacerUtils.placement(piston.pos, piston.facing, Items.PISTON);
+            addRecycled(piston.pos);
+            setWait(TaskState.WAIT_GAME_UPDATE, 1);
+            resetModifyLook();
+        } else {
+            this.piston = null;
+            this.state = TaskState.FIND_PISTON;
+            this.tick(true);
         }
-        BlockPlacerUtils.placement(piston.pos, piston.facing, Items.PISTON);
-        addRecycled(piston.pos);
-        setWait(TaskState.WAIT_GAME_UPDATE, 1);
-        resetModifyLook();
     }
 
     private void findSlimeBlock() {
@@ -222,7 +233,6 @@ public class TaskHandler {
             MessageUtils.setOverlayMessage(Text.literal(LanguageText.HANDLE_SEEK.getString().replace("%BlockPos%", pos.toShortString())));
         } else {
             state = TaskState.WAIT_GAME_UPDATE;
-            this.tick(true);
         }
     }
 
@@ -277,7 +287,6 @@ public class TaskHandler {
             MessageUtils.setOverlayMessage(Text.literal(LanguageText.HANDLE_SEEK.getString().replace("%BlockPos%", pos.toShortString())));
         } else {
             state = TaskState.WAIT_GAME_UPDATE;
-            this.tick(true);
         }
     }
 
@@ -344,7 +353,6 @@ public class TaskHandler {
             MessageUtils.setOverlayMessage(Text.literal(LanguageText.HANDLE_SEEK.getString().replace("%BlockPos%", pos.toShortString())));
         } else {
             state = TaskState.WAIT_GAME_UPDATE;
-            this.tick(true);
         }
     }
 
@@ -353,23 +361,25 @@ public class TaskHandler {
     }
 
     private void recycledItems() {
-        if (!recycled) recycled = true;
         if (!recycledQueue.isEmpty()) {
             var blockPos = recycledQueue.peek();
-            BlockBreakerUtils.updateBlockBreakingProgress(blockPos);
             var blockState = world.getBlockState(blockPos);
-            if (blockState.calcBlockBreakingDelta(player, world, blockPos) < 1F) {
+            if (Config.INSTANCE.taskShortWait && InventoryManagerUtils.isInstantBreakingBlock(blockState, playerInventory.getMainHandStack())) {
+                BlockBreakerUtils.updateBlockBreakingProgress(blockPos);
+                this.tick(true);
+            } else {
                 InventoryManagerUtils.autoSwitch(blockState);
-                return;
+                BlockBreakerUtils.updateBlockBreakingProgress(blockPos);
             }
             if (blockState.isReplaceable()) {
                 recycledQueue.remove(blockPos);
             }
             return;
         }
-        if (retryCount < retryCountMax) {
+        if (timeout && retryCount < retryCountMax) {
             retryCount++;
             state = TaskState.INITIALIZE;
+            this.tick(true);
         } else {
             state = TaskState.COMPLETE;
         }
@@ -377,10 +387,12 @@ public class TaskHandler {
 
     private void fail() {
         state = TaskState.RECYCLED_ITEMS;
+        tick(true);
     }
 
     private void timeout() {
-        state = TaskState.FAIL;
+        state = TaskState.RECYCLED_ITEMS;
+        tick(true);
     }
 
     private void execute() {
@@ -395,7 +407,7 @@ public class TaskHandler {
             // 切换到工具
             if (world.getBlockState(piston.pos).calcBlockBreakingDelta(player, world, piston.pos) < 1F) {
                 InventoryManagerUtils.autoSwitch(world.getBlockState(piston.pos));
-                setWait(TaskState.EXECUTE, Config.INSTANCE.taskShortWait ? 2 : 3);
+                setWait(TaskState.EXECUTE, Config.INSTANCE.taskShortWait ? 1 : 3);
                 return;
             }
             // 打掉附近红石火把
@@ -440,6 +452,7 @@ public class TaskHandler {
         if (!world.getBlockState(pos).isOf(block)) {
             this.state = TaskState.RECYCLED_ITEMS;
             this.debugUpdateStates("目标不存在");
+            this.tick(true);
             return;
         }
         if (!this.executed) {
@@ -448,43 +461,51 @@ public class TaskHandler {
             if (this.piston == null) {
                 this.debugUpdateStates("活塞未获取,准备查找合适的位置");
                 this.state = TaskState.FIND_PISTON;
+                this.tick(true);
                 return;
             }
-
             if (this.redstoneTorch == null) {
                 this.debugUpdateStates("红石火把未获取,准备查找合适的位置");
                 this.state = TaskState.FIND_REDSTONE_TORCH;
+                this.tick(true);
                 return;
             }
             if (this.slimeBlock == null) {
                 this.debugUpdateStates("红石火把底座未获取,准备查找合适的位置");
                 this.state = TaskState.FIND_SLIME_BLOCK;
+                this.tick(true);
                 return;
             }
 
             if (world.getBlockState(this.piston.pos).isReplaceable()) {
                 this.debugUpdateStates("[%s] 活塞未放置且该位置可放置物品,设置放置状态", this.piston.pos.toShortString());
                 this.state = TaskState.PLACE_PISTON;
+                this.tick(true);
                 return;
             } else if (!(world.getBlockState(this.piston.pos).getBlock() instanceof PistonBlock)) {
-                this.findPiston();
+                this.state = TaskState.FIND_PISTON;
+                this.tick(true);
                 return;
             }
 
             if (world.getBlockState(this.slimeBlock.pos).isReplaceable()) {
                 this.state = TaskState.PLACE_SLIME_BLOCK;
+                this.tick(true);
                 return;
             } else if (!Block.sideCoversSmallSquare(world, slimeBlock.pos, slimeBlock.facing)) {
-                this.findRedstoneTorch();
+                this.state = TaskState.FIND_REDSTONE_TORCH;
+                this.tick(true);
                 return;
             }
 
             if (world.getBlockState(redstoneTorch.pos).isReplaceable()) {
                 this.state = TaskState.PLACE_REDSTONE_TORCH;
+                this.tick(true);
                 return;
             } else if (!(world.getBlockState(redstoneTorch.pos).getBlock() instanceof RedstoneTorchBlock
                     || world.getBlockState(redstoneTorch.pos).getBlock() instanceof WallRedstoneTorchBlock)) {
-                this.findRedstoneTorch();
+                this.state = TaskState.FIND_REDSTONE_TORCH;
+                this.tick(true);
                 return;
             }
 
@@ -492,16 +513,17 @@ public class TaskHandler {
                 if (world.getBlockState(this.piston.pos).contains(PistonBlock.EXTENDED)) {
                     if (world.getBlockState(this.piston.pos).get(PistonBlock.EXTENDED)) {
                         this.state = TaskState.EXECUTE;
+                        this.tick(true);
                     }
                 }
             }
         }
     }
 
-    private void init() {
-        this.state = TaskState.WAIT_GAME_UPDATE;
+    private void init(boolean reset) {
         this.nextState = null;
         this.ticks = 0;
+        this.ticksPrivateInvokeMax = 1;
         this.ticksTotalMax = 100;
         this.ticksTimeoutMax = 30;
         this.tickWaitMax = 0;
@@ -513,6 +535,13 @@ public class TaskHandler {
         this.executed = false;
         this.recycled = false;
         this.timeout = false;
+        if (reset) {
+            this.placePiston();
+            this.findPiston();
+            this.findSlimeBlock();
+        }
+        this.state = TaskState.WAIT_GAME_UPDATE;
+        this.tick(true);
     }
 
     private void debug(String var1, Object... var2) {
@@ -530,6 +559,10 @@ public class TaskHandler {
     }
 
     public boolean isComplete() {
-        return state == TaskState.COMPLETE;
+        return state == TaskState.COMPLETE || ticks >= ticksTotalMax;
+    }
+
+    public TaskState getState() {
+        return state;
     }
 }
