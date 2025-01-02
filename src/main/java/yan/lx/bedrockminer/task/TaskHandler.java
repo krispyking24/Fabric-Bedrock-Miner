@@ -41,7 +41,6 @@ public class TaskHandler {
     public int retryCountMax;
     public boolean executed;
     public boolean recycled;
-    public int recycledCount;
     public boolean timeout;
 
     public TaskHandler(ClientWorld world, Block block, BlockPos pos) {
@@ -49,7 +48,6 @@ public class TaskHandler {
         this.world = world;
         this.block = block;
         this.pos = pos;
-        this.state = TaskState.INITIALIZE;
         this.taskSchemes = TaskSeekSchemeTools.findAllPossible(pos, world);
         this.recycledQueue = Queues.newConcurrentLinkedQueue();
         this.retryCount = 0;
@@ -76,15 +74,13 @@ public class TaskHandler {
     }
 
     private void resetModifyLook() {
-        TaskPlayerLookManager.reset();
+        if (TaskPlayerLookManager.isModify()) {
+            TaskPlayerLookManager.reset();
+        }
     }
 
     public void tick() {
         this.tick(false);
-    }
-
-    private void tickInternal() {
-        this.tick(true);
     }
 
     private void tick(boolean internalCallbacks) {
@@ -96,10 +92,10 @@ public class TaskHandler {
         if (this.state == TaskState.COMPLETE) {
             return;
         }
-        if (this.ticks > this.ticksTotalMax) {
+        if (this.ticks >= this.ticksTotalMax) {
             this.state = TaskState.COMPLETE;
         }
-        if (!this.timeout && this.ticks > this.ticksTimeoutMax) {
+        if (!this.timeout && this.ticks >= this.ticksTimeoutMax) {
             this.timeout = true;
             this.state = TaskState.TIMEOUT;
         }
@@ -141,7 +137,6 @@ public class TaskHandler {
         BlockPlacerUtils.placement(slimeBlock.pos, slimeBlock.facing, Items.SLIME_BLOCK);
         addRecycled(slimeBlock.pos);
         this.state = TaskState.WAIT_GAME_UPDATE;
-        // setWait(TaskState.WAIT_GAME_UPDATE, 1);
         resetModifyLook();
     }
 
@@ -155,7 +150,7 @@ public class TaskHandler {
         }
         BlockPlacerUtils.placement(redstoneTorch.pos, redstoneTorch.facing, Items.REDSTONE_TORCH);
         addRecycled(redstoneTorch.pos);
-        setWait(TaskState.WAIT_GAME_UPDATE, 3);
+        setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 3);
         resetModifyLook();
     }
 
@@ -227,7 +222,6 @@ public class TaskHandler {
             MessageUtils.setOverlayMessage(Text.literal(LanguageText.HANDLE_SEEK.getString().replace("%BlockPos%", pos.toShortString())));
         } else {
             state = TaskState.WAIT_GAME_UPDATE;
-            this.tickInternal();    // 查找算法,不需要独占TICK执行
         }
     }
 
@@ -282,7 +276,6 @@ public class TaskHandler {
             MessageUtils.setOverlayMessage(Text.literal(LanguageText.HANDLE_SEEK.getString().replace("%BlockPos%", pos.toShortString())));
         } else {
             state = TaskState.WAIT_GAME_UPDATE;
-            this.tickInternal();    // 查找算法,不需要独占TICK执行
         }
     }
 
@@ -349,7 +342,6 @@ public class TaskHandler {
             MessageUtils.setOverlayMessage(Text.literal(LanguageText.HANDLE_SEEK.getString().replace("%BlockPos%", pos.toShortString())));
         } else {
             state = TaskState.WAIT_GAME_UPDATE;
-            this.tickInternal();    // 查找算法,不需要独占TICK执行
         }
     }
 
@@ -359,8 +351,7 @@ public class TaskHandler {
 
     private void recycledItems() {
         if (!recycled) recycled = true;
-        var player = MinecraftClient.getInstance().player;
-        if (!recycledQueue.isEmpty() && player != null) {
+        if (!recycledQueue.isEmpty()) {
             var blockPos = recycledQueue.peek();
             BlockBreakerUtils.updateBlockBreakingProgress(blockPos);
             var blockState = world.getBlockState(blockPos);
@@ -373,18 +364,20 @@ public class TaskHandler {
             }
             return;
         }
-        state = TaskState.COMPLETE;
-        this.tickInternal();    // 查找算法,不需要独占TICK执行
+        if (retryCount < retryCountMax) {
+            retryCount++;
+            state = TaskState.INITIALIZE;
+        } else {
+            state = TaskState.COMPLETE;
+        }
     }
 
     private void fail() {
         state = TaskState.RECYCLED_ITEMS;
-        this.tickInternal();    // 查找算法,不需要独占TICK执行
     }
 
     private void timeout() {
         state = TaskState.FAIL;
-        this.tickInternal();    // 查找算法,不需要独占TICK执行
     }
 
     private void execute() {
@@ -399,7 +392,7 @@ public class TaskHandler {
             // 切换到工具
             if (world.getBlockState(piston.pos).calcBlockBreakingDelta(player, world, piston.pos) < 1F) {
                 InventoryManagerUtils.autoSwitch(world.getBlockState(piston.pos));
-                setWait(TaskState.EXECUTE, 3);
+                setWait(TaskState.EXECUTE, Config.INSTANCE.taskShortWait ? 2 : 3);
                 return;
             }
             // 打掉附近红石火把
@@ -420,30 +413,31 @@ public class TaskHandler {
             }
             executed = true;
         }
-        setWait(TaskState.WAIT_GAME_UPDATE, 3);
+        setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 3);
     }
 
     private void waitCustom() {
         if (--this.tickWaitMax <= 0) {
             this.state = this.nextState == null ? TaskState.WAIT_GAME_UPDATE : this.nextState;
             this.tickWaitMax = 0;
-            debug("等待已结束, 状态设置为: %s", this.state);
+            this.debug("等待已结束, 状态设置为: %s", this.state);
+            this.tick(true);
         } else {
             ++this.ticksTotalMax;
             ++this.ticksTimeoutMax;
-            debug("剩余等待TICK: %s", tickWaitMax);
+            this.debug("剩余等待TICK: %s", tickWaitMax);
         }
     }
 
     private void updateStates() {
         if (this.piston != null && world.getBlockState(this.piston.pos).isOf(Blocks.MOVING_PISTON)) {
-            debugUpdateStates("活塞正在移动");
+            this.debugUpdateStates("活塞正在移动");
             return;
         }
         if (!world.getBlockState(pos).isOf(block)) {
-            state = TaskState.RECYCLED_ITEMS;
-            debugUpdateStates("目标不存在");
-            this.tickInternal();
+            this.state = TaskState.RECYCLED_ITEMS;
+            this.debugUpdateStates("目标不存在");
+            this.tick(true);
             return;
         }
         if (!this.executed) {
@@ -452,35 +446,36 @@ public class TaskHandler {
             if (this.piston == null) {
                 this.debugUpdateStates("活塞未获取,准备查找合适的位置");
                 this.state = TaskState.FIND_PISTON;
-                this.tickInternal();    // 查找算法,不需要独占TICK执行
+                this.tick(true);
                 return;
             }
 
             if (this.redstoneTorch == null) {
                 this.debugUpdateStates("红石火把未获取,准备查找合适的位置");
                 this.state = TaskState.FIND_REDSTONE_TORCH;
-                this.tickInternal();    // 查找算法,不需要独占TICK执行
+                this.tick(true);
                 return;
             }
             if (this.slimeBlock == null) {
                 this.debugUpdateStates("红石火把底座未获取,准备查找合适的位置");
                 this.state = TaskState.FIND_SLIME_BLOCK;
-                this.tickInternal();    // 查找算法,不需要独占TICK执行
+                this.tick(true);
                 return;
             }
 
             if (world.getBlockState(this.piston.pos).isReplaceable()) {
                 this.debugUpdateStates("[%s] 活塞未放置且该位置可放置物品,设置放置状态", this.piston.pos.toShortString());
                 this.state = TaskState.PLACE_PISTON;
+                this.tick(true);
                 return;
             } else if (!(world.getBlockState(this.piston.pos).getBlock() instanceof PistonBlock)) {
                 this.findPiston();
                 return;
             }
 
-
             if (world.getBlockState(this.slimeBlock.pos).isReplaceable()) {
                 this.state = TaskState.PLACE_SLIME_BLOCK;
+                this.tick(true);
                 return;
             } else if (!Block.sideCoversSmallSquare(world, slimeBlock.pos, slimeBlock.facing)) {
                 this.findRedstoneTorch();
@@ -488,10 +483,13 @@ public class TaskHandler {
             }
 
             if (world.getBlockState(redstoneTorch.pos).isReplaceable()) {
-                state = TaskState.PLACE_REDSTONE_TORCH;
+                this.state = TaskState.PLACE_REDSTONE_TORCH;
+                this.tick(true);
                 return;
-            } else if (!(world.getBlockState(redstoneTorch.pos).getBlock() instanceof RedstoneTorchBlock)) {
+            } else if (!(world.getBlockState(redstoneTorch.pos).getBlock() instanceof RedstoneTorchBlock
+                    || world.getBlockState(redstoneTorch.pos).getBlock() instanceof WallRedstoneTorchBlock)) {
                 this.findRedstoneTorch();
+                this.tick(true);
                 return;
             }
 
@@ -499,6 +497,7 @@ public class TaskHandler {
                 if (world.getBlockState(this.piston.pos).contains(PistonBlock.EXTENDED)) {
                     if (world.getBlockState(this.piston.pos).get(PistonBlock.EXTENDED)) {
                         this.state = TaskState.EXECUTE;
+                        this.tick(true);
                     }
                 }
             }
@@ -512,19 +511,15 @@ public class TaskHandler {
         this.ticksTotalMax = 100;
         this.ticksTimeoutMax = 30;
         this.tickWaitMax = 0;
-
         this.direction = null;
         this.piston = null;
         this.redstoneTorch = null;
         this.slimeBlock = null;
-
         this.recycledQueue.clear();
         this.executed = false;
         this.recycled = false;
-        this.recycledCount = 0;
         this.timeout = false;
-
-        this.tickInternal();
+        this.tick(true);
     }
 
     private void debug(String var1, Object... var2) {

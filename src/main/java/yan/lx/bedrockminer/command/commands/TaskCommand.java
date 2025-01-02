@@ -46,16 +46,29 @@ public class TaskCommand extends CommandBase {
                             Config.save();
                             return 0;
                         })))
+                .then(literal("shortWait")
+                        .then(argument("isShortWait", BoolArgumentType.bool())
+                                .executes(this::onWait)
+                        )
+                )
                 .then(literal("add")
                         .then(argument("blockPos", BlockPosArgumentType.blockPos())
                                         .executes(this::add)
 //                                .then(argument("blockPos2", BlockPosArgumentType.blockPos()).executes(this::selection))))
                         ))
                 .then(literal("clear").executes(this::clear));
-//
-//                .then(literal("limit")
-//                        .then(argument("limit", IntegerArgumentType.integer(1, 5))
-//                                .executes(this::toggleSwitch)));
+
+    }
+
+    private int onWait(CommandContext<FabricClientCommandSource> context) {
+        var isShortWait = BoolArgumentType.getBool(context, "isShortWait");
+        if (isShortWait) {
+            MessageUtils.addMessage(LanguageText.COMMAND_TASK_SHORT_WAIT_SHORT);
+        } else {
+            MessageUtils.addMessage(LanguageText.COMMAND_TASK_SHORT_WAIT_NORMAL);
+        }
+        Config.INSTANCE.taskShortWait = isShortWait;
+        return 0;
     }
 
     private int selection(CommandContext<FabricClientCommandSource> context) {
@@ -87,18 +100,6 @@ public class TaskCommand extends CommandBase {
 
     private int clear(CommandContext<FabricClientCommandSource> context) {
         TaskManager.clearTask();
-        return 0;
-    }
-
-    private int toggleSwitch(CommandContext<FabricClientCommandSource> context) {
-        var config = Config.INSTANCE;
-        var limit = IntegerArgumentType.getInteger(context, "limit");
-        if (config.taskLimit != limit) {
-            config.taskLimit = limit;
-            Config.save();
-        }
-        var msg = LanguageText.COMMAND_TASK_LIMIT.getString().replace("%limit%", String.valueOf(limit));
-        MessageUtils.addMessage(Text.translatable(msg));
         return 0;
     }
 }

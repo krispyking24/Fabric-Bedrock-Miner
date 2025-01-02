@@ -27,7 +27,8 @@ public class LanguageText {
     public static final Text COMMAND_BLOCK_BLACKLIST_ADD = Text.translatable("bedrockminer.command.block.blacklist.add");
     public static final Text COMMAND_BLOCK_BLACKLIST_REMOVE = Text.translatable("bedrockminer.command.block.blacklist.remove");
 
-    public static final Text COMMAND_TASK_LIMIT = Text.translatable("bedrockminer.command.task.limit");
+    public static final Text COMMAND_TASK_SHORT_WAIT_NORMAL = Text.translatable("bedrockminer.command.task.short_wait.normal");
+    public static final Text COMMAND_TASK_SHORT_WAIT_SHORT = Text.translatable("bedrockminer.command.task.short_wait.short");
     public static final Text COMMAND_TASK_CLEAR = Text.translatable("bedrockminer.command.task.clear");
 
     public static final Text COMMAND_DISABLE_ON = Text.translatable("bedrockminer.command.disable.on");

@@ -11,9 +11,6 @@ This project fork modified from [LXYan2333/Fabric-Bedrock-Miner](https://github.
 #### Block whitelist (break supported)
 - Bedrock
 
-#### Block blacklist (Break is not supported)
-- None
-
 #### Server block blacklist (Break is not supported, cannot be changed by command, built-in filter)
 - Command Block
 - Chain Command Block
@@ -33,9 +30,8 @@ This project fork modified from [LXYan2333/Fabric-Bedrock-Miner](https://github.
 - `/bedrockMiner behavior floor remove <floor>` remove a floor from the blacklist.
 - `/bedrockMiner behavior block whitelist add <block>` add whitelist block list
 - `/bedrockMiner behavior block whitelist remove <block>` remove whitelist block list
-- `/bedrockMiner behavior block blacklist add <block>` add blacklist block list
-- `/bedrockMiner behavior block blacklist remove <block>` remove blacklist block list
 - `/bedrockMiner task add <x, y, z>` add a task
+- `/bedrockMiner task shortWait <bool>` short custom wait
 - `/bedrockMiner task clear` clear the task
 - `/bedrockMiner debug true` enables debug mode
 - `/bedrockMiner debug false` turn off debug mode

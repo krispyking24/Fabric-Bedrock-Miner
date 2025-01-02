@@ -18,6 +18,7 @@ public class Config {
     public boolean debug = false;
     public boolean vertical = true;
     public boolean horizontal = true;
+    public boolean taskShortWait = false;
     public int taskLimit = 1;
     public List<Integer> floorsBlacklist = new ArrayList<>();
     public List<String> blockWhitelist = getDefaultBlockWhitelist();

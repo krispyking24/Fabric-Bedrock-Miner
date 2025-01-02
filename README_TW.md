@@ -11,9 +11,6 @@
 #### 白名單方塊（支援破壞）
 - 基岩
 
-#### 黑名單方塊（不支援破壞）
-- 無
-
 #### 伺服器黑名單方塊（不支援破壞，無法透過指令更改，內建過濾器）
 - 屏障
 - 指令方塊
@@ -34,9 +31,8 @@
 - `/bedrockMiner behavior floor remove <floor>` 移除層數從黑名單
 - `/bedrockMiner behavior block whitelist add <block>` 增加白名單方塊
 - `/bedrockMiner behavior block whitelist remove <block>` 移除白名單方塊
-- `/bedrockMiner behavior block blacklist add <block>` 增加黑名單方塊
-- `/bedrockMiner behavior block blacklist remove <block>` 移除黑名單方塊
 - `/bedrockMiner task add <x, y, z>` 新增任務
+- `/bedrockMiner task shortWait <bool>` 短自定義等待
 - `/bedrockMiner task clear` 清空任務
 - `/bedrockMiner debug true` 開啟除錯模式
 - `/bedrockMiner debug false` 關閉除錯模式

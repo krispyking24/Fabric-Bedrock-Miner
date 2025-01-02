@@ -18,6 +18,8 @@
   "bedrockminer.command.block.blacklist.add": "§7添加黑名单方块 \"#blockName#\" 成功!",
   "bedrockminer.command.block.blacklist.remove": "§7删除黑名单方块 \"#blockName#\" 成功!",
   "bedrockminer.command.exception.invalidString": "§7输入的 \"%input%\" 字符串错误！",
+  "bedrockminer.command.task.short_wait.normal": "§2自定义等待已设置为正常速度！",
+  "bedrockminer.command.task.short_wait.short": "§7自定义等待已设置为快速模式！",
   "bedrockminer.command.task.clear": "§2成功将任务缓存清空！",
   "bedrockminer.command.disable.on": "§2禁用成功！",
   "bedrockminer.command.disable.off": "§7启用成功！",
