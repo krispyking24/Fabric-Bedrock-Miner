@@ -535,11 +535,6 @@ public class TaskHandler {
         this.executed = false;
         this.recycled = false;
         this.timeout = false;
-        if (reset) {
-            this.placePiston();
-            this.findPiston();
-            this.findSlimeBlock();
-        }
         this.state = TaskState.WAIT_GAME_UPDATE;
         this.tick(true);
     }

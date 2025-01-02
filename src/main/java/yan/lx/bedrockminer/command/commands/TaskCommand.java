@@ -68,6 +68,7 @@ public class TaskCommand extends CommandBase {
             MessageUtils.addMessage(LanguageText.COMMAND_TASK_SHORT_WAIT_NORMAL);
         }
         Config.INSTANCE.taskShortWait = isShortWait;
+        Config.save();
         return 0;
     }
 
