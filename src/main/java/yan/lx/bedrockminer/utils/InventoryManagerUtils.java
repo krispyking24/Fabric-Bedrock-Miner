@@ -56,7 +56,7 @@ public class InventoryManagerUtils {
         if (PlayerInventory.isValidHotbarIndex(slot)) {
             playerInventory.selectedSlot = slot;
         } else {
-            interactionManager.pickFromInventory(slot);
+            interactionManager.pickItemFromBlock(BlockPos.fromLong(slot), true);
         }
         networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.selectedSlot)); // 发送更新手持物品的数据包
     }
