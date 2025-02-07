@@ -74,7 +74,3 @@ https://www.bilibili.com/video/BV1Fv411P7Vc
 ## Q群
 
 ![群二维码](https://github.com/Bunnui/Fabric-Bedrock-Miner/assets/37466008/7f1c2bc7-876b-4d34-9534-c72a3b555a2a)
-
-## 爱发电
-
-https://afdian.net/a/bunny_i
