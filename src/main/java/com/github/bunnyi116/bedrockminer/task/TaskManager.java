@@ -8,17 +8,17 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 import com.github.bunnyi116.bedrockminer.config.Config;
-import com.github.bunnyi116.bedrockminer.utils.BlockUtils;
-import com.github.bunnyi116.bedrockminer.utils.InventoryManagerUtils;
-import com.github.bunnyi116.bedrockminer.utils.MessageUtils;
+import com.github.bunnyi116.bedrockminer.util.BlockUtils;
+import com.github.bunnyi116.bedrockminer.util.InventoryManagerUtils;
+import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 
 import java.util.LinkedList;
 import java.util.List;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
 import static com.github.bunnyi116.bedrockminer.I18n.*;
-import static com.github.bunnyi116.bedrockminer.utils.InteractionUtils.getClosestFace;
-import static com.github.bunnyi116.bedrockminer.utils.InteractionUtils.isBlockWithinReach;
+import static com.github.bunnyi116.bedrockminer.util.InteractionUtils.getClosestFace;
+import static com.github.bunnyi116.bedrockminer.util.InteractionUtils.isBlockWithinReach;
 
 public class TaskManager {
     private static final List<TaskHandler> handleTasks = new LinkedList<>();

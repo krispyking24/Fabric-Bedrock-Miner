@@ -8,7 +8,7 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Direction;
 import com.github.bunnyi116.bedrockminer.command.argument.BlockPosArgumentType;
-import com.github.bunnyi116.bedrockminer.utils.BlockPlacerUtils;
+import com.github.bunnyi116.bedrockminer.util.BlockPlacerUtils;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;

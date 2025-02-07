@@ -1,4 +1,4 @@
-package com.github.bunnyi116.bedrockminer.utils;
+package com.github.bunnyi116.bedrockminer.util;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;

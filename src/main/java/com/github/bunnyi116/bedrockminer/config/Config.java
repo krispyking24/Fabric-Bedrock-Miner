@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Blocks;
 import com.github.bunnyi116.bedrockminer.Debug;
-import com.github.bunnyi116.bedrockminer.utils.BlockUtils;
+import com.github.bunnyi116.bedrockminer.util.BlockUtils;
 
 import java.io.*;
 import java.util.ArrayList;

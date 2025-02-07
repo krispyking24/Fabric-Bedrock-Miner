@@ -1,6 +1,6 @@
 package com.github.bunnyi116.bedrockminer.task;
 
-import com.github.bunnyi116.bedrockminer.utils.*;
+import com.github.bunnyi116.bedrockminer.util.*;
 import com.google.common.collect.Queues;
 import net.minecraft.block.*;
 import net.minecraft.client.world.ClientWorld;

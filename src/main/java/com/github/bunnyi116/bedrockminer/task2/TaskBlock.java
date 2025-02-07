@@ -129,6 +129,10 @@ public abstract class TaskBlock {
         return this.offset(Direction.EAST, distance);
     }
 
+    public boolean equalsPos(BlockPos blockPos) {
+        return this.pos.equals(blockPos);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

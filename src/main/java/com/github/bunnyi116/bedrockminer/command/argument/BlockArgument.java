@@ -13,7 +13,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 import com.github.bunnyi116.bedrockminer.I18n;
-import com.github.bunnyi116.bedrockminer.utils.StringReaderUtils;
+import com.github.bunnyi116.bedrockminer.util.StringReaderUtils;
 
 import java.util.Arrays;
 import java.util.Collection;

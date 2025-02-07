@@ -11,12 +11,12 @@ import com.github.bunnyi116.bedrockminer.I18n;
 import com.github.bunnyi116.bedrockminer.command.CommandBase;
 import com.github.bunnyi116.bedrockminer.command.argument.BlockArgument;
 import com.github.bunnyi116.bedrockminer.config.Config;
-import com.github.bunnyi116.bedrockminer.utils.MessageUtils;
+import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
-import static com.github.bunnyi116.bedrockminer.utils.BlockUtils.getBlockId;
-import static com.github.bunnyi116.bedrockminer.utils.BlockUtils.getBlockName;
+import static com.github.bunnyi116.bedrockminer.util.BlockUtils.getBlockId;
+import static com.github.bunnyi116.bedrockminer.util.BlockUtils.getBlockName;
 
 public class BehaviorCommand extends CommandBase {
     @Override

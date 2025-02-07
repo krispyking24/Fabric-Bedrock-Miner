@@ -13,7 +13,7 @@ import com.github.bunnyi116.bedrockminer.command.CommandBase;
 import com.github.bunnyi116.bedrockminer.command.argument.BlockPosArgumentType;
 import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.task.TaskManager;
-import com.github.bunnyi116.bedrockminer.utils.MessageUtils;
+import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 
 import java.util.ArrayList;
 import java.util.List;
