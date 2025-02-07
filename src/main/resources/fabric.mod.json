@@ -5,9 +5,8 @@
   "name": "Bedrock Miner",
   "description": "Client mod to mine bedrock!",
   "authors": [
-    "Bunny_i",
-    "LXYan",
-    "bunnyi116"
+    "bunnyi116",
+    "LXYan"
   ],
   "contact": {
     "homepage": "https://github.com/bunnyi116/fabric-bedrock-miner",
