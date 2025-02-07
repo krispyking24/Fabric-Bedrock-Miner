@@ -1,5 +1,6 @@
 package com.github.bunnyi116.bedrockminer.task2;
 
+import com.github.bunnyi116.bedrockminer.task2.block.scheme.TaskSchemeLeverBlock;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import com.github.bunnyi116.bedrockminer.task2.block.TaskTargetBlock;
@@ -16,6 +17,10 @@ public class Finder {
 
     public final static Direction[] DEFAULT_REDSTONE_TORCH_DIRECTIONS = new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.UP, Direction.DOWN};
     public final static Direction[] DEFAULT_REDSTONE_TORCH_FACINGS = new Direction[]{Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+
+    public final static Direction[] DEFAULT_LEVER_DIRECTIONS = new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.UP, Direction.DOWN};
+    public final static Direction[] DEFAULT_LEVER_FACINGS = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+
 
     public static TaskSchemePistonBlock[] findPiston(TaskTargetBlock targetBlock) {
         List<TaskSchemePistonBlock> pistons = new ArrayList<>();
@@ -61,6 +66,31 @@ public class Finder {
             }
         }
         return redstoneTorchs.toArray(new TaskSchemeRedstoneTorchBlock[0]);
+    }
+
+    public static TaskSchemeLeverBlock[] findLever(TaskTargetBlock target, TaskSchemePistonBlock piston) {
+        List<TaskSchemeLeverBlock> levers = new ArrayList<>();
+        for (Direction leverDirection : DEFAULT_LEVER_DIRECTIONS) {
+            final BlockPos leverPos = target.offset(leverDirection);
+            if (leverPos.equals(piston.pos)) continue;  // 在活塞位置
+            if (leverPos.equals(piston.offset(piston.facing))) continue;  // 在活塞头位置
+            for (Direction leverFacing : DEFAULT_LEVER_FACINGS) {
+                BlockPos basePos = leverPos.offset(leverFacing.getOpposite());
+                if (basePos.equals(piston.pos)) continue;  // 底座是活塞
+                levers.add(new TaskSchemeLeverBlock(piston.world, leverPos, leverDirection, leverFacing));
+            }
+        }
+        for (Direction leverDirection : DEFAULT_LEVER_DIRECTIONS) {
+            final BlockPos leverPos = piston.offset(leverDirection);
+            if (leverPos.equals(target.pos)) continue;  // 在目标方块位置
+            if (leverPos.equals(piston.offset(piston.facing))) continue;  // 在活塞头位置
+            for (Direction leverFacing : DEFAULT_LEVER_FACINGS) {
+                BlockPos basePos = leverPos.offset(leverFacing.getOpposite());
+                if (basePos.equals(piston.pos)) continue;  // 底座是活塞
+                levers.add(new TaskSchemeLeverBlock(piston.world, leverPos, leverDirection, leverFacing));
+            }
+        }
+        return levers.toArray(new TaskSchemeLeverBlock[0]);
     }
 
     public static TaskSchemeBaseBlockBlock findRedstoneTorchBaseBlock(TaskSchemeRedstoneTorchBlock redstoneTorch) {
