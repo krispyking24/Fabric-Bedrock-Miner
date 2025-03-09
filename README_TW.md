@@ -1,12 +1,14 @@
 **繁體中文** | [简体中文](./README.md) | [English](./README_EN.md) 
 
 # Fabric-Bedrock-Miner
+
 幫你 "挖掘" 基岩的Fabric使用者端模組！
 
 # 說明
+
 此項目從 [LXYan2333/Fabric-Bedrock-Miner](https://github.com/LXYan2333/Fabric-Bedrock-Miner) fork 進行修改
 
-## 預設方塊列表清單
+## 預設方塊列表
 
 #### 白名單方塊（支援破壞）
 - 基岩
@@ -38,11 +40,12 @@
 - `/bedrockMiner debug false` 關閉除錯模式
 
 # 影片
-https://www.youtube.com/watch?v=b8Y86yxjr_Y
-</br>
+
+https://www.youtube.com/watch?v=b8Y86yxjr_Y  
 https://www.bilibili.com/video/BV1Fv411P7Vc
 
 # 使用
+
 準備好以下物品：
 1. 效率V 鑽石/獄隨鎬 
 2. 挖掘加速II 烽火台
@@ -52,7 +55,7 @@ https://www.bilibili.com/video/BV1Fv411P7Vc
 
 **空手**右鍵基岩啟動模組（注意要空手）
 
-啟動後，左鍵基岩，模組會自動破除基岩。
+啟動後，左鍵基岩，模組會自動破壞基岩。
 
 再次空手右鍵基岩關閉模組。
 
