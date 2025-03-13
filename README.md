@@ -8,7 +8,7 @@
 
 该项目复刻自 [LXYan2333/Fabric-Bedrock-Miner](https://github.com/LXYan2333/Fabric-Bedrock-Miner) 进行修改
 
-## 默认方块列表清单
+## 默认方块列表
 
 #### 破坏方块白名单（支持破坏）
 
@@ -33,7 +33,7 @@
 - 空气
 - 可替换方块
 
-## 客户端指命说明
+## 客户端指令说明
 
 - `/bedrockMiner` 开启/关闭
 - `/bedrockMiner disable` 禁用模组（开启后模组将不会继续处理）
@@ -42,15 +42,14 @@
 - `/bedrockMiner behavior block whitelist add <block>` 添加白名单方块列表
 - `/bedrockMiner behavior block whitelist remove <block>` 移除白名单方块列表
 - `/bedrockMiner task add <x, y, z>` 添加任务
-- `/bedrockMiner task shortWait <bool>` 短自定义等待
+- `/bedrockMiner task shortWait <bool>` 设置短暂自定义等待时间
 - `/bedrockMiner task clear` 清理任务
 - `/bedrockMiner debug true` 开启调试模式
 - `/bedrockMiner debug false` 关闭调试模式
 
 # 视频教程
 
-https://www.youtube.com/watch?v=b8Y86yxjr_Y
-</br>
+https://www.youtube.com/watch?v=b8Y86yxjr_Y  
 https://www.bilibili.com/video/BV1Fv411P7Vc
 
 # 使用方法
@@ -58,7 +57,7 @@ https://www.bilibili.com/video/BV1Fv411P7Vc
 使用前需准备好如下物品：
 
 1. 效率 Ⅴ 钻石镐（下界合金也行）
-2. 急迫 Ⅱ 信标
+2. 急迫 II 信标
 3. 一些活塞
 4. 一些红石火把
 5. 黏液块若干
