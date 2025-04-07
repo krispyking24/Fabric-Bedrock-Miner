@@ -80,7 +80,7 @@ public class TaskCommand extends CommandBase {
     private Text getModeText(boolean mode, Direction... directions) {
         List<String> list = new ArrayList<>();
         for (Direction direction : directions) {
-            list.add(direction.getName());
+            list.add(direction.getId());
         }
         return Text.literal(String.format("%s: %s", String.join(", ", list), mode));
     }

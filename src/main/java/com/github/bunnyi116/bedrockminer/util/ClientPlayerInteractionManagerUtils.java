@@ -36,7 +36,7 @@ public class ClientPlayerInteractionManagerUtils {  // 该类是为后续开发�
     private static int breakingTickMax;
 
     private static void syncSelectedSlot() {
-        int i = player.getInventory().selectedSlot;
+        int i = player.getInventory().getSelectedSlot();
         if (i != lastSelectedSlot) {
             lastSelectedSlot = i;
             networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(lastSelectedSlot));

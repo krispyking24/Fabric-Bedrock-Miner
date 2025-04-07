@@ -54,17 +54,17 @@ public class InventoryManagerUtils {
     public static void switchToSlot(int slot) {
         // 背包中没有指定的物品
         if (PlayerInventory.isValidHotbarIndex(slot)) {
-            playerInventory.selectedSlot = slot;
+            playerInventory.setSelectedSlot(slot);
         } else {
             interactionManager.pickItemFromBlock(BlockPos.fromLong(slot), true);
         }
-        networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.selectedSlot)); // 发送更新手持物品的数据包
+        networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.getSelectedSlot())); // 发送更新手持物品的数据包
     }
 
     public static void switchToItem(int minDamage, Item... items) {
         // 遍历主背包
-        for (int i = 0; i < playerInventory.main.size(); i++) {
-            ItemStack stack = playerInventory.main.get(i);
+        for (int i = 0; i < playerInventory.getMainStacks().size(); i++) {
+            ItemStack stack = playerInventory.getMainStacks().get(i);
             if (stack.isEmpty()) {
                 continue;
             }

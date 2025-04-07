@@ -28,7 +28,7 @@ public class DirectionArgumentType implements ArgumentType<Direction> {
         }
         var string = reader.getString().substring(i, reader.getCursor());
         for (Direction direction : Direction.values()) {
-            if (string.equalsIgnoreCase(direction.getName())) {
+            if (string.equalsIgnoreCase(direction.getId())) {
                 return direction;
             }
         }
@@ -46,8 +46,8 @@ public class DirectionArgumentType implements ArgumentType<Direction> {
         }
         var string = reader.getString().substring(i, reader.getCursor());
         for (Direction direction : Direction.values()) {
-            if (direction.getName().contains(string)) {
-                builder.suggest(direction.getName());
+            if (direction.getId().contains(string)) {
+                builder.suggest(direction.getId());
             }
         }
         return builder.buildFuture();

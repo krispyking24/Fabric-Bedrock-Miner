@@ -45,7 +45,6 @@ public class TaskHandler {
     public boolean timeout;
 
     public TaskHandler(ClientWorld world, Block block, BlockPos pos) {
-        this.debug("[构造函数] 开始\r\n");
         this.world = world;
         this.block = block;
         this.pos = pos;
@@ -54,7 +53,6 @@ public class TaskHandler {
         this.retryCount = 0;
         this.retryCountMax = 1;
         this.init(false);
-        this.debug("[构造函数] 结束\r\n");
     }
 
     private void setWait(@Nullable TaskState nextState, int tickWaitMax) {
