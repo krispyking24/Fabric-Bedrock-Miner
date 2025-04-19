@@ -6,14 +6,11 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
 
 public class BlockPlacerUtils {
-    public static final double MAX_BREAK_SQUARED_DISTANCE = MathHelper.square(6.0);
-
     /**
      * 活塞放置
      *
@@ -37,7 +34,7 @@ public class BlockPlacerUtils {
             default -> 0F;
         };
 
-        if (!InteractionUtils.isBlockWithinReach(blockPos, facing)) {
+        if (!InteractionUtils.isBlockWithinReach(blockPos, facing, 1F)) {
             return;
         }
         if (items != null) {

@@ -1,5 +1,6 @@
 package com.github.bunnyi116.bedrockminer;
 
+import com.github.bunnyi116.bedrockminer.command.CommandManager;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -12,7 +13,6 @@ import net.minecraft.world.GameMode;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.github.bunnyi116.bedrockminer.command.CommandManager;
 
 public class BedrockMiner implements ModInitializer {
     public static final String MOD_NAME = "Bedrock Miner";

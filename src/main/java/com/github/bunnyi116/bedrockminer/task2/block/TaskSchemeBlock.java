@@ -1,9 +1,9 @@
 package com.github.bunnyi116.bedrockminer.task2.block;
 
+import com.github.bunnyi116.bedrockminer.task2.TaskBlock;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import com.github.bunnyi116.bedrockminer.task2.TaskBlock;
 
 public abstract class TaskSchemeBlock extends TaskBlock {
     public final Direction direction;

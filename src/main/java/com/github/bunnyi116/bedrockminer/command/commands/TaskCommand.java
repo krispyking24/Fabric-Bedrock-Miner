@@ -1,5 +1,11 @@
 package com.github.bunnyi116.bedrockminer.command.commands;
 
+import com.github.bunnyi116.bedrockminer.I18n;
+import com.github.bunnyi116.bedrockminer.command.CommandBase;
+import com.github.bunnyi116.bedrockminer.command.argument.BlockPosArgumentType;
+import com.github.bunnyi116.bedrockminer.config.Config;
+import com.github.bunnyi116.bedrockminer.task.TaskManager;
+import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -8,12 +14,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Direction;
-import com.github.bunnyi116.bedrockminer.I18n;
-import com.github.bunnyi116.bedrockminer.command.CommandBase;
-import com.github.bunnyi116.bedrockminer.command.argument.BlockPosArgumentType;
-import com.github.bunnyi116.bedrockminer.config.Config;
-import com.github.bunnyi116.bedrockminer.task.TaskManager;
-import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 
 import java.util.ArrayList;
 import java.util.List;

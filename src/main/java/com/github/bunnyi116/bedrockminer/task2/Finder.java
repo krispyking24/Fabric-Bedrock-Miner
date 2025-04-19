@@ -1,12 +1,12 @@
 package com.github.bunnyi116.bedrockminer.task2;
 
-import com.github.bunnyi116.bedrockminer.task2.block.scheme.TaskSchemeLeverBlock;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import com.github.bunnyi116.bedrockminer.task2.block.TaskTargetBlock;
 import com.github.bunnyi116.bedrockminer.task2.block.scheme.TaskSchemeBaseBlockBlock;
+import com.github.bunnyi116.bedrockminer.task2.block.scheme.TaskSchemeLeverBlock;
 import com.github.bunnyi116.bedrockminer.task2.block.scheme.TaskSchemePistonBlock;
 import com.github.bunnyi116.bedrockminer.task2.block.scheme.TaskSchemeRedstoneTorchBlock;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 import java.util.ArrayList;
 import java.util.List;

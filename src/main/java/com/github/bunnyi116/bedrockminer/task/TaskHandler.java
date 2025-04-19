@@ -1,5 +1,8 @@
 package com.github.bunnyi116.bedrockminer.task;
 
+import com.github.bunnyi116.bedrockminer.Debug;
+import com.github.bunnyi116.bedrockminer.I18n;
+import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.util.*;
 import com.google.common.collect.Queues;
 import net.minecraft.block.*;
@@ -10,26 +13,26 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import com.github.bunnyi116.bedrockminer.Debug;
-import com.github.bunnyi116.bedrockminer.I18n;
-import com.github.bunnyi116.bedrockminer.config.Config;
 
 import java.util.Queue;
 
-import static net.minecraft.block.Block.sideCoversSmallSquare;
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.player;
+import static net.minecraft.block.Block.sideCoversSmallSquare;
 
 public class TaskHandler {
     public final ClientWorld world;
     public final Block block;
     public final BlockPos pos;
+
     private TaskState state;
     private @Nullable TaskState nextState;
+
     public final TaskSeekSchemeInfo[] taskSchemes;
     public @Nullable Direction direction;
     public @Nullable TaskSeekBlockInfo piston;
     public @Nullable TaskSeekBlockInfo redstoneTorch;
     public @Nullable TaskSeekBlockInfo slimeBlock;
+
     public final Queue<BlockPos> recycledQueue;
     public boolean executeModify;
     private int ticks;
@@ -38,8 +41,8 @@ public class TaskHandler {
     private int ticksTotalMax;
     private int ticksTimeoutMax;
     private int tickWaitMax;
-    public int retryCount;
-    public int retryCountMax;
+    public int retryCount = 0;
+    public int retryCountMax = 1;
     public boolean executed;
     public boolean recycled;
     public boolean timeout;
@@ -50,8 +53,6 @@ public class TaskHandler {
         this.pos = pos;
         this.taskSchemes = TaskSeekSchemeTools.findAllPossible(pos, world);
         this.recycledQueue = Queues.newConcurrentLinkedQueue();
-        this.retryCount = 0;
-        this.retryCountMax = 1;
         this.init(false);
     }
 
@@ -86,7 +87,7 @@ public class TaskHandler {
         if (this.state == TaskState.COMPLETE) {
             return;
         }
-        if (privateInvoke && this.ticksPrivateInvoke++ >= ticksPrivateInvokeMax)   // 防止无限死循环
+        if (privateInvoke && this.ticksPrivateInvoke++ >= ticksPrivateInvokeMax)   // 暂时不知道什么情况，临时防止无限死循环办法
         {
             this.ticksPrivateInvoke = 0;
             return;
@@ -114,10 +115,18 @@ public class TaskHandler {
             case PLACE_REDSTONE_TORCH -> this.placeRedstoneTorch();
             case PLACE_SLIME_BLOCK -> this.placeSlimeBlock();
             case EXECUTE -> this.execute();
-            case TIMEOUT -> this.timeout();
-            case FAIL -> this.fail();
+            case TIMEOUT -> {
+                debug("任务已超时");
+                state = TaskState.RECYCLED_ITEMS;
+                tick(true);
+            }
+            case FAIL -> {
+                debug("任务已失败");
+                state = TaskState.RECYCLED_ITEMS;
+                tick(true);
+            }
             case RECYCLED_ITEMS -> this.recycledItems();
-            case COMPLETE -> complete();
+            case COMPLETE -> debug("任务已完成");
         }
         if (privateInvoke) {
             debug("内部调用结束");
@@ -358,16 +367,13 @@ public class TaskHandler {
         }
     }
 
-    private void complete() {
-        debug("任务已完成");
-    }
-
     private void recycledItems() {
         if (!recycledQueue.isEmpty()) {
             var blockPos = recycledQueue.peek();
             var blockState = world.getBlockState(blockPos);
+            debug("任务物品正在回收: (%s) --> %s", blockPos.toShortString(), blockState.getBlock().getName().getString());
             InventoryManagerUtils.autoSwitch(blockState);
-            BlockBreakerUtils.updateBlockBreakingProgress(blockPos);
+            ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(blockPos);
             if (blockState.isReplaceable()) {
                 recycledQueue.remove(blockPos);
             }
@@ -375,21 +381,13 @@ public class TaskHandler {
         }
         if (timeout && retryCount < retryCountMax) {
             retryCount++;
+            debug("任务物品回收已完成, 超时重试: %s", retryCount);
             state = TaskState.INITIALIZE;
             this.tick(true);
         } else {
+            debug("任务物品回收已完成");
             state = TaskState.COMPLETE;
         }
-    }
-
-    private void fail() {
-        state = TaskState.RECYCLED_ITEMS;
-        tick(true);
-    }
-
-    private void timeout() {
-        state = TaskState.RECYCLED_ITEMS;
-        tick(true);
     }
 
     private void execute() {
@@ -411,13 +409,13 @@ public class TaskHandler {
             BlockPos[] nearbyRedstoneTorch = TaskSeekSchemeTools.findPistonNearbyRedstoneTorch(piston.pos, world);
             for (BlockPos pos : nearbyRedstoneTorch) {
                 if (world.getBlockState(pos).getBlock() instanceof RedstoneTorchBlock) {
-                    BlockBreakerUtils.updateBlockBreakingProgress(pos);
+                    ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(pos);
                 }
             }
             if (world.getBlockState(redstoneTorch.pos).getBlock() instanceof RedstoneTorchBlock) {
-                BlockBreakerUtils.updateBlockBreakingProgress(redstoneTorch.pos);
+                ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(redstoneTorch.pos);
             }
-            BlockBreakerUtils.updateBlockBreakingProgress(piston.pos);
+            ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(piston.pos);
             BlockPlacerUtils.placement(piston.pos, direction.getOpposite(), Items.PISTON);
             addRecycled(piston.pos);
             if (executeModify) {

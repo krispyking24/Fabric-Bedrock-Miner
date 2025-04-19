@@ -1,10 +1,10 @@
 package com.github.bunnyi116.bedrockminer.command;
 
+import com.github.bunnyi116.bedrockminer.BedrockMiner;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
-import com.github.bunnyi116.bedrockminer.BedrockMiner;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 

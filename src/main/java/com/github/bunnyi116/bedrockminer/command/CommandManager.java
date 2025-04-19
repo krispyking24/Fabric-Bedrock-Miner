@@ -1,8 +1,5 @@
 package com.github.bunnyi116.bedrockminer.command;
 
-import com.mojang.brigadier.context.CommandContext;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import com.github.bunnyi116.bedrockminer.BedrockMiner;
 import com.github.bunnyi116.bedrockminer.Test;
 import com.github.bunnyi116.bedrockminer.command.commands.BehaviorCommand;
@@ -10,13 +7,15 @@ import com.github.bunnyi116.bedrockminer.command.commands.DebugCommand;
 import com.github.bunnyi116.bedrockminer.command.commands.DisableCommand;
 import com.github.bunnyi116.bedrockminer.command.commands.TaskCommand;
 import com.github.bunnyi116.bedrockminer.task.TaskManager;
+import com.mojang.brigadier.context.CommandContext;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 import java.util.ArrayList;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 public class CommandManager {
-
     private static final ArrayList<CommandBase> commands;
 
     static {

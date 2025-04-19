@@ -31,11 +31,11 @@ public class InteractionUtils {
     }
 
     public static boolean isBlockWithinReach(BlockPos targetPos) {
-        return isBlockWithinReach(targetPos, getClosestFace(targetPos));
+        return isBlockWithinReach(targetPos, getClosestFace(targetPos), 0);
     }
 
-    public static boolean isBlockWithinReach(BlockPos targetPos, Direction side) {
-        return isBlockWithinReach(targetPos, getClosestFace(targetPos), 0);
+    public static boolean isBlockWithinReach(BlockPos targetPos, double deltaReachDistance) {
+        return isBlockWithinReach(targetPos, getClosestFace(targetPos), deltaReachDistance);
     }
 
     public static boolean isBlockWithinReach(BlockPos targetPos, Direction side, double deltaReachDistance) {

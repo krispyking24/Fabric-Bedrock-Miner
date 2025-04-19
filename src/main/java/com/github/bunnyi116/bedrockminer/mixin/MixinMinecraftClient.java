@@ -1,5 +1,8 @@
 package com.github.bunnyi116.bedrockminer.mixin;
 
+import com.github.bunnyi116.bedrockminer.BedrockMiner;
+import com.github.bunnyi116.bedrockminer.task.TaskManager;
+import com.github.bunnyi116.bedrockminer.util.ClientPlayerInteractionManagerUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
@@ -16,9 +19,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-import com.github.bunnyi116.bedrockminer.BedrockMiner;
-import com.github.bunnyi116.bedrockminer.task.TaskManager;
-import com.github.bunnyi116.bedrockminer.util.ClientPlayerInteractionManagerUtils;
 
 @Mixin(value = MinecraftClient.class, priority = 999)
 public class MixinMinecraftClient {

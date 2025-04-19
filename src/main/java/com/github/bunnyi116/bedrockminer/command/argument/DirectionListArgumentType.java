@@ -1,5 +1,6 @@
 package com.github.bunnyi116.bedrockminer.command.argument;
 
+import com.github.bunnyi116.bedrockminer.I18n;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -10,7 +11,6 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Direction;
-import com.github.bunnyi116.bedrockminer.I18n;
 
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;

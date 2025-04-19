@@ -74,10 +74,8 @@ public class TaskPlayerLookManager {
         }
     }
 
-
     public static void onTick() {
-        // 自动重置视角
-        if (isModify()) {
+        if (isModify()) {   // 自动重置视角
             if (ticks++ > 20) {
                 ticks = 0;
                 reset();

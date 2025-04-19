@@ -1,5 +1,7 @@
 package com.github.bunnyi116.bedrockminer.command.argument;
 
+import com.github.bunnyi116.bedrockminer.I18n;
+import com.github.bunnyi116.bedrockminer.util.StringReaderUtils;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -12,8 +14,6 @@ import net.minecraft.block.Block;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
-import com.github.bunnyi116.bedrockminer.I18n;
-import com.github.bunnyi116.bedrockminer.util.StringReaderUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
