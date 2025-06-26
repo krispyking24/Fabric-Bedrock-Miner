@@ -63,6 +63,8 @@ If my mod saves you tons of time, please consider leaving a star.
 
 Checkout to the corresponding Minecraft version and compile following the Fabric wiki.
 
-## QQ Group
+## About
 
-![群二维码](https://github.com/Bunnui/Fabric-Bedrock-Miner/assets/37466008/7f1c2bc7-876b-4d34-9534-c72a3b555a2a)
+[QQ Group](https://qm.qq.com/q/lHXukQ3Ghk)
+
+[Discord](https://discord.gg/9cpJG7Nt)

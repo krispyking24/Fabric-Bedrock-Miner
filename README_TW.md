@@ -61,6 +61,8 @@ https://www.bilibili.com/video/BV1Fv411P7Vc
 
 如果本模組幫你解省了大量時間的話，請考慮給個Star吧。
 
-## Q群
+## 關於
 
-![群組QR Code](https://github.com/Bunnui/Fabric-Bedrock-Miner/assets/37466008/7f1c2bc7-876b-4d34-9534-c72a3b555a2a)
+[QQ群](https://qm.qq.com/q/lHXukQ3Ghk)
+
+[Discord](https://discord.gg/9cpJG7Nt)
