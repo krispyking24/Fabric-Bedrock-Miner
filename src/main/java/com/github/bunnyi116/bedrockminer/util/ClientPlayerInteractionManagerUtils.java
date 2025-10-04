@@ -72,7 +72,7 @@ public class ClientPlayerInteractionManagerUtils {  // 璇ョ被鏄负鍚庣画寮�鍙戝
                 }
                 BlockState blockState = world.getBlockState(pos);
                 client.getTutorialManager().onBlockBreaking(world, pos, blockState, 0.0F);
-                var calcBlockBreakingDelta = blockState.calcBlockBreakingDelta(player, player.getWorld(), pos);
+                var calcBlockBreakingDelta = blockState.calcBlockBreakingDelta(player, player.getEntityWorld(), pos);
                 if (calcBlockBreakingDelta >= BREAKING_PROGRESS_MAX) {
                     sendSequencedPacket((sequence) -> {
                         if (!blockState.isAir()) {
@@ -118,7 +118,7 @@ public class ClientPlayerInteractionManagerUtils {  // 璇ョ被鏄负鍚庣画寮�鍙戝
                 breakingBlock = false;
                 return false;
             } else {
-                currentBreakingProgress += blockState.calcBlockBreakingDelta(player, player.getWorld(), pos);
+                currentBreakingProgress += blockState.calcBlockBreakingDelta(player, player.getEntityWorld(), pos);
                 if (blockBreakingSoundCooldown % 4.0F == 0.0F) {
                     BlockSoundGroup blockSoundGroup = blockState.getSoundGroup();
                     client.getSoundManager().play(new PositionedSoundInstance(blockSoundGroup.getHitSound(), SoundCategory.BLOCKS, (blockSoundGroup.getVolume() + 1.0F) / 8.0F, blockSoundGroup.getPitch() * 0.5F, SoundInstance.createRandom(), pos));
