@@ -239,16 +239,17 @@ public class Task {
                     }
                 }
                 // 预检查, 避免无法放置导致失败
-                if (!(world.getBlockState(slimeBlock.pos).isReplaceable() || sideCoversSmallSquare(world, slimeBlock.pos, slimeBlock.facing))) {
-                    continue;
+                if (BlockPlacerUtils.canPlace(world, slimeBlock.pos, Blocks.SLIME_BLOCK.getDefaultState()) || sideCoversSmallSquare(world, slimeBlock.pos, slimeBlock.facing)) {// 特殊放置方案类型1, 需要检查目标方块是否能被充能
+                    if (redstoneTorch.type == 1 && !world.getBlockState(pos).isSolidBlock(world, pos)) {
+                        continue;
+                    }
+                    this.direction = direction;
+                    this.piston = piston;
+                    this.redstoneTorch = redstoneTorch;
+                    this.slimeBlock = slimeBlock;
+                    break;
                 }
 
-
-                this.direction = direction;
-                this.piston = piston;
-                this.redstoneTorch = redstoneTorch;
-                this.slimeBlock = slimeBlock;
-                break;
             }
         }
         if (this.piston == null || this.redstoneTorch == null || this.slimeBlock == null) {

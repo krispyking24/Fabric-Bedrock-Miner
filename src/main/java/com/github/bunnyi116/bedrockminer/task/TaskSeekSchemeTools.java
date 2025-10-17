@@ -1,6 +1,5 @@
 package com.github.bunnyi116.bedrockminer.task;
 
-import com.github.bunnyi116.bedrockminer.Debug;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
@@ -78,7 +77,7 @@ public class TaskSeekSchemeTools {
                     default -> throw new IllegalStateException("Unexpected value: " + facing);
                 };
                 // 添加到方案
-                list.add(new TaskSeekBlockInfo(redstoneTorchPos, facing, level));
+                list.add(new TaskSeekBlockInfo(1, redstoneTorchPos, facing, level));
             }
         }
 
