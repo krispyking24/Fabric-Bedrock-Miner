@@ -4,17 +4,19 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.effect.StatusEffectUtil;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.registry.tag.FluidTags;
+import net.minecraft.screen.slot.SlotActionType;
 
 import java.util.Objects;
 
@@ -51,14 +53,59 @@ public class InventoryManagerUtils {
         }
     }
 
+    public static void swapSlots(ClientPlayerEntity player, ClientPlayerInteractionManager interactionManager, int sourceSlot, int hotbarIndex) {
+        if (player == null || interactionManager == null) {
+            return;
+        }
+        if (player.currentScreenHandler == player.playerScreenHandler) {
+            if (sourceSlot == hotbarIndex) {   // 同一个槽位
+                return;
+            }
+            interactionManager.clickSlot(
+                    player.currentScreenHandler.syncId,  // 当前容器ID
+                    sourceSlot,                          // 源槽编号
+                    hotbarIndex,                         // 目标快捷栏编号（0–8）
+                    SlotActionType.SWAP,                 // 交换动作
+                    player
+            );
+        }
+    }
+
+    public static void pickFromInventory(ClientPlayerEntity player, ClientPlayerInteractionManager interactionManager, int slot) {
+        if (player == null || interactionManager == null) {
+            return;
+        }
+
+        final var playerInventory = player.getInventory();
+        if (player.currentScreenHandler != player.playerScreenHandler) {
+            return; // 确保当前不是打开箱子/界面时调用
+        }
+
+        // 如果点的是快捷栏内槽位（0–8），直接切换选中即可
+        if (PlayerInventory.isValidHotbarIndex(slot)) {
+            playerInventory.setSelectedSlot(slot);
+            return;
+        }
+
+        for (int i = 0; i < PlayerInventory.HOTBAR_SIZE; i++) {
+            final var itemStack = playerInventory.getStack(i);
+            if (itemStack.isEmpty()) {
+                swapSlots(player, interactionManager, slot, i);
+                playerInventory.setSelectedSlot(i);
+                return;
+            }
+        }
+        swapSlots(player, interactionManager, slot, 0);
+        playerInventory.setSelectedSlot(0);
+    }
+
     public static void switchToSlot(int slot) {
         // 背包中没有指定的物品
         if (PlayerInventory.isValidHotbarIndex(slot)) {
             playerInventory.setSelectedSlot(slot);
+        } else {
+            pickFromInventory(player, interactionManager, slot);
         }
-//        else {
-//            interactionManager.pickItemFromEntity(player, true);
-//        }
         networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.getSelectedSlot())); // 发送更新手持物品的数据包
     }
 
