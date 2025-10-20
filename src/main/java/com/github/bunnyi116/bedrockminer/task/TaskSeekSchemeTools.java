@@ -64,8 +64,12 @@ public class TaskSeekSchemeTools {
 
         // 活塞在目标方块上方，红石火把通过在目标方块下方，充能目标方块激活活塞
         if (direction == Direction.UP) {
-            final var redstoneTorchPos = targetPos.offset(direction.getOpposite());
+            final var redstoneTorchFacing = targetPos.offset(direction.getOpposite());
             for (Direction facing : redstoneTorchFacings) {
+                final var basePos = redstoneTorchFacing.offset(facing.getOpposite());
+                if (basePos.equals(pistonInfo.pos) || basePos.equals(pistonHeadPos))
+                    continue;
+
                 // 红石火把无法倒置
                 if (facing == Direction.DOWN)
                     continue;
@@ -77,7 +81,7 @@ public class TaskSeekSchemeTools {
                     default -> throw new IllegalStateException("Unexpected value: " + facing);
                 };
                 // 添加到方案
-                list.add(new TaskSeekBlockInfo(1, redstoneTorchPos, facing, level));
+                list.add(new TaskSeekBlockInfo(1, redstoneTorchFacing, facing, level));
             }
         }
 
@@ -91,8 +95,8 @@ public class TaskSeekSchemeTools {
             for (Direction redstoneTorchFacing : redstoneTorchFacings) {
                 final var basePos = redstoneTorchPos.offset(redstoneTorchFacing.getOpposite());
 
-                // 过滤红石火把附在活塞面上位置
-                if (basePos.equals(pistonInfo.pos))
+                // 过滤红石火把附在活塞上位置
+                if (basePos.equals(pistonInfo.pos) || basePos.equals(pistonHeadPos))
                     continue;
 
                 // 红石火把无法倒置
@@ -110,8 +114,13 @@ public class TaskSeekSchemeTools {
                 if (!redstoneTorchPos.equals(targetPos)) {
                     list.add(new TaskSeekBlockInfo(redstoneTorchPos, redstoneTorchFacing, level));
                 }
+
                 var redstoneTorchPosUp = redstoneTorchPos.up();
                 if (!redstoneTorchPosUp.equals(targetPos) && !redstoneTorchPosUp.equals(pistonInfo.pos)) {
+                    // 过滤红石火把附在活塞上位置
+                    final var baseUpPos = redstoneTorchPos.offset(redstoneTorchFacing.getOpposite());
+                    if (baseUpPos.equals(pistonInfo.pos) || baseUpPos.equals(pistonHeadPos))
+                        continue;
                     list.add(new TaskSeekBlockInfo(redstoneTorchPos.up(), redstoneTorchFacing, level + 1));
                 }
             }
