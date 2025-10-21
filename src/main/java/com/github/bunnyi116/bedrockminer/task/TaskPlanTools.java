@@ -13,33 +13,33 @@ import java.util.List;
 /**
  * 任务方案查找器
  */
-public class TaskSeekSchemeTools {
+public class TaskPlanTools {
     public static Direction[] directions = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
 
     /**
      * 查找所有可能放置情况(假设性的，未检查游戏中的环境)
      */
-    public static TaskSeekSchemeInfo[] findAllPossible(BlockPos targetPos, ClientWorld world) {
-        final var schemes = new ArrayList<TaskSeekSchemeInfo>();
+    public static TaskPlanItem[] findAllPossible(BlockPos targetPos, ClientWorld world) {
+        final var schemes = new ArrayList<TaskPlanItem>();
         for (Direction direction : directions) {
             final var pistons = findPistonPossible(direction, targetPos);
-            for (TaskSeekBlockInfo piston : pistons) {
+            for (TaskPlan piston : pistons) {
                 final var redstoneTorches = findRedstoneTorchPossible(direction, targetPos, piston);
-                for (TaskSeekBlockInfo redstoneTorch : redstoneTorches) {
+                for (TaskPlan redstoneTorch : redstoneTorches) {
                     final var slimeBlock = findSlimeBlockPossible(redstoneTorch);
-                    schemes.add(new TaskSeekSchemeInfo(direction, piston, redstoneTorch, slimeBlock));
+                    schemes.add(new TaskPlanItem(direction, piston, redstoneTorch, slimeBlock));
                 }
             }
         }
         // 重新排序
         schemes.sort(Comparator
-                .comparingInt((TaskSeekSchemeInfo scheme) -> scheme.piston.level + scheme.redstoneTorch.level)
+                .comparingInt((TaskPlanItem scheme) -> scheme.piston.level + scheme.redstoneTorch.level)
         );
-        return schemes.toArray(TaskSeekSchemeInfo[]::new);
+        return schemes.toArray(TaskPlanItem[]::new);
     }
 
-    private static TaskSeekBlockInfo[] findPistonPossible(Direction direction, BlockPos targetPos) {
-        final var list = new ArrayList<TaskSeekBlockInfo>();
+    private static TaskPlan[] findPistonPossible(Direction direction, BlockPos targetPos) {
+        final var list = new ArrayList<TaskPlan>();
         final var pistonPos = targetPos.offset(direction);
         for (Direction pistonFacing : Direction.values()) {
             // 活塞臂在目标方块位置
@@ -51,37 +51,37 @@ public class TaskSeekSchemeTools {
                 case DOWN -> 1;
                 case NORTH, SOUTH, WEST, EAST -> 2;
             };
-            list.add(new TaskSeekBlockInfo(pistonPos, pistonFacing, level));
+            list.add(new TaskPlan(pistonPos, pistonFacing, level));
         }
-        return list.toArray(TaskSeekBlockInfo[]::new);
+        return list.toArray(TaskPlan[]::new);
     }
 
     final static List<Direction> redstoneTorchFacings = List.of(Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
 
-    private static TaskSeekBlockInfo[] findRedstoneTorchPossible(Direction direction, BlockPos targetPos, TaskSeekBlockInfo pistonInfo) {
-        final var list = new ArrayList<TaskSeekBlockInfo>();
+    private static TaskPlan[] findRedstoneTorchPossible(Direction direction, BlockPos targetPos, TaskPlan pistonInfo) {
+        final var list = new ArrayList<TaskPlan>();
         final var pistonHeadPos = pistonInfo.pos.offset(pistonInfo.facing);
 
         // 活塞在目标方块上方，红石火把通过在目标方块下方，充能目标方块激活活塞
         if (direction == Direction.UP) {
-            final var redstoneTorchFacing = targetPos.offset(direction.getOpposite());
-            for (Direction facing : redstoneTorchFacings) {
-                final var basePos = redstoneTorchFacing.offset(facing.getOpposite());
+            final var redstoneTorchPos = targetPos.offset(direction.getOpposite());
+            for (Direction redstoneTorchFacing : redstoneTorchFacings) {
+                final var basePos = redstoneTorchPos.offset(redstoneTorchFacing.getOpposite());
                 if (basePos.equals(pistonInfo.pos) || basePos.equals(pistonHeadPos))
                     continue;
 
                 // 红石火把无法倒置
-                if (facing == Direction.DOWN)
+                if (redstoneTorchFacing == Direction.DOWN)
                     continue;
 
                 // 设置排序等级
-                int level = switch (facing) {
+                int level = switch (redstoneTorchFacing) {
                     case UP -> 0;
                     case NORTH, SOUTH, WEST, EAST -> 2;
-                    default -> throw new IllegalStateException("Unexpected value: " + facing);
+                    default -> throw new IllegalStateException("Unexpected value: " + redstoneTorchFacing);
                 };
                 // 添加到方案
-                list.add(new TaskSeekBlockInfo(1, redstoneTorchFacing, facing, level));
+                list.add(new TaskPlan(1, redstoneTorchPos, redstoneTorchFacing, level));
             }
         }
 
@@ -112,7 +112,7 @@ public class TaskSeekSchemeTools {
 
                 // 添加到方案
                 if (!redstoneTorchPos.equals(targetPos)) {
-                    list.add(new TaskSeekBlockInfo(redstoneTorchPos, redstoneTorchFacing, level));
+                    list.add(new TaskPlan(redstoneTorchPos, redstoneTorchFacing, level));
                 }
 
                 var redstoneTorchPosUp = redstoneTorchPos.up();
@@ -121,17 +121,17 @@ public class TaskSeekSchemeTools {
                     final var baseUpPos = redstoneTorchPos.offset(redstoneTorchFacing.getOpposite());
                     if (baseUpPos.equals(pistonInfo.pos) || baseUpPos.equals(pistonHeadPos))
                         continue;
-                    list.add(new TaskSeekBlockInfo(redstoneTorchPos.up(), redstoneTorchFacing, level + 1));
+                    list.add(new TaskPlan(redstoneTorchPos.up(), redstoneTorchFacing, level + 1));
                 }
             }
         }
-        return list.toArray(TaskSeekBlockInfo[]::new);
+        return list.toArray(TaskPlan[]::new);
     }
 
-    private static TaskSeekBlockInfo findSlimeBlockPossible(TaskSeekBlockInfo redstoneTorchInfo) {
+    private static TaskPlan findSlimeBlockPossible(TaskPlan redstoneTorchInfo) {
         BlockPos pos = redstoneTorchInfo.pos;
         Direction facing = redstoneTorchInfo.facing;
-        return new TaskSeekBlockInfo(pos.offset(facing.getOpposite()), facing, facing.getAxis().isVertical() ? 0 : 1);
+        return new TaskPlan(pos.offset(facing.getOpposite()), facing, facing.getAxis().isVertical() ? 0 : 1);
     }
 
     // 查找活塞附近的火把

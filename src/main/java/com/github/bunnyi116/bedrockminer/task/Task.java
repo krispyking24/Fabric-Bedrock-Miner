@@ -11,7 +11,6 @@ import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Queue;
@@ -28,11 +27,8 @@ public class Task {
     private TaskState lastState;
     private @Nullable TaskState nextState;
 
-    public final TaskSeekSchemeInfo[] taskSchemes;
-    public @Nullable Direction direction;
-    public @Nullable TaskSeekBlockInfo piston;
-    public @Nullable TaskSeekBlockInfo redstoneTorch;
-    public @Nullable TaskSeekBlockInfo slimeBlock;
+    public final TaskPlanItem[] planItems;
+    public @Nullable TaskPlanItem planItem;
 
     public final Queue<BlockPos> recycledQueue;
     public boolean executeModify;
@@ -52,7 +48,7 @@ public class Task {
         this.world = world;
         this.block = block;
         this.pos = pos;
-        this.taskSchemes = TaskSeekSchemeTools.findAllPossible(pos, world);
+        this.planItems = TaskPlanTools.findAllPossible(pos, world);
         this.recycledQueue = Queues.newConcurrentLinkedQueue();
         this.init();
     }
@@ -63,7 +59,7 @@ public class Task {
         this.currentState = TaskState.WAIT_CUSTOM;
     }
 
-    private void setModifyLook(TaskSeekBlockInfo blockInfo) {
+    private void setModifyLook(TaskPlan blockInfo) {
         if (blockInfo != null) {
             debug("修改视角");
             setModifyLook(blockInfo.facing);
@@ -153,83 +149,76 @@ public class Task {
     }
 
     private void placeSlimeBlock() {
-        if (slimeBlock == null) {
-            this.currentState = TaskState.WAIT_GAME_UPDATE;
+        if (planItem == null) {
+            this.currentState = TaskState.FIND;
             return;
         }
-        if (slimeBlock.isNeedModify() && !slimeBlock.modify) {
-            setModifyLook(slimeBlock);
-            return;
-        }
-        BlockPlacerUtils.placement(slimeBlock.pos, slimeBlock.facing, Items.SLIME_BLOCK);
-        addRecycled(slimeBlock.pos);
+        BlockPlacerUtils.placement(planItem.slimeBlock.pos, planItem.slimeBlock.facing, Items.SLIME_BLOCK);
+        this.addRecycled(planItem.slimeBlock.pos);
+        this.resetModifyLook();
         this.currentState = TaskState.WAIT_GAME_UPDATE;
-        resetModifyLook();
     }
 
     private void placeRedstoneTorch() {
-        if (redstoneTorch == null) {
+        if (planItem == null) {
             this.currentState = TaskState.FIND;
             return;
         }
         debug("红石火把");
-        if (redstoneTorch.isNeedModify() && !redstoneTorch.modify) {
-            setModifyLook(redstoneTorch);
+        if (planItem.redstoneTorch.isNeedModify() && !planItem.redstoneTorch.modify) {
+            setModifyLook(planItem.redstoneTorch);
             return;
         }
-        BlockPlacerUtils.placement(redstoneTorch.pos, redstoneTorch.facing, Items.REDSTONE_TORCH);
-        addRecycled(redstoneTorch.pos);
-        setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 2);
-        resetModifyLook();
+        BlockPlacerUtils.placement(planItem.redstoneTorch.pos, planItem.redstoneTorch.facing, Items.REDSTONE_TORCH);
+        this.addRecycled(planItem.redstoneTorch.pos);
+        this.setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 2);
+        this.resetModifyLook();
     }
 
     private void placePiston() {
-        if (piston == null) {
+        if (planItem == null) {
             this.currentState = TaskState.FIND;
             return;
         }
         debug("放置活塞");
-        var placeBlockState = Blocks.PISTON.getDefaultState().with(PistonBlock.FACING, piston.facing);
-        if (BlockPlacerUtils.canPlace(world, piston.pos, placeBlockState)) {
-            if (piston.isNeedModify() && !piston.modify) {
-                setModifyLook(piston);
+        var placeBlockState = Blocks.PISTON.getDefaultState().with(PistonBlock.FACING, planItem.piston.facing);
+        if (BlockPlacerUtils.canPlace(world, planItem.piston.pos, placeBlockState)) {
+            if (planItem.piston.isNeedModify() && !planItem.piston.modify) {
+                setModifyLook(planItem.piston);
                 return;
             }
-            BlockPlacerUtils.placement(piston.pos, piston.facing, Items.PISTON);
-            addRecycled(piston.pos);
-            setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 3);
-            resetModifyLook();
+            BlockPlacerUtils.placement(planItem.piston.pos, planItem.piston.facing, Items.PISTON);
+            this.addRecycled(planItem.piston.pos);
+            this.setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 3);
+            this.resetModifyLook();
         } else {
-            this.piston = null;
+            this.planItem = null;
             this.currentState = TaskState.FIND;
         }
     }
 
     private void find() {
-        if (this.piston == null || this.redstoneTorch == null || this.slimeBlock == null) {
-            this.piston = null;
-            this.redstoneTorch = null;
-            this.slimeBlock = null;
+        if (this.planItem == null) {
             debug("查找方案");
-            for (TaskSeekSchemeInfo taskSchemeInfo : taskSchemes) {
-                final var direction = taskSchemeInfo.direction;
-                final var piston = taskSchemeInfo.piston;
-                final var redstoneTorch = taskSchemeInfo.redstoneTorch;
-                final var slimeBlock = taskSchemeInfo.slimeBlock;
-                if (!World.isValid(piston.pos) || !World.isValid(redstoneTorch.pos) || !World.isValid(slimeBlock.pos)) {
+            for (TaskPlanItem item : planItems) {
+                if (!item.isWorldValid()) {
                     continue;
                 }
-
-                final var pistonState = world.getBlockState(piston.pos);
-                final var pistonHeadState = world.getBlockState(piston.pos.offset(piston.facing));
                 // 检查活塞位置
-                if (!(pistonState.isReplaceable() && pistonHeadState.isReplaceable())) {
-                    if (!(pistonState.getBlock() instanceof PistonBlock)) {
+                final var pistonPos = item.piston.pos;
+                final var pistonFacing = item.piston.facing;
+                final var pistonHeadPos = pistonPos.offset(pistonFacing);
+                final var pistonState = world.getBlockState(pistonPos);
+                final var pistonHeadState = world.getBlockState(pistonHeadPos);
+
+                final var pistonDefaultState = Blocks.PISTON.getDefaultState().with(PistonBlock.FACING, pistonFacing);
+                final var pistonHeadDefaultState = Blocks.PISTON_HEAD.getDefaultState().with(PistonHeadBlock.FACING, pistonFacing);
+                if (!BlockPlacerUtils.canPlace(world, pistonPos, pistonDefaultState) || !BlockPlacerUtils.canPlace(world, pistonHeadPos, pistonHeadDefaultState)) {
+                    if (!(pistonState.isOf(Blocks.PISTON) && pistonHeadState.isOf(Blocks.PISTON_HEAD))) {
                         continue;
                     }
                 }
-                // 预检查, 避免无法放置导致失败
-                final var redstoneTorchState = world.getBlockState(redstoneTorch.pos);
+                final var redstoneTorchState = world.getBlockState(item.redstoneTorch.pos);
                 if (!redstoneTorchState.isReplaceable()) {  // 如果该位置已存在方块
                     // 当前位置方块类型
                     if (!(redstoneTorchState.getBlock() instanceof RedstoneTorchBlock
@@ -238,29 +227,25 @@ public class Task {
                         continue;
                     }
                 }
-                // 预检查, 避免无法放置导致失败
-                if (BlockPlacerUtils.canPlace(world, slimeBlock.pos, Blocks.SLIME_BLOCK.getDefaultState()) || sideCoversSmallSquare(world, slimeBlock.pos, slimeBlock.facing)) {// 特殊放置方案类型1, 需要检查目标方块是否能被充能
-                    if (redstoneTorch.type == 1 && !world.getBlockState(pos).isSolidBlock(world, pos)) {
+                if (BlockPlacerUtils.canPlace(world, item.slimeBlock.pos, Blocks.SLIME_BLOCK.getDefaultState()) || sideCoversSmallSquare(world, item.slimeBlock.pos, item.slimeBlock.facing)) {// 特殊放置方案类型1, 需要检查目标方块是否能被充能
+                    if (item.redstoneTorch.type == 1 && !world.getBlockState(pos).isSolidBlock(world, pos)) {
                         continue;
                     }
-                    this.direction = direction;
-                    this.piston = piston;
-                    this.redstoneTorch = redstoneTorch;
-                    this.slimeBlock = slimeBlock;
+                    this.planItem = item;
                     break;
                 }
 
             }
         }
-        if (this.piston == null || this.redstoneTorch == null || this.slimeBlock == null) {
+        if (this.planItem == null) {
             this.currentState = TaskState.FAIL;
             MessageUtils.setOverlayMessage(Text.literal(I18n.HANDLE_SEEK.getString().replace("%BlockPos%", pos.toShortString())));
         } else {
-            debug("目标: %s", pos);
-            debug("方案: %s", direction);
-            debug("活塞: %s", piston);
-            debug("底座: %s", slimeBlock);
-            debug("红石火把: %s", redstoneTorch);
+            this.debug("目标: %s", pos);
+            this.debug("方案: %s", this.planItem.direction);
+            this.debug("活塞: %s", this.planItem.piston);
+            this.debug("底座: %s", this.planItem.slimeBlock);
+            this.debug("红石火把: %s", this.planItem.redstoneTorch);
             this.currentState = TaskState.WAIT_GAME_UPDATE;
         }
     }
@@ -293,39 +278,39 @@ public class Task {
     }
 
     private void execute() {
-        if (executed || player == null || direction == null || piston == null || redstoneTorch == null || slimeBlock == null) {
+        if (executed || player == null || planItem == null) {
             return;
         }
-        if (!executeModify && direction.getAxis().isHorizontal()) {
-            setModifyLook(direction.getOpposite());
-            executeModify = true;
+        if (!executeModify && planItem.direction.getAxis().isHorizontal()) {
+            this.setModifyLook(planItem.direction.getOpposite());
+            this.executeModify = true;
             return;
         } else {
             // 切换到工具
-            if (world.getBlockState(piston.pos).calcBlockBreakingDelta(player, world, piston.pos) < 1F) {
-                InventoryManagerUtils.autoSwitch(world.getBlockState(piston.pos));
-                setWait(TaskState.EXECUTE, 1);
+            if (world.getBlockState(planItem.piston.pos).calcBlockBreakingDelta(player, world, planItem.piston.pos) < 1F) {
+                InventoryManagerUtils.autoSwitch(world.getBlockState(planItem.piston.pos));
+                this.setWait(TaskState.EXECUTE, 1);
                 return;
             }
             // 打掉附近红石火把
-            BlockPos[] nearbyRedstoneTorch = TaskSeekSchemeTools.findPistonNearbyRedstoneTorch(piston.pos, world);
-            for (BlockPos pos : nearbyRedstoneTorch) {
+            final var nearbyRedstoneTorch = TaskPlanTools.findPistonNearbyRedstoneTorch(planItem.piston.pos, world);
+            for (final var pos : nearbyRedstoneTorch) {
                 if (world.getBlockState(pos).getBlock() instanceof RedstoneTorchBlock) {
                     ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(pos);
                 }
             }
-            if (world.getBlockState(redstoneTorch.pos).getBlock() instanceof RedstoneTorchBlock) {
-                ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(redstoneTorch.pos);
+            if (world.getBlockState(planItem.redstoneTorch.pos).getBlock() instanceof RedstoneTorchBlock) {
+                ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(planItem.redstoneTorch.pos);
             }
-            ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(piston.pos);
-            BlockPlacerUtils.placement(piston.pos, direction.getOpposite(), Items.PISTON);
-            addRecycled(piston.pos);
-            if (executeModify) {
-                resetModifyLook();
+            ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(planItem.piston.pos);
+            BlockPlacerUtils.placement(planItem.piston.pos, planItem.direction.getOpposite(), Items.PISTON);
+            this.addRecycled(planItem.piston.pos);
+            if (this.executeModify) {
+                this.resetModifyLook();
             }
-            executed = true;
+            this.executed = true;
         }
-        setWait(TaskState.WAIT_GAME_UPDATE, 4);
+        this.setWait(TaskState.WAIT_GAME_UPDATE, 4);
     }
 
     private void waitCustom() {
@@ -341,83 +326,74 @@ public class Task {
     }
 
     private void updateStates() {
-        if (this.piston != null && world.getBlockState(this.piston.pos).isOf(Blocks.MOVING_PISTON)) {
-            this.debugUpdateStates("活塞正在移动");
-            return;
-        }
         if (!world.getBlockState(pos).isOf(block)) {
             this.currentState = TaskState.RECYCLED_ITEMS;
             this.debugUpdateStates("目标不存在");
             return;
         }
+        if (this.planItem == null) {
+            this.currentState = TaskState.FIND;
+            this.debugUpdateStates("没有正在执行的放置方案, 准备查找可执行方案");
+            return;
+        }
+        if (world.getBlockState(planItem.piston.pos).isOf(Blocks.MOVING_PISTON)) {
+            this.debugUpdateStates("活塞正在移动");
+            return;
+        }
         if (!this.executed) {
             debugUpdateStates("任务未执行过");
-            // 获取放置位置
-            if (this.piston == null) {
-                this.debugUpdateStates("活塞未获取,准备查找合适的位置");
-                this.currentState = TaskState.FIND;
-                return;
-            }
-            if (this.redstoneTorch == null) {
-                this.debugUpdateStates("红石火把未获取,准备查找合适的位置");
-                this.currentState = TaskState.FIND;
-                return;
-            }
-            if (this.slimeBlock == null) {
-                this.debugUpdateStates("红石火把底座未获取,准备查找合适的位置");
-                this.currentState = TaskState.FIND;
-                return;
-            }
 
             // 活塞
-            if (world.getBlockState(this.piston.pos).isReplaceable()) {
-                this.debugUpdateStates("[%s] [%s] 活塞未放置且该位置可放置物品,设置放置状态", this.piston.pos.toShortString(), this.piston.facing);
+            if (world.getBlockState(this.planItem.piston.pos).isReplaceable()) {
+                this.debugUpdateStates("[%s] [%s] 活塞未放置且该位置可放置物品,设置放置状态", this.planItem.piston.pos.toShortString(), this.planItem.piston.facing);
                 this.currentState = TaskState.PLACE_PISTON;
                 return;
             }
-            if (world.getBlockState(this.piston.pos).getBlock() instanceof PistonBlock) {
-                if (world.getBlockState(this.piston.pos).get(PistonBlock.FACING) != this.piston.facing) {
-                    this.debugUpdateStates("[%s] [%s] 活塞已放置, 但放置方向不正确", this.piston.pos.toShortString(), this.piston.facing);
+            if (world.getBlockState(this.planItem.piston.pos).getBlock() instanceof PistonBlock) {
+                if (world.getBlockState(this.planItem.piston.pos).get(PistonBlock.FACING) != this.planItem.piston.facing) {
+                    this.debugUpdateStates("[%s] [%s] 活塞已放置, 但放置方向不正确", this.planItem.piston.pos.toShortString(), this.planItem.piston.facing);
                     this.currentState = TaskState.FAIL;
                     return;
                 }
             }
 
             // 底座
-            if (world.getBlockState(this.slimeBlock.pos).isReplaceable()) {
-                this.debugUpdateStates("[%s] [%s] 底座未放置且该位置可放置物品,设置放置状态", this.slimeBlock.pos.toShortString(), this.slimeBlock.facing);
+            if (world.getBlockState(this.planItem.slimeBlock.pos).isReplaceable()) {
+                this.debugUpdateStates("[%s] [%s] 底座未放置且该位置可放置物品,设置放置状态", this.planItem.slimeBlock.pos.toShortString(), this.planItem.slimeBlock.facing);
                 this.currentState = TaskState.PLACE_SLIME_BLOCK;
                 return;
             }
-            if (!Block.sideCoversSmallSquare(world, slimeBlock.pos, slimeBlock.facing)) {
-                this.debugUpdateStates("[%s] [%s] 底座已放置, 但不是完整的方块", this.slimeBlock.pos.toShortString(), this.slimeBlock.facing);
+            if (!Block.sideCoversSmallSquare(world, this.planItem.slimeBlock.pos, this.planItem.slimeBlock.facing)) {
+                this.debugUpdateStates("[%s] [%s] 底座已放置, 但不是完整的方块", this.planItem.slimeBlock.pos.toShortString(), this.planItem.slimeBlock.facing);
                 this.currentState = TaskState.FAIL;
                 return;
             }
 
             // 红石火把
-            if (world.getBlockState(redstoneTorch.pos).isReplaceable()) {
-                this.debugUpdateStates("[%s] [%s] 红石火把未放置且该位置可放置物品,设置放置状态", this.redstoneTorch.pos.toShortString(), this.redstoneTorch.facing);
+            if (world.getBlockState(this.planItem.redstoneTorch.pos).isReplaceable()) {
+                this.debugUpdateStates("[%s] [%s] 红石火把未放置且该位置可放置物品,设置放置状态", this.planItem.redstoneTorch.pos.toShortString(), this.planItem.redstoneTorch.facing);
                 this.currentState = TaskState.PLACE_REDSTONE_TORCH;
                 return;
             }
-            if (world.getBlockState(redstoneTorch.pos).getBlock() instanceof RedstoneTorchBlock && this.redstoneTorch.facing != Direction.UP) {
-                this.debugUpdateStates("[%s] [%s] 红石火把已放置, 但放置状态与方案不一致", this.redstoneTorch.pos.toShortString(), this.redstoneTorch.facing);
-                this.currentState = TaskState.FAIL;
-                return;
-            }
-            if (world.getBlockState(redstoneTorch.pos).getBlock() instanceof WallRedstoneTorchBlock) {
-                if (world.getBlockState(redstoneTorch.pos).get(WallRedstoneTorchBlock.FACING) != this.redstoneTorch.facing) {
-                    this.debugUpdateStates("[%s] [%s] 红石火把已放置, 但放置状态与方案不一致", this.redstoneTorch.pos.toShortString(), this.redstoneTorch.facing);
+            if (world.getBlockState(this.planItem.redstoneTorch.pos).getBlock() instanceof RedstoneTorchBlock) {
+                boolean b = false;
+                if (world.getBlockState(this.planItem.redstoneTorch.pos).getBlock() instanceof WallRedstoneTorchBlock) {
+                    if (world.getBlockState(this.planItem.redstoneTorch.pos).get(WallRedstoneTorchBlock.FACING) != this.planItem.redstoneTorch.facing) {
+                        b = true;
+                    }
+                } else if (this.planItem.redstoneTorch.facing != Direction.UP) {
+                    b = true;
+                }
+                if (b) {
+                    this.debugUpdateStates("[%s] [%s] 红石火把已放置, 但放置状态与方案不一致", this.planItem.redstoneTorch.pos.toShortString(), this.planItem.redstoneTorch.facing);
                     this.currentState = TaskState.FAIL;
-                    return;
                 }
             }
 
-            if (world.getBlockState(this.piston.pos).getBlock() instanceof PistonBlock) {
-                if (world.getBlockState(this.piston.pos).contains(PistonBlock.EXTENDED)) {
-                    if (world.getBlockState(this.piston.pos).get(PistonBlock.EXTENDED)) {
-                        this.debugUpdateStates("[%s] [%s] 条件已充足, 准备开始尝试", this.piston.pos.toShortString(), this.piston.facing);
+            if (world.getBlockState(this.planItem.piston.pos).getBlock() instanceof PistonBlock) {
+                if (world.getBlockState(this.planItem.piston.pos).contains(PistonBlock.EXTENDED)) {
+                    if (world.getBlockState(this.planItem.piston.pos).get(PistonBlock.EXTENDED)) {
+                        this.debugUpdateStates("[%s] [%s] 条件已充足, 准备开始尝试", this.planItem.piston.pos.toShortString(), this.planItem.piston.facing);
                         this.currentState = TaskState.EXECUTE;
                     }
                 }
@@ -431,10 +407,7 @@ public class Task {
         this.ticksTotalMax = 100;
         this.ticksTimeoutMax = 45;
         this.tickWaitMax = 0;
-        this.direction = null;
-        this.piston = null;
-        this.redstoneTorch = null;
-        this.slimeBlock = null;
+        this.planItem = null;
         this.recycledQueue.clear();
         this.executed = false;
         this.recycled = false;

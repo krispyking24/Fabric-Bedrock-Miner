@@ -3,14 +3,14 @@ package com.github.bunnyi116.bedrockminer.task;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
-public class TaskSeekBlockInfo {
+public class TaskPlan {
     public final int type;
     public final BlockPos pos;
     public final Direction facing;
     public boolean modify;
     public int level;
 
-    public TaskSeekBlockInfo(int type, BlockPos pos, Direction facing, int level) {
+    public TaskPlan(int type, BlockPos pos, Direction facing, int level) {
         this.type = type;
         this.pos = pos;
         this.facing = facing;
@@ -18,16 +18,16 @@ public class TaskSeekBlockInfo {
         this.level = level;
     }
 
-    public TaskSeekBlockInfo(int type, BlockPos pos, Direction facing) {
+    public TaskPlan(int type, BlockPos pos, Direction facing) {
         this(type, pos, facing, 0);
     }
 
 
-    public TaskSeekBlockInfo(BlockPos pos, Direction facing, int level) {
+    public TaskPlan(BlockPos pos, Direction facing, int level) {
         this(0, pos, facing, level);
     }
 
-    public TaskSeekBlockInfo(BlockPos pos, Direction facing) {
+    public TaskPlan(BlockPos pos, Direction facing) {
         this(0, pos, facing, 0);
     }
 
