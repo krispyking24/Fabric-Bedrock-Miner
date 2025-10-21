@@ -255,6 +255,10 @@ public class Task {
             var blockPos = recycledQueue.peek();
             var blockState = world.getBlockState(blockPos);
             debug("任务物品正在回收: (%s) --> %s", blockPos.toShortString(), blockState.getBlock().getName().getString());
+            if (blockState.getBlock().getHardness() < 0) {
+                recycledQueue.remove(blockPos);
+                recycledItems();
+            }
             var instant = world.getBlockState(blockPos).calcBlockBreakingDelta(player, world, blockPos) >= ClientPlayerInteractionManagerUtils.BREAKING_PROGRESS_MAX;
             if (!instant) {
                 InventoryManagerUtils.autoSwitch(blockState);
