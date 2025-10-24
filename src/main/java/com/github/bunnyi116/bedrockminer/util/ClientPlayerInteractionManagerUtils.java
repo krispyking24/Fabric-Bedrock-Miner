@@ -3,6 +3,7 @@ package com.github.bunnyi116.bedrockminer.util;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.PendingUpdateManager;
 import net.minecraft.client.network.SequencedPacketCreator;
 import net.minecraft.item.ItemStack;
@@ -12,13 +13,18 @@ import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket.Action;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
 
 @Environment(EnvType.CLIENT)
-public class ClientPlayerInteractionManagerUtils {  // 该类是为后续开发做准备
+public class ClientPlayerInteractionManagerUtils {
     public static final float BREAKING_PROGRESS_MAX = 0.7F;
 
     private static BlockPos currentBreakingPos = new BlockPos(-1, -1, -1);
@@ -28,6 +34,12 @@ public class ClientPlayerInteractionManagerUtils {  // 该类是为后续开发�
     private static int lastSelectedSlot;
     private static int breakingTicks;
     private static int breakingTickMax;
+
+
+    public static boolean canInteractWithBlockAt(BlockPos pos, double additionalRange) {
+        double d = player.getBlockInteractionRange() + additionalRange;
+        return (new Box(pos)).squaredMagnitude(player.getEyePos()) < d * d;
+    }
 
     private static void syncSelectedSlot() {
         int i = player.getInventory().getSelectedSlot();
@@ -131,7 +143,7 @@ public class ClientPlayerInteractionManagerUtils {  // 该类是为后续开发�
     }
 
     public static void updateBlockBreakingProgress(BlockPos pos) {
-        updateBlockBreakingProgress(pos, InteractionUtils.getClosestFace(pos), null, null);
+        updateBlockBreakingProgress(pos, getClosestFace(pos), null, null);
     }
 
     public static void sendSequencedPacket(SequencedPacketCreator packetCreator, @Nullable Runnable beforeSending, @Nullable Runnable afterSending) {
@@ -150,6 +162,56 @@ public class ClientPlayerInteractionManagerUtils {  // 该类是为后续开发�
 
     public static void sendSequencedPacket(SequencedPacketCreator packetCreator) {
         sendSequencedPacket(packetCreator, null, null);
+    }
+
+    public static Direction getClosestFace(BlockPos targetPos) {
+        Vec3d playerPos = player.getEyePos();
+        Vec3d targetCenterPos = targetPos.toCenterPos();
+        Direction closestFace = null;
+        double closestDistanceSquared = Double.MAX_VALUE;
+        for (Direction direction : Direction.values()) {
+            double offsetX = direction.getOffsetX() * 0.5;
+            double offsetY = direction.getOffsetY() * 0.5;
+            double offsetZ = direction.getOffsetZ() * 0.5;
+            Vec3d facePos = targetCenterPos.add(offsetX, offsetY, offsetZ);
+            double distanceSquared = playerPos.squaredDistanceTo(facePos);
+            // 更新最近的面
+            if (distanceSquared < closestDistanceSquared) {
+                closestDistanceSquared = distanceSquared;
+                closestFace = direction;
+            }
+        }
+        return closestFace;
+    }
+
+    private static List<Vec3d> getFacePoints(Vec3d center, Direction side) {
+        List<Vec3d> points = new ArrayList<>();
+        double halfSize = 0.5; // 方块的一半边长
+        // 获取偏移方向
+        double offsetX = side.getOffsetX() * halfSize;
+        double offsetY = side.getOffsetY() * halfSize;
+        double offsetZ = side.getOffsetZ() * halfSize;
+        // 面的中心点
+        Vec3d faceCenter = center.add(offsetX, offsetY, offsetZ);
+        points.add(faceCenter);
+        // 面的四个角
+        if (side.getAxis() == Direction.Axis.Y) { // 顶部/底部面
+            points.add(faceCenter.add(halfSize, 0, halfSize));
+            points.add(faceCenter.add(halfSize, 0, -halfSize));
+            points.add(faceCenter.add(-halfSize, 0, halfSize));
+            points.add(faceCenter.add(-halfSize, 0, -halfSize));
+        } else if (side.getAxis() == Direction.Axis.X) { // 左/右面
+            points.add(faceCenter.add(0, halfSize, halfSize));
+            points.add(faceCenter.add(0, halfSize, -halfSize));
+            points.add(faceCenter.add(0, -halfSize, halfSize));
+            points.add(faceCenter.add(0, -halfSize, -halfSize));
+        } else if (side.getAxis() == Direction.Axis.Z) { // 前/后面
+            points.add(faceCenter.add(halfSize, halfSize, 0));
+            points.add(faceCenter.add(halfSize, -halfSize, 0));
+            points.add(faceCenter.add(-halfSize, halfSize, 0));
+            points.add(faceCenter.add(-halfSize, -halfSize, 0));
+        }
+        return points;
     }
 
     public static void resetBreaking() {

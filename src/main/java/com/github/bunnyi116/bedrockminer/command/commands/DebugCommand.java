@@ -4,11 +4,13 @@ import com.github.bunnyi116.bedrockminer.I18n;
 import com.github.bunnyi116.bedrockminer.command.CommandBase;
 import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.util.MessageUtils;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 
 public class DebugCommand extends CommandBase {
 
@@ -19,18 +21,33 @@ public class DebugCommand extends CommandBase {
 
     @Override
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandRegistryAccess registryAccess) {
-        builder.then(literal("true").executes(context -> toggleSwitch(true)))
-                .then(literal("false").executes(context -> toggleSwitch(false)));
+        builder
+                .executes(context -> {
+                    final boolean b = !Config.INSTANCE.debug;
+                    if (b) {
+                        MessageUtils.addMessage(I18n.DEBUG_ON);
+                    } else {
+                        MessageUtils.addMessage(I18n.DEBUG_OFF);
+                    }
+                    Config.INSTANCE.debug = b;
+                    Config.save();
+                    return Command.SINGLE_SUCCESS;
+                })
+
+                .then(argument("bool", BoolArgumentType.bool())
+                        .executes(context -> {
+                            final boolean b = BoolArgumentType.getBool(context, "bool");
+                            if (b) {
+                                MessageUtils.addMessage(I18n.DEBUG_ON);
+                            } else {
+                                MessageUtils.addMessage(I18n.DEBUG_OFF);
+                            }
+                            Config.INSTANCE.debug = b;
+                            Config.save();
+                            return Command.SINGLE_SUCCESS;
+                        })
+                );
     }
 
-    private int toggleSwitch(boolean b) {
-        if (b) {
-            MessageUtils.addMessage(I18n.DEBUG_ON);
-        } else {
-            MessageUtils.addMessage(I18n.DEBUG_OFF);
-        }
-        Config.INSTANCE.debug = b;
-        Config.save();
-        return 0;
-    }
+
 }

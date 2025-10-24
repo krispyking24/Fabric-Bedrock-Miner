@@ -1,5 +1,6 @@
 package com.github.bunnyi116.bedrockminer.task;
 
+import com.github.bunnyi116.bedrockminer.BedrockMiner;
 import com.github.bunnyi116.bedrockminer.Debug;
 import com.github.bunnyi116.bedrockminer.I18n;
 import com.github.bunnyi116.bedrockminer.config.Config;
@@ -13,6 +14,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Queue;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.player;
@@ -53,6 +55,18 @@ public class Task {
         this.init();
     }
 
+    public boolean canInteractWithBlockAt() {
+        if (this.world == BedrockMiner.world) {
+            if (ClientPlayerInteractionManagerUtils.canInteractWithBlockAt(pos, 1.0F)) {
+                if (planItem != null) {
+                    return planItem.canInteractWithBlockAt();
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void setWait(@Nullable TaskState nextState, int tickWaitMax) {
         this.nextState = nextState;
         this.tickWaitMax = Math.max(tickWaitMax, 1);
@@ -68,12 +82,12 @@ public class Task {
     }
 
     private void setModifyLook(Direction facing) {
-        PlayerLookManager.set(facing, this);
+        PlayerLookManager.INSTANCE.set(facing, this);
     }
 
     private void resetModifyLook() {
-        if (PlayerLookManager.isModify()) {
-            PlayerLookManager.reset();
+        if (PlayerLookManager.INSTANCE.isModify()) {
+            PlayerLookManager.INSTANCE.reset();
         }
     }
 
@@ -204,13 +218,11 @@ public class Task {
                 if (!item.isWorldValid()) {
                     continue;
                 }
-                // 检查活塞位置
                 final var pistonPos = item.piston.pos;
                 final var pistonFacing = item.piston.facing;
                 final var pistonHeadPos = pistonPos.offset(pistonFacing);
                 final var pistonState = world.getBlockState(pistonPos);
                 final var pistonHeadState = world.getBlockState(pistonHeadPos);
-
                 final var pistonDefaultState = Blocks.PISTON.getDefaultState().with(PistonBlock.FACING, pistonFacing);
                 final var pistonHeadDefaultState = Blocks.PISTON_HEAD.getDefaultState().with(PistonHeadBlock.FACING, pistonFacing);
                 if (!BlockPlacerUtils.canPlace(world, pistonPos, pistonDefaultState) || !BlockPlacerUtils.canPlace(world, pistonHeadPos, pistonHeadDefaultState)) {
@@ -279,6 +291,7 @@ public class Task {
                 currentState = TaskState.COMPLETE;
             }
         }
+
     }
 
     private void execute() {
@@ -346,7 +359,6 @@ public class Task {
         }
         if (!this.executed) {
             debugUpdateStates("任务未执行过");
-
             // 活塞
             if (world.getBlockState(this.planItem.piston.pos).isReplaceable()) {
                 this.debugUpdateStates("[%s] [%s] 活塞未放置且该位置可放置物品,设置放置状态", this.planItem.piston.pos.toShortString(), this.planItem.piston.facing);
@@ -360,7 +372,6 @@ public class Task {
                     return;
                 }
             }
-
             // 底座
             if (world.getBlockState(this.planItem.slimeBlock.pos).isReplaceable()) {
                 this.debugUpdateStates("[%s] [%s] 底座未放置且该位置可放置物品,设置放置状态", this.planItem.slimeBlock.pos.toShortString(), this.planItem.slimeBlock.facing);
@@ -372,7 +383,6 @@ public class Task {
                 this.currentState = TaskState.FAIL;
                 return;
             }
-
             // 红石火把
             if (world.getBlockState(this.planItem.redstoneTorch.pos).isReplaceable()) {
                 this.debugUpdateStates("[%s] [%s] 红石火把未放置且该位置可放置物品,设置放置状态", this.planItem.redstoneTorch.pos.toShortString(), this.planItem.redstoneTorch.facing);
@@ -393,15 +403,16 @@ public class Task {
                     this.currentState = TaskState.FAIL;
                 }
             }
-
             if (world.getBlockState(this.planItem.piston.pos).getBlock() instanceof PistonBlock) {
                 if (world.getBlockState(this.planItem.piston.pos).contains(PistonBlock.EXTENDED)) {
                     if (world.getBlockState(this.planItem.piston.pos).get(PistonBlock.EXTENDED)) {
                         this.debugUpdateStates("[%s] [%s] 条件已充足, 准备开始尝试", this.planItem.piston.pos.toShortString(), this.planItem.piston.facing);
                         this.currentState = TaskState.EXECUTE;
+                        return;
                     }
                 }
             }
+            this.debugUpdateStates("？？？");
         }
     }
 

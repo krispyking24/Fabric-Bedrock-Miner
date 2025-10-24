@@ -53,4 +53,12 @@ public class BedrockMiner implements ModInitializer {
             BedrockMiner.gameMode = mc.interactionManager.getCurrentGameMode();
         }
     }
+
+    public static boolean gameVariableIsValid() {
+        return client != null
+                && world != null
+                && player != null
+                && networkHandler != null
+                && interactionManager != null;
+    }
 }

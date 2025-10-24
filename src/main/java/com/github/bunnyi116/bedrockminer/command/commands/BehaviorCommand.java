@@ -5,6 +5,7 @@ import com.github.bunnyi116.bedrockminer.command.CommandBase;
 import com.github.bunnyi116.bedrockminer.command.argument.BlockArgument;
 import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.util.MessageUtils;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -72,7 +73,7 @@ public class BehaviorCommand extends CommandBase {
                         .replace("%listFloor%", sb.toString())
                 )
         );
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
 
     private int addFloor(CommandContext<FabricClientCommandSource> context) {
@@ -87,7 +88,7 @@ public class BehaviorCommand extends CommandBase {
                         .replace("%count%", String.valueOf(floor))
                 )
         );
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
 
     private int removeFloor(CommandContext<FabricClientCommandSource> context) {
@@ -102,7 +103,7 @@ public class BehaviorCommand extends CommandBase {
                         .replace("%count%", String.valueOf(floor))
                 )
         );
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
 
     private int addBlockWhitelist(CommandContext<FabricClientCommandSource> context) {
@@ -114,7 +115,7 @@ public class BehaviorCommand extends CommandBase {
             Config.save();
             sendChat(I18n.COMMAND_BLOCK_WHITELIST_ADD, block);
         }
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
 
     private int removeBlockWhitelist(CommandContext<FabricClientCommandSource> context) {
@@ -126,7 +127,7 @@ public class BehaviorCommand extends CommandBase {
             Config.save();
             sendChat(I18n.COMMAND_BLOCK_WHITELIST_REMOVE, block);
         }
-        return 0;
+        return Command.SINGLE_SUCCESS;
     }
 
     private boolean isFilterBlock(Block block) {

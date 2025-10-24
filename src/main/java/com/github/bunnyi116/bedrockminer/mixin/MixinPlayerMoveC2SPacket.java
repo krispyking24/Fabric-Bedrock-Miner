@@ -10,11 +10,11 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public class MixinPlayerMoveC2SPacket {
     @ModifyVariable(method = "<init>(DDDFFZZZZ)V", at = @At("HEAD"), ordinal = 0, argsOnly = true)
     private static float modifyLookYaw(float yaw) {
-        return PlayerLookManager.onModifyLookYaw(yaw);
+        return PlayerLookManager.INSTANCE.onModifyLookYaw(yaw);
     }
 
     @ModifyVariable(method = "<init>(DDDFFZZZZ)V", at = @At("HEAD"), ordinal = 1, argsOnly = true)
     private static float modifyLookPitch(float pitch) {
-        return PlayerLookManager.onModifyLookPitch(pitch);
+        return PlayerLookManager.INSTANCE.onModifyLookPitch(pitch);
     }
 }

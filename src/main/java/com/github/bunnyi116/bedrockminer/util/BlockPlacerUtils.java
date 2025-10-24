@@ -2,10 +2,7 @@ package com.github.bunnyi116.bedrockminer.util;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.AreaEffectCloudEntity;
-import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.projectile.ArrowEntity;
 import net.minecraft.item.Item;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.Hand;
@@ -24,7 +21,7 @@ public class BlockPlacerUtils {
         if (!world.getBlockState(blockPos).isReplaceable())
             return;
 
-        if (!InteractionUtils.isBlockWithinReach(blockPos, facing, 1F)) {
+        if (!ClientPlayerInteractionManagerUtils.canInteractWithBlockAt(blockPos, 1.0F)) {
             return;
         }
         if (items != null) {

@@ -12,87 +12,90 @@ import static com.github.bunnyi116.bedrockminer.BedrockMiner.networkHandler;
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.player;
 
 public class PlayerLookManager {
-    private static boolean modifyYaw = false;
-    private static boolean modifyPitch = false;
-    private static float yaw = 0F;
-    private static float pitch = 0F;
-    private static int ticks = 0;
-    private static @Nullable Task task = null;
+    public static PlayerLookManager INSTANCE = new PlayerLookManager();
 
-    public static float onModifyLookYaw(float yaw) {
-        return modifyYaw ? PlayerLookManager.yaw : yaw;
+    private boolean modifyYaw = false;
+    private boolean modifyPitch = false;
+    private float yaw = 0F;
+    private float pitch = 0F;
+    private int ticks = 0;
+    private @Nullable Task task = null;
+
+    public float onModifyLookYaw(float yaw) {
+        return this.modifyYaw ? this.yaw : yaw;
     }
 
-    public static float onModifyLookPitch(float pitch) {
-        return modifyPitch ? PlayerLookManager.pitch : pitch;
+    public float onModifyLookPitch(float pitch) {
+        return this.modifyPitch ? this.pitch : pitch;
     }
 
-    private static PlayerMoveC2SPacket getLookAndOnGroundPacket(ClientPlayerEntity player) {
-        var yaw = modifyYaw ? PlayerLookManager.yaw : player.getYaw();
-        var pitch = modifyPitch ? PlayerLookManager.pitch : player.getPitch();
+    private PlayerMoveC2SPacket getLookAndOnGroundPacket(ClientPlayerEntity player) {
+        var yaw = this.modifyYaw ? this.yaw : player.getYaw();
+        var pitch = this.modifyPitch ? this.pitch : player.getPitch();
         return new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround(), false);
     }
 
-    public static void sendLookAndOnGroundPacket() {
+    public void sendLookAndOnGroundPacket() {
         if (networkHandler != null && player != null) {
-            networkHandler.sendPacket(getLookAndOnGroundPacket(player));
+            networkHandler.sendPacket(this.getLookAndOnGroundPacket(player));
         }
     }
 
-    public static void set(float yaw, float pitch) {
-        PlayerLookManager.modifyYaw = true;
-        PlayerLookManager.yaw = yaw;
-        PlayerLookManager.modifyPitch = true;
-        PlayerLookManager.pitch = pitch;
+    public void setYaw(float yaw) {
+        this.yaw = yaw;
+        this.modifyYaw = true;
     }
 
-    public static void set(Direction facing, Task task) {
-        PlayerLookManager.task = task;
-        float yaw = switch (facing) {
+    public void setPitch(float pitch) {
+        this.pitch = pitch;
+        this.modifyPitch = true;
+    }
+
+
+    public void set(float yaw, float pitch) {
+        this.setYaw(yaw);
+        this.setPitch(pitch);
+    }
+
+    public void set(Direction facing, Task task) {
+        this.task = task;
+        final var yaw = switch (facing) {
             case SOUTH -> 180F;
             case EAST -> 90F;
             case NORTH -> 0F;
             case WEST -> -90F;
             default -> player == null ? 0F : player.getYaw();
         };
-        float pitch = switch (facing) {
+        final var pitch = switch (facing) {
             case UP -> 90F;
             case DOWN -> -90F;
             default -> 0F;
         };
-        set(yaw, pitch);
-        sendLookAndOnGroundPacket();
+        this.set(yaw, pitch);
+        this.sendLookAndOnGroundPacket();
     }
 
-    public static void reset() {
-        modifyYaw = false;
-        yaw = 0F;
-        modifyPitch = false;
-        pitch = 0F;
-        task = null;
-        // 发送一个还原视角的数据包
-        MinecraftClient client = MinecraftClient.getInstance();
-        ClientPlayerEntity player = client.player;
-        ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
-        if (networkHandler != null && player != null) {
-            networkHandler.sendPacket(getLookAndOnGroundPacket(player));
-        }
+    public void reset() {
+        this.modifyYaw = false;
+        this.modifyPitch = false;
+        this.task = null;
+        this.sendLookAndOnGroundPacket();
     }
 
-    public static void onTick() {
-        if (isModify()) {   // 自动重置视角
-            if (ticks++ > 20) {
-                ticks = 0;
-                reset();
+    public void tick() {
+        if (this.isModify()) {   // 自动重置视角
+            if (this.ticks++ > 20) {
+                this.ticks = 0;
+                this.reset();
             }
         }
     }
 
-    public static boolean isModify() {
-        return modifyYaw || modifyPitch;
+    public boolean isModify() {
+        return this.modifyYaw || this.modifyPitch;
     }
 
-    public static @Nullable Task getTask() {
-        return task;
+    public @Nullable Task getTask() {
+        return this.task;
     }
 }

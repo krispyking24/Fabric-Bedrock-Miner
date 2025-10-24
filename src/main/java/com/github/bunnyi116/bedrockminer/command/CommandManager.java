@@ -7,9 +7,8 @@ import com.github.bunnyi116.bedrockminer.command.commands.DebugCommand;
 import com.github.bunnyi116.bedrockminer.command.commands.DisableCommand;
 import com.github.bunnyi116.bedrockminer.command.commands.TaskCommand;
 import com.github.bunnyi116.bedrockminer.task.TaskManager;
-import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.Command;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 import java.util.ArrayList;
 
@@ -31,26 +30,21 @@ public class CommandManager {
     }
 
     public static void init() {
-        // 开始注册
+        final var root = literal(getCommandPrefix())
+                .executes(context -> {
+                            TaskManager.INSTANCE.switchOnOff();
+                            return Command.SINGLE_SUCCESS;
+                        }
+                );
+        if (BedrockMiner.TEST) {
+            Test.register(root);
+        }
+
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            // 子命令
             for (var command : commands) {
                 command.register(dispatcher, registryAccess);
-            }
-            // 主命令执行
-            var root = literal(getCommandPrefix()).executes(CommandManager::executes);
-            // 测试命令
-            if (BedrockMiner.TEST) {
-                Test.register(root);
             }
             dispatcher.register(root);
         });
     }
-
-    private static int executes(CommandContext<FabricClientCommandSource> context) {
-        TaskManager.setWorking(!TaskManager.isWorking());
-        return 0;
-    }
-
-
 }

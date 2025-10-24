@@ -2,26 +2,43 @@ package com.github.bunnyi116.bedrockminer.config;
 
 import com.github.bunnyi116.bedrockminer.BedrockMiner;
 import com.github.bunnyi116.bedrockminer.Debug;
+import com.github.bunnyi116.bedrockminer.task.TaskRange;
 import com.github.bunnyi116.bedrockminer.util.BlockUtils;
+import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.github.bunnyi116.bedrockminer.I18n.FLOOR_BLACK_LIST_WARN;
+
 public class Config {
     public static final File CONFIG_DIR = FabricLoader.getInstance().getConfigDir().toFile();
     public static final File CONFIG_FILE = new File(CONFIG_DIR, BedrockMiner.MOD_ID + ".json");
     public static final Config INSTANCE = Config.load();
+
     public boolean disable = false;
     public boolean debug = false;
     public boolean taskShortWait = true;
     public List<Integer> floorsBlacklist = new ArrayList<>();
+    public List<TaskRange> ranges = new ArrayList<>();
     public List<String> blockWhitelist = getDefaultBlockWhitelist();
     public transient List<String> blockBlacklistServer = getDefaultBlockBlacklistServer();
+
+    public transient Direction[] pistonDirections = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+    public transient Direction[] pistonFacings = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+
+    public transient Direction[] redstoneTorchDirections = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+    public transient Direction[] redstoneTorchFacings = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
 
     public static List<String> getDefaultBlockWhitelist() {
         var list = new ArrayList<String>();
@@ -44,6 +61,33 @@ public class Config {
         list.add(BlockUtils.getBlockId(Blocks.STRUCTURE_BLOCK));            // 结构方块
         list.add(BlockUtils.getBlockId(Blocks.JIGSAW));                     // 拼图方块
         return list;
+    }
+
+
+    public boolean isAllowBlock(Block block) {
+        var mc = MinecraftClient.getInstance();
+        // 方块黑名单检查(服务器)
+        if (!mc.isInSingleplayer()) {
+            for (var defaultBlockBlack : blockBlacklistServer) {
+                if (BlockUtils.getBlockId(block).equals(defaultBlockBlack)) {
+                    return false;
+                }
+            }
+        }
+        // 方块白名单检查(用户自定义)
+        for (var blockBlack : blockWhitelist) {
+            if (BlockUtils.getBlockId(block).equals(blockBlack)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isFloorsBlacklist(BlockPos pos) {
+        if (!floorsBlacklist.isEmpty()) {  // 楼层限制
+            return floorsBlacklist.contains(pos.getY());
+        }
+        return false;
     }
 
     public static Config load() {
@@ -80,6 +124,4 @@ public class Config {
             e.printStackTrace();
         }
     }
-
-
 }
