@@ -1,19 +1,23 @@
-[繁體中文](./README_TW.md) | [简体中文](./README.md) | **English**
+[Traditional Chinese](./README_TW.md) | [Simplified Chinese](./README.md) | **English**
+
+---
 
 # Fabric-Bedrock-Miner
 
-A Fabric client mod to "mine" bedrock!
+A Fabric client mod to "mine" bedrock! 
 
-# Description
+---
 
-This project is a modified fork of [LXYan2333/Fabric-Bedrock-Miner](https://github.com/LXYan2333/Fabric-Bedrock-Miner) <br>
+## 📚 Project Description
 
-## Default block lists
+This project is a modified fork of [LXYan2333/Fabric-Bedrock-Miner](https://github.com/LXYan2333/Fabric-Bedrock-Miner).
 
-#### Block whitelist (break supported)
+## 🧱 Block Lists
+
+### Block Whitelist (Break Supported)
 - Bedrock
 
-#### Server block blacklist (Break is not supported, cannot be changed by command, built-in filter)
+### Block Blacklist (Break Not Supported, Cannot Be Changed by Command, Built-In Filter)
 - Barrier
 - Command Block
 - Chain Command Block
@@ -22,49 +26,75 @@ This project is a modified fork of [LXYan2333/Fabric-Bedrock-Miner](https://gith
 - Structure Block
 - Jigsaw Block
 
-#### Block for adding command filters
+### Blocks for Adding Command Filters
 - Air
-- Replaceable blocks
+- Replaceable Blocks
 
-### Command description
+---
+
+## 🛠️ Client Commands
+
 - `/bedrockMiner` on/off
 - `/bedrockMiner disable` disable the mod (the mod will not continue to process after it is turned on)
-- `/bedrockMiner behavior floor add <floor>` add a floor to the blacklist.
-- `/bedrockMiner behavior floor remove <floor>` remove a floor from the blacklist.
+- `/bedrockMiner behavior floor add <floor>` add a floor to the blacklist
+- `/bedrockMiner behavior floor remove <floor>` remove a floor from the blacklist
 - `/bedrockMiner behavior block whitelist add <block>` add a block to the whitelist
 - `/bedrockMiner behavior block whitelist remove <block>` remove a block from the whitelist
-- `/bedrockMiner task add <x, y, z>` add a task
+- `/bedrockMiner task add <name> <pos1> <pos2>` add a task range
 - `/bedrockMiner task shortWait <bool>` set short custom wait time
 - `/bedrockMiner task clear` clear the task
-- `/bedrockMiner debug true` enables debug mode
+- `/bedrockMiner debug true` enable debug mode
 - `/bedrockMiner debug false` turn off debug mode
 
-# Showcase
+---
 
-https://www.youtube.com/watch?v=b8Y86yxjr_Y  
-https://www.bilibili.com/video/BV1Fv411P7Vc
+# 🎥 Video Tutorials
 
-# Usage
+- [YouTube Video Tutorial](https://www.youtube.com/watch?v=b8Y86yxjr_Y)
+- [Bilibili Video Tutorial](https://www.bilibili.com/video/BV1Fv411P7Vc)
+
+---
+
+# 🛠️ Usage
 
 Have the following items ready:
-1. Efficiency V diamond (or netherite) pickaxe
-2. Haste II beacon
-3. Pistons
-4. Redstone torches
-5. Slime blocks
 
-Right click bedrock **with an empty hand** to switch on/off.
+- Efficiency V diamond (or netherite) pickaxe 
+- Haste II beacon 
+- Pistons 
+- Redstone torches 
+- Slime blocks 
 
-While the mod is enabled, left click bedrock to "mine" it.
+### Start and Stop
 
-If my mod saves you tons of time, please consider leaving a star.
+- **Start**: Right-click bedrock with an empty hand to activate the mod. (Make sure your hand is empty) 
+- **Operation**: While the mod is enabled, left-click bedrock to "mine" it. 
+- **Stop**: Right-click bedrock with an empty hand again to deactivate the mod. 
 
-# Compile
+If this mod saves you a lot of time, please consider giving it a star! 🌟
 
-Checkout to the corresponding Minecraft version and compile following the Fabric wiki.
+---
 
-## About
+## 🌟 Project Statistics 📊
 
-[QQ Group](https://qm.qq.com/q/lHXukQ3Ghk)
+<a href="https://www.star-history.com/#bunnyi116/fabric-bedrock-miner&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=bunnyi116/fabric-bedrock-miner&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=bunnyi116/fabric-bedrock-miner&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=bunnyi116/fabric-bedrock-miner&type=date&legend=top-left" />
+ </picture>
+</a>
 
-[Discord](https://discord.gg/9cpJG7Nt)
+---
+
+## ❤️ Special Thanks 🙏
+
+Thank you to all contributors for their hard work!
+
+[![](https://contrib.rocks/image?repo=bunnyi116/fabric-bedrock-miner)](https://github.com/bunnyi116/fabric-bedrock-miner/graphs/contributors)
+
+---
+
+## 🤝 About Us
+
+Join our [QQ Group: 456129886](https://qm.qq.com/q/lHXukQ3Ghk) and let's discuss together! 💬
