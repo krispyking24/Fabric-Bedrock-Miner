@@ -209,8 +209,21 @@ public class InventoryManagerUtils {
     private static float getBlockBreakingSpeed(BlockState blockState, ItemStack itemStack) {
         var f = itemStack.getMiningSpeedMultiplier(blockState);  // 当前物品的破坏系数速度
         //#if MC > 12006
+        // 根据工具的"效率"附魔增加破坏速度
         if (f > 1.0F) {
-            f += (float)player.getAttributeValue(EntityAttributes.MINING_EFFICIENCY);
+            // 获取itemStack的附魔集合
+            for (var enchantment : itemStack.getEnchantments().getEnchantments()) {
+                var enchantmentKey = enchantment.getKey();
+                if (enchantmentKey.isPresent()) {
+                    // 获取效率附魔等级
+                    if (enchantmentKey.get() == Enchantments.EFFICIENCY) {
+                        int toolLevel = EnchantmentHelper.getLevel(enchantment, itemStack);
+                        if (toolLevel > 0 && !itemStack.isEmpty()) {
+                            f += (float) (toolLevel * toolLevel + 1);
+                        }
+                    }
+                }
+            }
         }
         //#else
         //$$ if (f > 1.0F) {
@@ -222,22 +235,7 @@ public class InventoryManagerUtils {
         //#endif
 
 
-//        // 根据工具的"效率"附魔增加破坏速度
-//        if (f > 1.0F) {
-//            // 获取itemStack的附魔集合
-//            for (var enchantment : itemStack.getEnchantments().getEnchantments()) {
-//                var enchantmentKey = enchantment.getKey();
-//                if (enchantmentKey.isPresent()) {
-//                    // 获取效率附魔等级
-//                    if (enchantmentKey.get() == Enchantments.EFFICIENCY) {
-//                        int toolLevel = EnchantmentHelper.getLevel(enchantment, itemStack);
-//                        if (toolLevel > 0 && !itemStack.isEmpty()) {
-//                            f += (float) (toolLevel * toolLevel + 1);
-//                        }
-//                    }
-//                }
-//            }
-//        }
+
 
 
         // 根据玩家"急迫"状态效果增加破坏速度
