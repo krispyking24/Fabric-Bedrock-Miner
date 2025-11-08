@@ -57,7 +57,7 @@ public class Task {
 
     public boolean canInteractWithBlockAt() {
         if (this.world == BedrockMiner.world) {
-            if (ClientPlayerInteractionManagerUtils.canInteractWithBlockAt(pos, 1.0F)) {
+            if (PlayerUtils.canInteractWithBlockAt(pos, 1.0F)) {
                 if (planItem != null) {
                     return planItem.canInteractWithBlockAt();
                 }
@@ -231,7 +231,7 @@ public class Task {
                     }
                 }
                 final var redstoneTorchState = world.getBlockState(item.redstoneTorch.pos);
-                if (!redstoneTorchState.isReplaceable()) {  // 如果该位置已存在方块
+                if (!BlockUtils.isReplaceable(redstoneTorchState)) {  // 如果该位置已存在方块
                     // 当前位置方块类型
                     if (!(redstoneTorchState.getBlock() instanceof RedstoneTorchBlock
                             || redstoneTorchState.getBlock() instanceof WallRedstoneTorchBlock
@@ -276,7 +276,7 @@ public class Task {
                 InventoryManagerUtils.autoSwitch(blockState);
             }
             ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(blockPos);
-            if (blockState.isReplaceable()) {
+            if (BlockUtils.isReplaceable(blockState)) {
                 recycledQueue.remove(blockPos);
             }
             if (instant && !recycledQueue.isEmpty()) {
@@ -360,7 +360,7 @@ public class Task {
         if (!this.executed) {
             debugUpdateStates("任务未执行过");
             // 活塞
-            if (world.getBlockState(this.planItem.piston.pos).isReplaceable()) {
+            if (BlockUtils.isReplaceable(world.getBlockState(this.planItem.piston.pos))) {
                 this.debugUpdateStates("[%s] [%s] 活塞未放置且该位置可放置物品,设置放置状态", this.planItem.piston.pos.toShortString(), this.planItem.piston.facing);
                 this.currentState = TaskState.PLACE_PISTON;
                 return;
@@ -373,7 +373,7 @@ public class Task {
                 }
             }
             // 底座
-            if (world.getBlockState(this.planItem.slimeBlock.pos).isReplaceable()) {
+            if (BlockUtils.isReplaceable(world.getBlockState(this.planItem.slimeBlock.pos))) {
                 this.debugUpdateStates("[%s] [%s] 底座未放置且该位置可放置物品,设置放置状态", this.planItem.slimeBlock.pos.toShortString(), this.planItem.slimeBlock.facing);
                 this.currentState = TaskState.PLACE_SLIME_BLOCK;
                 return;
@@ -384,7 +384,7 @@ public class Task {
                 return;
             }
             // 红石火把
-            if (world.getBlockState(this.planItem.redstoneTorch.pos).isReplaceable()) {
+            if (BlockUtils.isReplaceable(world.getBlockState(this.planItem.redstoneTorch.pos))) {
                 this.debugUpdateStates("[%s] [%s] 红石火把未放置且该位置可放置物品,设置放置状态", this.planItem.redstoneTorch.pos.toShortString(), this.planItem.redstoneTorch.facing);
                 this.currentState = TaskState.PLACE_REDSTONE_TORCH;
                 return;

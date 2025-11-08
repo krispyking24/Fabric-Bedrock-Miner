@@ -4,6 +4,7 @@ import com.github.bunnyi116.bedrockminer.I18n;
 import com.github.bunnyi116.bedrockminer.command.CommandBase;
 import com.github.bunnyi116.bedrockminer.command.argument.BlockArgument;
 import com.github.bunnyi116.bedrockminer.config.Config;
+import com.github.bunnyi116.bedrockminer.util.BlockUtils;
 import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -131,7 +132,7 @@ public class BehaviorCommand extends CommandBase {
     }
 
     private boolean isFilterBlock(Block block) {
-        return block.getDefaultState().isAir() || block.getDefaultState().isReplaceable();
+        return block.getDefaultState().isAir() || BlockUtils.isReplaceable(block.getDefaultState());
     }
 
     private Boolean filterBlockWhitelist(Block block) {

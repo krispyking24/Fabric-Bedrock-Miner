@@ -1,10 +1,7 @@
 package com.github.bunnyi116.bedrockminer.task;
 
 import com.github.bunnyi116.bedrockminer.config.Config;
-import com.github.bunnyi116.bedrockminer.util.InventoryManagerUtils;
-import com.github.bunnyi116.bedrockminer.util.MessageUtils;
-import com.github.bunnyi116.bedrockminer.util.PlayerLookManager;
-import com.github.bunnyi116.bedrockminer.util.PlayerUtils;
+import com.github.bunnyi116.bedrockminer.util.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Items;
@@ -109,7 +106,7 @@ public class TaskManager {
                                     if (rangeBox.intersects(box)) {
                                         final var blockState = world.getBlockState(blockPos);
                                         final var block = blockState.getBlock();
-                                        if (blockState.isAir() || blockState.isReplaceable()) {
+                                        if (blockState.isAir() || BlockUtils.isReplaceable(blockState)) {
                                             continue;
                                         }
                                         if (!Config.INSTANCE.isAllowBlock(block)) {

@@ -35,13 +35,6 @@ public class ClientPlayerInteractionManagerUtils {
     private static int breakingTicks;
     private static int breakingTickMax;
 
-
-    public static boolean canInteractWithBlockAt(BlockPos pos, double additionalRange) {
-        double d = PlayerUtils.getBlockInteractionRange() + additionalRange;
-        return (new Box(pos)).squaredMagnitude(player.getEyePos()) < d * d;
-    }
-
-
     private static void syncSelectedSlot() {
         int i = PlayerInventoryUtils.getSelectedSlot();
         if (i != lastSelectedSlot) {
@@ -167,7 +160,7 @@ public class ClientPlayerInteractionManagerUtils {
 
     public static Direction getClosestFace(BlockPos targetPos) {
         Vec3d playerPos = player.getEyePos();
-        Vec3d targetCenterPos = targetPos.toCenterPos();
+        Vec3d targetCenterPos = Vec3d.ofCenter(targetPos);
         Direction closestFace = null;
         double closestDistanceSquared = Double.MAX_VALUE;
         for (Direction direction : Direction.values()) {

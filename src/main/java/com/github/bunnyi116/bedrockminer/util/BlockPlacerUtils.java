@@ -9,6 +9,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
@@ -18,10 +19,10 @@ public class BlockPlacerUtils {
         if (blockPos == null || facing == null)
             return;
 
-        if (!world.getBlockState(blockPos).isReplaceable())
+        if (!BlockUtils.isReplaceable(world.getBlockState(blockPos)))
             return;
 
-        if (!ClientPlayerInteractionManagerUtils.canInteractWithBlockAt(blockPos, 1.0F)) {
+        if (!PlayerUtils.canInteractWithBlockAt(blockPos, 1.0F)) {
             return;
         }
         if (items != null) {
@@ -47,7 +48,7 @@ public class BlockPlacerUtils {
 
         // 模拟选中位置(凭空放置)
         var hitPos = blockPos.offset(facing.getOpposite());
-        var hitVec3d = hitPos.toCenterPos().offset(facing, 0.5F);   // 放置面中心坐标
+        var hitVec3d = Vec3d.ofCenter(hitPos).offset(facing, 0.5F);   // 放置面中心坐标
         var hitResult = new BlockHitResult(hitVec3d, facing, blockPos, false);
 
         // 发送交互方块数据包
@@ -60,7 +61,7 @@ public class BlockPlacerUtils {
 
     public static boolean canPlace(ClientWorld world, BlockPos blockPos, BlockState placeBlockState) {
         // 目标位置的方块是否可以被替换
-        if (!world.getBlockState(blockPos).isReplaceable()) {
+        if (!BlockUtils.isReplaceable(world.getBlockState(blockPos))) {
             return false;
         }
         // 检查放置方块的碰撞体积

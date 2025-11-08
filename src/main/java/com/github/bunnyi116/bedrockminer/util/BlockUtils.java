@@ -1,6 +1,7 @@
 package com.github.bunnyi116.bedrockminer.util;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
@@ -20,5 +21,13 @@ public class BlockUtils {
 
     public static String getBlockId(Block block) {
         return getIdentifier(block).toString();
+    }
+
+    public static boolean isReplaceable(BlockState blockState) {
+        //#if MC > 11902
+        return blockState.isReplaceable();
+        //#else
+        //$$ return blockState.getMaterial().isReplaceable();
+        //#endif
     }
 }

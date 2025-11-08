@@ -1,6 +1,8 @@
 package com.github.bunnyi116.bedrockminer.task;
 
+import com.github.bunnyi116.bedrockminer.util.BlockUtils;
 import com.github.bunnyi116.bedrockminer.util.ClientPlayerInteractionManagerUtils;
+import com.github.bunnyi116.bedrockminer.util.PlayerUtils;
 import net.minecraft.block.Block;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
@@ -26,11 +28,11 @@ public class TaskPlanItem {
     }
 
     public boolean canInteractWithBlockAt() {
-        final var b1 = ClientPlayerInteractionManagerUtils.canInteractWithBlockAt(piston.pos, 1.0F);
-        final var b2 = ClientPlayerInteractionManagerUtils.canInteractWithBlockAt(redstoneTorch.pos, 1.0F);
+        final var b1 = PlayerUtils.canInteractWithBlockAt(piston.pos, 1.0F);
+        final var b2 = PlayerUtils.canInteractWithBlockAt(redstoneTorch.pos, 1.0F);
         if (b1 && b2) {
-            final var b3 = ClientPlayerInteractionManagerUtils.canInteractWithBlockAt(slimeBlock.pos, 1.0F);
-            if (b3 && world.getBlockState(slimeBlock.pos).isReplaceable()) {
+            final var b3 = PlayerUtils.canInteractWithBlockAt(slimeBlock.pos, 1.0F);
+            if (b3 && BlockUtils.isReplaceable(world.getBlockState(slimeBlock.pos))) {
                 return true;
             }
             return Block.sideCoversSmallSquare(world, slimeBlock.pos, slimeBlock.facing);
