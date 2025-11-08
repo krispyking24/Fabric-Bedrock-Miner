@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Queue;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.player;
+import static com.github.bunnyi116.bedrockminer.I18n.FAIL_MISSING_SLIME;
 import static net.minecraft.block.Block.sideCoversSmallSquare;
 
 public class Task {
@@ -185,7 +186,11 @@ public class Task {
         }
         BlockPlacerUtils.placement(planItem.redstoneTorch.pos, planItem.redstoneTorch.facing, Items.REDSTONE_TORCH);
         this.addRecycled(planItem.redstoneTorch.pos);
-        this.setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 2);
+        if (planItem.redstoneTorch.isNeedModify()) {
+            this.setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 2);
+        } else {
+            this.currentState = TaskState.WAIT_GAME_UPDATE;
+        }
         this.resetModifyLook();
     }
 
@@ -203,7 +208,11 @@ public class Task {
             }
             BlockPlacerUtils.placement(planItem.piston.pos, planItem.piston.facing, Items.PISTON);
             this.addRecycled(planItem.piston.pos);
-            this.setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 3);
+            if (planItem.piston.isNeedModify()) {
+                this.setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 3);
+            } else {
+                this.currentState = TaskState.WAIT_GAME_UPDATE;
+            }
             this.resetModifyLook();
         } else {
             this.planItem = null;
@@ -239,14 +248,20 @@ public class Task {
                         continue;
                     }
                 }
-                if (BlockPlacerUtils.canPlace(world, item.slimeBlock.pos, Blocks.SLIME_BLOCK.getDefaultState()) || sideCoversSmallSquare(world, item.slimeBlock.pos, item.slimeBlock.facing)) {// 特殊放置方案类型1, 需要检查目标方块是否能被充能
+                if (BlockPlacerUtils.canPlace(world, item.slimeBlock.pos, Blocks.SLIME_BLOCK.getDefaultState())
+                        || sideCoversSmallSquare(world, item.slimeBlock.pos, item.slimeBlock.facing)) {// 特殊放置方案类型1, 需要检查目标方块是否能被充能
                     if (item.redstoneTorch.type == 1 && !world.getBlockState(pos).isSolidBlock(world, pos)) {
+                        continue;
+                    }
+                    // 如果需要放置底座, 检查粘液块是否充足
+                    if (BlockUtils.isReplaceable(world.getBlockState(item.slimeBlock.pos))
+                            && InventoryManagerUtils.getInventoryItemCount(Items.SLIME_BLOCK) < 1) {
+//                        MessageUtils.setOverlayMessage(FAIL_MISSING_SLIME);
                         continue;
                     }
                     this.planItem = item;
                     break;
                 }
-
             }
         }
         if (this.planItem == null) {
@@ -271,7 +286,8 @@ public class Task {
                 recycledQueue.remove(blockPos);
                 recycledItems();
             }
-            var instant = world.getBlockState(blockPos).calcBlockBreakingDelta(player, world, blockPos) >= ClientPlayerInteractionManagerUtils.BREAKING_PROGRESS_MAX;
+            var instant = world.getBlockState(blockPos).calcBlockBreakingDelta(player, world, blockPos)
+                    >= ClientPlayerInteractionManagerUtils.BREAKING_PROGRESS_MAX;
             if (!instant) {
                 InventoryManagerUtils.autoSwitch(blockState);
             }

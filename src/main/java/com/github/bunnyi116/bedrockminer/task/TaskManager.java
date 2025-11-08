@@ -186,9 +186,6 @@ public class TaskManager {
         if (InventoryManagerUtils.getInventoryItemCount(Items.REDSTONE_TORCH) < 1) {
             msg = FAIL_MISSING_REDSTONETORCH;
         }
-        if (InventoryManagerUtils.getInventoryItemCount(Items.SLIME_BLOCK) < 1) {
-            msg = FAIL_MISSING_SLIME;
-        }
         if (!InventoryManagerUtils.canInstantlyMinePiston()) {
             msg = FAIL_MISSING_INSTANTMINE;
         }
