@@ -4,6 +4,7 @@ import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.util.InventoryManagerUtils;
 import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 import com.github.bunnyi116.bedrockminer.util.PlayerLookManager;
+import com.github.bunnyi116.bedrockminer.util.PlayerUtils;
 import net.minecraft.block.Block;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Items;
@@ -97,9 +98,9 @@ public class TaskManager {
                     }
                     var rangeBox =  BlockBox.create(range.pos1, range.pos2);
                     var playerBox = new BlockBox(player.getBlockPos());
-                    var playerExpandBox = playerBox.expand((int) player.getBlockInteractionRange());
+                    var playerExpandBox = playerBox.expand((int) PlayerUtils.getBlockInteractionRange());
                     if (rangeBox.intersects(playerExpandBox)) {
-                        final var blockInteractionRange = (int) player.getBlockInteractionRange() - 1;
+                        final var blockInteractionRange = (int) PlayerUtils.getBlockInteractionRange() - 1;
                         for (int y = blockInteractionRange; y > -blockInteractionRange; y--) {
                             for (int x = -blockInteractionRange; x <= blockInteractionRange; x++) {
                                 for (int z = -blockInteractionRange; z <= blockInteractionRange; z++) {

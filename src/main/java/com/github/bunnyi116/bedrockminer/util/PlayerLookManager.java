@@ -1,7 +1,6 @@
 package com.github.bunnyi116.bedrockminer.util;
 
 import com.github.bunnyi116.bedrockminer.task.Task;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
@@ -29,15 +28,34 @@ public class PlayerLookManager {
         return this.modifyPitch ? this.pitch : pitch;
     }
 
-    private PlayerMoveC2SPacket getLookAndOnGroundPacket(ClientPlayerEntity player) {
-        var yaw = this.modifyYaw ? this.yaw : player.getYaw();
-        var pitch = this.modifyPitch ? this.pitch : player.getPitch();
+    public static PlayerMoveC2SPacket getLookPacket(ClientPlayerEntity player, float yaw, float pitch) {
+        //#if MC > 12101
         return new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround(), false);
+        //#else
+        //$$ return new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround());
+        //#endif
     }
 
-    public void sendLookAndOnGroundPacket() {
+    public static void sendLookPacket(ClientPlayNetworkHandler networkHandler, PlayerMoveC2SPacket packet) {
+        if (networkHandler != null) {
+            networkHandler.sendPacket(packet);
+        }
+    }
+
+    public static void sendLookPacket(ClientPlayNetworkHandler networkHandler, float yaw, float pitch) {
+        final PlayerMoveC2SPacket packet = PlayerLookManager.getLookPacket(player, yaw, pitch);
+        PlayerLookManager.sendLookPacket(networkHandler, packet);
+    }
+
+    private PlayerMoveC2SPacket getLookPacket(ClientPlayerEntity player) {
+        var yaw = this.modifyYaw ? this.yaw : player.getYaw();
+        var pitch = this.modifyPitch ? this.pitch : player.getPitch();
+        return getLookPacket(player, yaw, pitch);
+    }
+
+    public void sendLookPacket() {
         if (networkHandler != null && player != null) {
-            networkHandler.sendPacket(this.getLookAndOnGroundPacket(player));
+            networkHandler.sendPacket(this.getLookPacket(player));
         }
     }
 
@@ -72,14 +90,14 @@ public class PlayerLookManager {
             default -> 0F;
         };
         this.set(yaw, pitch);
-        this.sendLookAndOnGroundPacket();
+        this.sendLookPacket();
     }
 
     public void reset() {
         this.modifyYaw = false;
         this.modifyPitch = false;
         this.task = null;
-        this.sendLookAndOnGroundPacket();
+        this.sendLookPacket();
     }
 
     public void tick() {

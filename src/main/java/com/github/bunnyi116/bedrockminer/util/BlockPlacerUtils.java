@@ -42,7 +42,7 @@ public class BlockPlacerUtils {
                 case DOWN -> -90F;
                 default -> 0F;
             };
-            networkHandler.sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround(), false));
+            PlayerLookManager.sendLookPacket(networkHandler, yaw, pitch);
         }
 
         // 模拟选中位置(凭空放置)
@@ -69,7 +69,7 @@ public class BlockPlacerUtils {
             return true; // 放置的方块是没有没有碰撞体积，可以放置
         }
         for (var entity : world.getEntities()) {
-            if (entity instanceof ItemEntity){
+            if (entity instanceof ItemEntity) {
                 return true;
             }
             if (entity.collidesWithStateAtPos(blockPos, placeBlockState)) {

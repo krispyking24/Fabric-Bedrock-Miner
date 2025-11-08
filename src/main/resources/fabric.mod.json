@@ -1,12 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "bedrockminer",
+  "id": "${id}",
   "version": "${version}",
-  "name": "Bedrock Miner",
+  "name": "${name}",
   "description": "Client mod to mine bedrock!",
   "authors": [
-    "bunnyi116",
-    "LXYan"
+    "bunnyi116"
   ],
   "contact": {
     "homepage": "https://github.com/bunnyi116/fabric-bedrock-miner",
@@ -14,7 +13,7 @@
   },
   "license": "",
   "icon": "assets/bedrockminer/icon.png",
-  "environment": "*",
+  "environment": "client",
   "entrypoints": {
     "main": [
       "com.github.bunnyi116.bedrockminer.BedrockMiner"
@@ -25,11 +24,10 @@
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",
-    "minecraft": ">=${minecraft_version}",
-    "java": ">=${java_version}"
+    "minecraft": "${minecraft_dependency}"
   },
   "suggests": {
     "another-mod": "*"
   },
-  "accessWidener" : "bedrock-miner.accesswidener"
+  "accessWidener": "bedrock-miner.accesswidener"
 }

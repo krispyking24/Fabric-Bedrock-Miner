@@ -37,12 +37,13 @@ public class ClientPlayerInteractionManagerUtils {
 
 
     public static boolean canInteractWithBlockAt(BlockPos pos, double additionalRange) {
-        double d = player.getBlockInteractionRange() + additionalRange;
+        double d = PlayerUtils.getBlockInteractionRange() + additionalRange;
         return (new Box(pos)).squaredMagnitude(player.getEyePos()) < d * d;
     }
 
+
     private static void syncSelectedSlot() {
-        int i = player.getInventory().getSelectedSlot();
+        int i = PlayerInventoryUtils.getSelectedSlot();
         if (i != lastSelectedSlot) {
             lastSelectedSlot = i;
             networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(lastSelectedSlot));

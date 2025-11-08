@@ -14,9 +14,11 @@ import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.collection.DefaultedList;
 
 import java.util.Objects;
 
@@ -83,7 +85,7 @@ public class InventoryManagerUtils {
 
         // 如果点的是快捷栏内槽位（0–8），直接切换选中即可
         if (PlayerInventory.isValidHotbarIndex(slot)) {
-            playerInventory.setSelectedSlot(slot);
+            PlayerInventoryUtils.setSelectedSlot(slot);
             return;
         }
 
@@ -91,28 +93,28 @@ public class InventoryManagerUtils {
             final var itemStack = playerInventory.getStack(i);
             if (itemStack.isEmpty()) {
                 swapSlots(player, interactionManager, slot, i);
-                playerInventory.setSelectedSlot(i);
+                PlayerInventoryUtils.setSelectedSlot(i);
                 return;
             }
         }
         swapSlots(player, interactionManager, slot, 0);
-        playerInventory.setSelectedSlot(0);
+        PlayerInventoryUtils.setSelectedSlot(0);
     }
 
     public static void switchToSlot(int slot) {
         // 背包中没有指定的物品
         if (PlayerInventory.isValidHotbarIndex(slot)) {
-            playerInventory.setSelectedSlot(slot);
+            PlayerInventoryUtils.setSelectedSlot(slot);
         } else {
             pickFromInventory(player, interactionManager, slot);
         }
-        networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(playerInventory.getSelectedSlot())); // 发送更新手持物品的数据包
+        networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(PlayerInventoryUtils.getSelectedSlot())); // 发送更新手持物品的数据包
     }
 
     public static void switchToItem(int minDamage, Item... items) {
-        // 遍历主背包
-        for (int i = 0; i < playerInventory.getMainStacks().size(); i++) {
-            ItemStack stack = playerInventory.getMainStacks().get(i);
+        final DefaultedList<ItemStack> MainStacks = PlayerInventoryUtils.getMainStacks(playerInventory);
+        for (int i = 0; i < MainStacks.size(); i++) {
+            ItemStack stack = MainStacks.get(i);
             if (stack.isEmpty()) {
                 continue;
             }
@@ -206,22 +208,38 @@ public class InventoryManagerUtils {
      */
     private static float getBlockBreakingSpeed(BlockState blockState, ItemStack itemStack) {
         var f = itemStack.getMiningSpeedMultiplier(blockState);  // 当前物品的破坏系数速度
-        // 根据工具的"效率"附魔增加破坏速度
+        //#if MC > 12006
         if (f > 1.0F) {
-            // 获取itemStack的附魔集合
-            for (var enchantment : itemStack.getEnchantments().getEnchantments()) {
-                var enchantmentKey = enchantment.getKey();
-                if (enchantmentKey.isPresent()) {
-                    // 获取效率附魔等级
-                    if (enchantmentKey.get() == Enchantments.EFFICIENCY) {
-                        int toolLevel = EnchantmentHelper.getLevel(enchantment, itemStack);
-                        if (toolLevel > 0 && !itemStack.isEmpty()) {
-                            f += (float) (toolLevel * toolLevel + 1);
-                        }
-                    }
-                }
-            }
+            f += (float)player.getAttributeValue(EntityAttributes.MINING_EFFICIENCY);
         }
+        //#else
+        //$$ if (f > 1.0F) {
+        //$$     int level = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, itemStack);
+        //$$     if (level > 0 && !itemStack.isEmpty()) {
+        //$$         f += (float)(level * level + 1);
+        //$$     }
+        //$$ }
+        //#endif
+
+
+//        // 根据工具的"效率"附魔增加破坏速度
+//        if (f > 1.0F) {
+//            // 获取itemStack的附魔集合
+//            for (var enchantment : itemStack.getEnchantments().getEnchantments()) {
+//                var enchantmentKey = enchantment.getKey();
+//                if (enchantmentKey.isPresent()) {
+//                    // 获取效率附魔等级
+//                    if (enchantmentKey.get() == Enchantments.EFFICIENCY) {
+//                        int toolLevel = EnchantmentHelper.getLevel(enchantment, itemStack);
+//                        if (toolLevel > 0 && !itemStack.isEmpty()) {
+//                            f += (float) (toolLevel * toolLevel + 1);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
+
         // 根据玩家"急迫"状态效果增加破坏速度
         if (StatusEffectUtil.hasHaste(player)) {
             f *= 1.0F + (float) (StatusEffectUtil.getHasteAmplifier(player) + 1) * 0.2F;
@@ -239,6 +257,7 @@ public class InventoryManagerUtils {
         }
 
         // 如果玩家在水中并且没有"水下速掘"附魔，则减缓破坏速度
+        //#if MC > 12006
         f *= (float) player.getAttributeValue(EntityAttributes.BLOCK_BREAK_SPEED);
         if (player.isSubmergedIn(FluidTags.WATER)) {
             var submergedMiningSpeed = player.getAttributeInstance(EntityAttributes.SUBMERGED_MINING_SPEED);
@@ -246,6 +265,12 @@ public class InventoryManagerUtils {
                 f *= (float) submergedMiningSpeed.getValue();
             }
         }
+        //#else
+        //$$ if (player.isSubmergedIn(FluidTags.WATER) && !EnchantmentHelper.hasAquaAffinity(player)) {
+        //$$     f /= 5.0F;
+        //$$ }
+        //#endif
+
         if (!player.isOnGround()) { // 如果玩家不在地面上，则减缓破坏速度
             f /= 5.0F;
         }
