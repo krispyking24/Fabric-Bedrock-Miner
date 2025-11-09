@@ -1,0 +1,25 @@
+name: 功能请求
+description: 为此项目提出功能建议
+labels: []
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 动机
+      description: 你为什么需要这个功能？你想解决什么问题？你建议的功能如何帮助解决？
+      placeholder: 告诉我们你想要什么！
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 功能描述
+      description: 尽可能详细地描述你希望的功能
+      placeholder: 我希望在午夜抬头时能看到一片绚烂的星空。
+    validations:
+      required: true
+  - type: textarea
+    id: other-information
+    attributes:
+      label: 其他信息
+      description: 与此功能请求相关的其他有用信息。如无，请留空。

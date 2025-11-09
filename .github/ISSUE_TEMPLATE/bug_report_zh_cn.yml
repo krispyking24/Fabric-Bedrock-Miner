@@ -1,0 +1,79 @@
+name: Bug 报告
+description: 某些地方似乎不正确，可能是一个 Bug
+labels: []
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug 描述
+      description: |
+        清晰准确地描述 Bug 是什么。
+        是游戏崩溃、意外行为，还是出现了什么错误？
+        如果适用，请添加截图以帮助说明问题。
+      placeholder: 告诉我们你看到了什么！
+    validations:
+      required: true
+  - type: textarea
+    id: to-reproduce
+    attributes:
+      label: 重现步骤
+      description: 重现此 Bug 的步骤
+      placeholder: |
+        1. 创建一个世界
+        2. 等到午夜
+        3. 拥抱一只苦力怕
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: 预期行为
+      description: 你预期会发生什么？
+      placeholder: 苦力怕爆炸
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: 实际行为
+      description: 实际上发生了什么？
+      placeholder: 苦力怕把自己发射到了天上
+  - type: textarea
+    id: logs
+    attributes:
+      label: 相关日志
+      description: |-
+        如果是崩溃，请在此处提供 `logs` 文件夹中对应的 Minecraft 日志，或 `crash-reports` 文件夹中的崩溃报告。
+        请将日志文件作为附件上传，或将日志上传到 [pastebin](https://pastebin.com/) / [mclo.gs](https://mclo.gs/) 并在此处粘贴链接。
+        请避免直接粘贴整个日志文件的内容。
+        如无，请留空。
+      placeholder: https://pastebin.com/J6b7lKxR
+  - type: input
+    id: minecraft-version
+    attributes:
+      label: Minecraft 版本
+      description: 出现此 Bug 的 Minecraft 版本。
+      placeholder: 1.15.2
+    validations:
+      required: true
+  - type: input
+    id: mod-version
+    attributes:
+      label: TemplateMod 版本
+      description: 出现此 Bug 的 TemplateMod 版本。
+      placeholder: 1.2.3
+    validations:
+      required: true
+  - type: textarea
+    id: other-information
+    attributes:
+      label: 其他信息
+      description: 与此 Bug 报告相关的其他有用信息，例如其他相关模组的版本。如无，请留空。
+      placeholder: 该问题仅在玩家处于生存模式时发生
+  - type: checkboxes
+    id: check-list
+    attributes:
+      label: 检查清单
+      options:
+        - label: 我已确认该问题在模组的最新版本中仍然存在。
+          required: true
+        - label: 我已搜索现有问题并确认此问题未被重复报告。
+          required: true
