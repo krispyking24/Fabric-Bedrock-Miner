@@ -40,7 +40,8 @@ This project is a modified fork of [LXYan2333/Fabric-Bedrock-Miner](https://gith
 - `/bedrockMiner behavior floor remove <floor>` remove a floor from the blacklist
 - `/bedrockMiner behavior block whitelist add <block>` add a block to the whitelist
 - `/bedrockMiner behavior block whitelist remove <block>` remove a block from the whitelist
-- `/bedrockMiner task add <name> <pos1> <pos2>` add a task range
+- `/bedrockMiner task addRegionTaskConfig <name> <pos1> <pos2>` add a task range to the configuration file
+- `/bedrockMiner task addRegionTask <name> <pos1> <pos2>` add a temporary task (invalid after game restart)
 - `/bedrockMiner task shortWait <bool>` set short custom wait time
 - `/bedrockMiner task clear` clear the task
 - `/bedrockMiner debug true` enable debug mode

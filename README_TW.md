@@ -41,7 +41,8 @@
 - `/bedrockMiner behavior floor remove <floor>`：移除層數從黑名單
 - `/bedrockMiner behavior block whitelist add <block>`：增加白名單方塊
 - `/bedrockMiner behavior block whitelist remove <block>`：移除白名單方塊
-- `/bedrockMiner task add <name> <pos1> <pos2>`：新增任務範圍
+- `/bedrockMiner task addRegionTaskConfig <name> <pos1> <pos2>`：添加區域任務到配置文件
+- `/bedrockMiner task addRegionTask <name> <pos1> <pos2>`：添加區域任務(臨時性, 重啟遊戲後無效)
 - `/bedrockMiner task shortWait <bool>`：設定短暫自定義等待時間
 - `/bedrockMiner task clear`：清空任務
 - `/bedrockMiner debug true`：開啟除錯模式
