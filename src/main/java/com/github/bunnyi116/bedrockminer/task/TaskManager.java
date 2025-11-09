@@ -1,6 +1,7 @@
 package com.github.bunnyi116.bedrockminer.task;
 
-import com.github.bunnyi116.bedrockminer.config.Config;
+import com.github.bunnyi116.bedrockminer.api.ITaskManager;
+import com.github.bunnyi116.bedrockminer.config.ConfigManager;
 import com.github.bunnyi116.bedrockminer.util.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.world.ClientWorld;
@@ -11,40 +12,30 @@ import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
 import static com.github.bunnyi116.bedrockminer.I18n.*;
 
-public class TaskManager {
-    public static TaskManager INSTANCE = new TaskManager();
+public class TaskManager implements ITaskManager {
+    private static volatile @Nullable TaskManager INSTANCE;
 
-    private final ArrayList<Task> pendingTasks = new ArrayList<>();
-    @Nullable
-    private Task currentTask;
+    private final ArrayList<Task> pendingBlockTasks = new ArrayList<>();
+    private final List<TaskRegion> pendingRegionTasks = new ArrayList<>();
+    private @Nullable Task currentTask;
     private boolean working;
     private boolean processing;
     private int resetCount;
-
-    public TaskManager() {
-        this.currentTask = null;
-        this.working = false;
-        this.processing = false;
-        this.resetCount = 0;
-    }
-
-    public boolean isProcessing() {
-        return processing;
-    }
 
     public void tick() {
         if (!gameVariableIsValid()) {
             return;
         }
-        if (this.isDisabled() || !this.isWorking()) {
+        if (ConfigManager.getInstance().getConfig().disable || !this.isWorking()) {
             PlayerLookManager.INSTANCE.tick();
             return;
         }
-        if (this.pendingTasks.isEmpty() && Config.INSTANCE.ranges.isEmpty()) {
+        if (this.pendingBlockTasks.isEmpty() && this.pendingRegionTasks.isEmpty() && ConfigManager.getInstance().getConfig().ranges.isEmpty()) {
             this.currentTask = null;
             return;
         }
@@ -57,18 +48,21 @@ public class TaskManager {
                     this.resetCount = 0;
                     this.processing = false;
                     if (this.currentTask.isComplete()) {
-                        this.pendingTasks.remove(this.currentTask);
+                        this.pendingBlockTasks.remove(this.currentTask);
                         this.currentTask = null;
                     } else {
                         return;
                     }
-                } else if ((this.pendingTasks.size() > 1 || !Config.INSTANCE.ranges.isEmpty()) && this.resetCount++ >= 40) {
+                } else if ((this.pendingBlockTasks.size() > 1 || !ConfigManager.getInstance().getConfig().ranges.isEmpty())) {
+                    this.currentTask = null;
+                    this.resetCount = 0;
+                } else if (this.resetCount++ >= 40) {
                     this.currentTask = null;
                     this.resetCount = 0;
                 }
             }
             if (this.currentTask == null) {
-                final var iterator1 = pendingTasks.iterator();
+                final var iterator1 = pendingBlockTasks.iterator();
                 while (iterator1.hasNext()) {
                     var task = iterator1.next();
                     if (!task.canInteractWithBlockAt()) {
@@ -87,13 +81,13 @@ public class TaskManager {
             }
 
             if (this.currentTask == null) {
-                final var iterator2 = Config.INSTANCE.ranges.iterator();
+                final var iterator2 = new CombinedIterator<>(ConfigManager.getInstance().getConfig().ranges, pendingRegionTasks);
                 while (iterator2.hasNext()) {
                     var range = iterator2.next();
                     if (!range.isForWorld(world)) {
                         continue;
                     }
-                    var rangeBox =  BlockBox.create(range.pos1, range.pos2);
+                    var rangeBox = BlockBox.create(range.pos1, range.pos2);
                     var playerBox = new BlockBox(player.getBlockPos());
                     var playerExpandBox = playerBox.expand((int) PlayerUtils.getBlockInteractionRange());
                     if (rangeBox.intersects(playerExpandBox)) {
@@ -109,10 +103,10 @@ public class TaskManager {
                                         if (blockState.isAir() || BlockUtils.isReplaceable(blockState)) {
                                             continue;
                                         }
-                                        if (!Config.INSTANCE.isAllowBlock(block)) {
+                                        if (!ConfigManager.getInstance().getConfig().isAllowBlock(block)) {
                                             continue;
                                         }
-                                        if (Config.INSTANCE.isFloorsBlacklist(blockPos)) {
+                                        if (ConfigManager.getInstance().getConfig().isFloorsBlacklist(blockPos)) {
                                             continue;
                                         }
                                         var task = new Task(world, block, blockPos);
@@ -139,37 +133,11 @@ public class TaskManager {
     }
 
     public void clearTask() {
-        pendingTasks.clear();
+        pendingBlockTasks.clear();
         if (PlayerLookManager.INSTANCE.isModify()) { // 如果有任务正在修改事件, 则还原玩家视角
             PlayerLookManager.INSTANCE.reset();
         }
         MessageUtils.addMessage(COMMAND_TASK_CLEAR);
-    }
-
-    public void addTask(Block block, BlockPos pos, ClientWorld world) {
-        if (isDisabled() || !isWorking()) {
-            return;
-        }
-        if (!isAllowExecutionEnvironment(true)) {
-            return;
-        }
-        if (!gameMode.isSurvivalLike()) {
-            return;
-        }
-        if (!Config.INSTANCE.isAllowBlock(block)) {
-            return;
-        }
-        if (Config.INSTANCE.isFloorsBlacklist(pos)) {  // 楼层限制
-            var msg = FLOOR_BLACK_LIST_WARN.getString().replace("(#floor#)", String.valueOf(pos.getY()));
-            MessageUtils.setOverlayMessage(Text.literal(msg));
-            return;
-        }
-        for (var targetBlock : pendingTasks) {
-            if (targetBlock.pos.equals(pos)) {
-                return;
-            }
-        }
-        pendingTasks.add(new Task(world, block, pos));
     }
 
     public boolean isAllowExecutionEnvironment(boolean setOverlayMessage) {
@@ -196,25 +164,84 @@ public class TaskManager {
         return true;
     }
 
-    public boolean isWorking() {
-        return working;
+    @Override
+    public void addBlockTask(ClientWorld world, BlockPos pos, Block block) {
+        if (ConfigManager.getInstance().getConfig().disable || !isWorking()) {
+            return;
+        }
+        if (!isAllowExecutionEnvironment(true)) {
+            return;
+        }
+        if (!gameMode.isSurvivalLike()) {
+            return;
+        }
+        if (!ConfigManager.getInstance().getConfig().isAllowBlock(block)) {
+            return;
+        }
+        if (ConfigManager.getInstance().getConfig().isFloorsBlacklist(pos)) {  // 楼层限制
+            var msg = FLOOR_BLACK_LIST_WARN.getString().replace("(#floor#)", String.valueOf(pos.getY()));
+            MessageUtils.setOverlayMessage(Text.literal(msg));
+            return;
+        }
+        for (var targetBlock : pendingBlockTasks) {
+            if (targetBlock.pos.equals(pos)) {
+                return;
+            }
+        }
+        pendingBlockTasks.add(new Task(world, block, pos));
     }
 
-    public void setWorking(boolean working) {
-        if (working) {
-            MessageUtils.addMessage(TOGGLE_ON);
-        } else {
-            MessageUtils.addMessage(TOGGLE_OFF);
+    @Override
+    public void removeBlockTask(ClientWorld world, BlockPos pos) {
+        final var iterator = pendingBlockTasks.iterator();
+        while (iterator.hasNext()) {
+            var task = iterator.next();
+            if (task.pos.equals(pos)) {
+                iterator.remove();
+                return;
+            }
         }
-        this.working = working;
+    }
+
+    @Override
+    public void removeBlockTaskAll() {
+        pendingBlockTasks.clear();
+    }
+
+    @Override
+    public void addRegionTask(String name, ClientWorld world, BlockPos pos1, BlockPos pos2) {
+        for (TaskRegion range : this.pendingRegionTasks) {
+            if (range.name.equals(name)) {
+                return;
+            }
+        }
+        this.pendingRegionTasks.add(new TaskRegion(name, world, pos1, pos2));
+    }
+
+    @Override
+    public void removeRegionTaskAll(String name) {
+        final var iterator = pendingRegionTasks.iterator();
+        while (iterator.hasNext()) {
+            var range = iterator.next();
+            if (range.name.equals(name)) {
+                iterator.remove();
+                return;
+            }
+        }
+    }
+
+    @Override
+    public void removeRegionTaskAll() {
+        pendingRegionTasks.clear();
     }
 
     public void switchOnOff(@Nullable Block block) {
-        if (this.isDisabled() || !Config.INSTANCE.isAllowBlock(block))
+        if (ConfigManager.getInstance().getConfig().disable || !ConfigManager.getInstance().getConfig().isAllowBlock(block))
             return;
         this.switchOnOff();
     }
 
+    @Override
     public void switchOnOff() {
         if (this.isWorking()) {
             this.clearTask();
@@ -231,7 +258,47 @@ public class TaskManager {
         }
     }
 
-    private boolean isDisabled() {
-        return Config.INSTANCE.disable;
+    @Override
+    public void setWorking(boolean working) {
+        if (working) {
+            MessageUtils.addMessage(TOGGLE_ON);
+        } else {
+            MessageUtils.addMessage(TOGGLE_OFF);
+        }
+        this.working = working;
+    }
+
+    @Override
+    public boolean isWorking() {
+        return working;
+    }
+
+    @Override
+    public boolean isProcessing() {
+        return processing;
+    }
+
+    @Override
+    public @Nullable Task getCurrentTask() {
+        return currentTask;
+    }
+
+    public ArrayList<Task> getPendingBlockTasks() {
+        return pendingBlockTasks;
+    }
+
+    public List<TaskRegion> getPendingRegionTasks() {
+        return pendingRegionTasks;
+    }
+
+    public static TaskManager getInstance() {
+        if (INSTANCE == null) {
+            synchronized (TaskManager.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new TaskManager();
+                }
+            }
+        }
+        return INSTANCE;
     }
 }

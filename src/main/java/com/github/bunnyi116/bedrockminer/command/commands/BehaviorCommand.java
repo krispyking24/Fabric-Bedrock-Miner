@@ -1,9 +1,9 @@
 package com.github.bunnyi116.bedrockminer.command.commands;
 
+import com.github.bunnyi116.bedrockminer.APIs;
 import com.github.bunnyi116.bedrockminer.I18n;
 import com.github.bunnyi116.bedrockminer.command.CommandBase;
 import com.github.bunnyi116.bedrockminer.command.argument.BlockArgument;
-import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.util.BlockUtils;
 import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 import com.mojang.brigadier.Command;
@@ -29,7 +29,7 @@ public class BehaviorCommand extends CommandBase {
     @Override
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandRegistryAccess registryAccess) {
         builder.then(literal("floor")
-                        .then(literal("add")
+                        .then(literal("addTask")
                                 .then(argument("floor", IntegerArgumentType.integer())
                                         .executes(this::addFloor)
                                 )
@@ -43,27 +43,25 @@ public class BehaviorCommand extends CommandBase {
                         .then(literal("list").executes(this::listFloor)
                         )
                 )
-                .then(literal("block")
-                        .then(literal("whitelist")
-                                .then(literal("add")
-                                        .then(argument("block", new BlockArgument(this::filterBlockWhitelist))
-                                                .executes(this::addBlockWhitelist)
-                                        )
+                .then(literal("blockWhitelist")
+                        .then(literal("addTask")
+                                .then(argument("block", new BlockArgument(this::filterBlockWhitelist))
+                                        .executes(this::addBlockWhitelist)
                                 )
-                                .then(literal("remove")
-                                        .then(argument("block", new BlockArgument(this::showBlockWhitelist))
-                                                .executes(this::removeBlockWhitelist)
-                                        )
-                                ))
+                        )
+                        .then(literal("remove")
+                                .then(argument("block", new BlockArgument(this::showBlockWhitelist))
+                                        .executes(this::removeBlockWhitelist)
+                                )
+                        )
                 );
     }
 
     private int listFloor(CommandContext<FabricClientCommandSource> context) {
-        var config = Config.INSTANCE;
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < config.floorsBlacklist.size(); i++) {
-            Integer floor = config.floorsBlacklist.get(i);
-            if (i == config.floorsBlacklist.size() - 1) {
+        for (int i = 0; i < APIs.getInstance().getConfig().floorsBlacklist.size(); i++) {
+            Integer floor = APIs.getInstance().getConfig().floorsBlacklist.get(i);
+            if (i == APIs.getInstance().getConfig().floorsBlacklist.size() - 1) {
                 sb.append(floor);
             } else {
                 sb.append(floor).append(",");
@@ -79,10 +77,9 @@ public class BehaviorCommand extends CommandBase {
 
     private int addFloor(CommandContext<FabricClientCommandSource> context) {
         var floor = IntegerArgumentType.getInteger(context, "floor");
-        var config = Config.INSTANCE;
-        if (!config.floorsBlacklist.contains(floor)) {
-            config.floorsBlacklist.add(floor);
-            Config.save();
+        if (!APIs.getInstance().getConfig().floorsBlacklist.contains(floor)) {
+            APIs.getInstance().getConfig().floorsBlacklist.add(floor);
+            APIs.getInstance().getConfig().save();
         }
         MessageUtils.addMessage(
                 Text.literal(I18n.FLOOR_BLACK_LIST_ADD.getString()
@@ -94,10 +91,9 @@ public class BehaviorCommand extends CommandBase {
 
     private int removeFloor(CommandContext<FabricClientCommandSource> context) {
         var floor = IntegerArgumentType.getInteger(context, "floor");
-        var config = Config.INSTANCE;
-        if (config.floorsBlacklist.contains(floor)) {
-            config.floorsBlacklist.remove((Integer) floor);
-            Config.save();
+        if (APIs.getInstance().getConfig().floorsBlacklist.contains(floor)) {
+            APIs.getInstance().getConfig().floorsBlacklist.remove((Integer) floor);
+            APIs.getInstance().getConfig().save();
         }
         MessageUtils.addMessage(
                 Text.literal(I18n.FLOOR_BLACK_LIST_REMOVE.getString()
@@ -109,11 +105,10 @@ public class BehaviorCommand extends CommandBase {
 
     private int addBlockWhitelist(CommandContext<FabricClientCommandSource> context) {
         var block = BlockArgument.getBlock(context, "block");
-        var config = Config.INSTANCE;
         var blockId = getBlockId(block);
-        if (!config.blockWhitelist.contains(blockId)) {
-            config.blockWhitelist.add(blockId);
-            Config.save();
+        if (!APIs.getInstance().getConfig().blockWhitelist.contains(blockId)) {
+            APIs.getInstance().getConfig().blockWhitelist.add(blockId);
+            APIs.getInstance().getConfig().save();
             sendChat(I18n.COMMAND_BLOCK_WHITELIST_ADD, block);
         }
         return Command.SINGLE_SUCCESS;
@@ -121,11 +116,10 @@ public class BehaviorCommand extends CommandBase {
 
     private int removeBlockWhitelist(CommandContext<FabricClientCommandSource> context) {
         var block = BlockArgument.getBlock(context, "block");
-        var config = Config.INSTANCE;
         var blockId = getBlockId(block);
-        if (config.blockWhitelist.contains(blockId)) {
-            config.blockWhitelist.remove(blockId);
-            Config.save();
+        if (APIs.getInstance().getConfig().blockWhitelist.contains(blockId)) {
+            APIs.getInstance().getConfig().blockWhitelist.remove(blockId);
+            APIs.getInstance().getConfig().save();
             sendChat(I18n.COMMAND_BLOCK_WHITELIST_REMOVE, block);
         }
         return Command.SINGLE_SUCCESS;
@@ -139,13 +133,12 @@ public class BehaviorCommand extends CommandBase {
         if (isFilterBlock(block)) {
             return true;
         }
-        return Config.INSTANCE.blockWhitelist.contains(getBlockId(block));
+        return APIs.getInstance().getConfig().blockWhitelist.contains(getBlockId(block));
     }
 
     private Boolean showBlockWhitelist(Block block) {
-        return !Config.INSTANCE.blockWhitelist.contains(getBlockId(block));
+        return !APIs.getInstance().getConfig().blockWhitelist.contains(getBlockId(block));
     }
-
 
     private void sendChat(Text text, Block block) {
         var msg = text.getString().replace("#blockName#", getBlockName(block));

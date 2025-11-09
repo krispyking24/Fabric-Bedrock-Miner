@@ -15,12 +15,18 @@ public class TaskPlanItem {
     public final TaskPlan piston;
     public final TaskPlan redstoneTorch;
     public final TaskPlan slimeBlock;
+    public int level;
 
     public TaskPlanItem(Direction direction, TaskPlan piston, TaskPlan redstoneTorch, TaskPlan slimeBlock) {
         this.direction = direction;
         this.piston = piston;
         this.redstoneTorch = redstoneTorch;
         this.slimeBlock = slimeBlock;
+        this.level = switch (direction) {
+            case UP -> 10;
+            case DOWN -> 20;
+            case NORTH, SOUTH, WEST, EAST -> 30;
+        };
     }
 
     public boolean isWorldValid() {

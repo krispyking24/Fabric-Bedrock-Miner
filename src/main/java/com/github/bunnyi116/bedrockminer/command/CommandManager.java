@@ -1,5 +1,6 @@
 package com.github.bunnyi116.bedrockminer.command;
 
+import com.github.bunnyi116.bedrockminer.APIs;
 import com.github.bunnyi116.bedrockminer.BedrockMiner;
 import com.github.bunnyi116.bedrockminer.Test;
 import com.github.bunnyi116.bedrockminer.command.commands.BehaviorCommand;
@@ -32,7 +33,7 @@ public class CommandManager {
     public static void init() {
         final var root = literal(getCommandPrefix())
                 .executes(context -> {
-                            TaskManager.INSTANCE.switchOnOff();
+                            APIs.getInstance().getTaskManager().switchOnOff();
                             return Command.SINGLE_SUCCESS;
                         }
                 );

@@ -1,9 +1,10 @@
 package com.github.bunnyi116.bedrockminer.task;
 
+import com.github.bunnyi116.bedrockminer.APIs;
 import com.github.bunnyi116.bedrockminer.BedrockMiner;
 import com.github.bunnyi116.bedrockminer.Debug;
 import com.github.bunnyi116.bedrockminer.I18n;
-import com.github.bunnyi116.bedrockminer.config.Config;
+import com.github.bunnyi116.bedrockminer.config.ConfigManager;
 import com.github.bunnyi116.bedrockminer.util.*;
 import com.google.common.collect.Queues;
 import net.minecraft.block.*;
@@ -14,11 +15,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Queue;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.player;
-import static com.github.bunnyi116.bedrockminer.I18n.FAIL_MISSING_SLIME;
 import static net.minecraft.block.Block.sideCoversSmallSquare;
 
 public class Task {
@@ -30,7 +31,7 @@ public class Task {
     private TaskState lastState;
     private @Nullable TaskState nextState;
 
-    public final TaskPlanItem[] planItems;
+    public final List<TaskPlanItem> planItems;
     public @Nullable TaskPlanItem planItem;
 
     public final Queue<BlockPos> recycledQueue;
@@ -186,11 +187,7 @@ public class Task {
         }
         BlockPlacerUtils.placement(planItem.redstoneTorch.pos, planItem.redstoneTorch.facing, Items.REDSTONE_TORCH);
         this.addRecycled(planItem.redstoneTorch.pos);
-        if (planItem.redstoneTorch.isNeedModify()) {
-            this.setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 2);
-        } else {
-            this.currentState = TaskState.WAIT_GAME_UPDATE;
-        }
+        this.setWait(TaskState.WAIT_GAME_UPDATE, ConfigManager.getInstance().getConfig().taskShortWait && !planItem.redstoneTorch.isNeedModify() ? 1 : 2);
         this.resetModifyLook();
     }
 
@@ -208,11 +205,7 @@ public class Task {
             }
             BlockPlacerUtils.placement(planItem.piston.pos, planItem.piston.facing, Items.PISTON);
             this.addRecycled(planItem.piston.pos);
-            if (planItem.piston.isNeedModify()) {
-                this.setWait(TaskState.WAIT_GAME_UPDATE, Config.INSTANCE.taskShortWait ? 1 : 3);
-            } else {
-                this.currentState = TaskState.WAIT_GAME_UPDATE;
-            }
+            this.setWait(TaskState.WAIT_GAME_UPDATE, ConfigManager.getInstance().getConfig().taskShortWait && !planItem.redstoneTorch.isNeedModify() ? 1 : 3);
             this.resetModifyLook();
         } else {
             this.planItem = null;
@@ -223,6 +216,18 @@ public class Task {
     private void find() {
         if (this.planItem == null) {
             debug("查找方案");
+            for (TaskPlanItem item : planItems) {
+                var slimeBlockState = world.getBlockState(item.slimeBlock.pos);
+                if (BlockUtils.isReplaceable(slimeBlockState)) {
+                    item.slimeBlock.level += 1;
+                } else if (sideCoversSmallSquare(world, item.slimeBlock.pos, item.slimeBlock.facing)) {
+                    item.slimeBlock.level -= 1;
+                }
+            }
+            planItems.sort(Comparator
+                    .comparingInt((TaskPlanItem scheme)
+                            -> scheme.level + scheme.piston.level + scheme.redstoneTorch.level + scheme.redstoneTorch.level)
+            );
             for (TaskPlanItem item : planItems) {
                 if (!item.isWorldValid()) {
                     continue;
@@ -249,7 +254,7 @@ public class Task {
                     }
                 }
                 if (BlockPlacerUtils.canPlace(world, item.slimeBlock.pos, Blocks.SLIME_BLOCK.getDefaultState())
-                        || sideCoversSmallSquare(world, item.slimeBlock.pos, item.slimeBlock.facing)) {// 特殊放置方案类型1, 需要检查目标方块是否能被充能
+                        || sideCoversSmallSquare(world, item.slimeBlock.pos, item.slimeBlock.facing)) {// 特殊放置方案类型1, 需要检查目标方块是否能能被……充
                     if (item.redstoneTorch.type == 1 && !world.getBlockState(pos).isSolidBlock(world, pos)) {
                         continue;
                     }

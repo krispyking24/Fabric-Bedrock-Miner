@@ -1,42 +1,28 @@
 package com.github.bunnyi116.bedrockminer.config;
 
-import com.github.bunnyi116.bedrockminer.BedrockMiner;
-import com.github.bunnyi116.bedrockminer.Debug;
-import com.github.bunnyi116.bedrockminer.task.TaskRange;
+import com.github.bunnyi116.bedrockminer.APIs;
+import com.github.bunnyi116.bedrockminer.task.TaskRegion;
 import com.github.bunnyi116.bedrockminer.util.BlockUtils;
-import com.github.bunnyi116.bedrockminer.util.MessageUtils;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.github.bunnyi116.bedrockminer.I18n.FLOOR_BLACK_LIST_WARN;
-
 public class Config {
-    public static final File CONFIG_DIR = FabricLoader.getInstance().getConfigDir().toFile();
-    public static final File CONFIG_FILE = new File(CONFIG_DIR, BedrockMiner.MOD_ID + ".json");
-    public static final Config INSTANCE = Config.load();
-
     public boolean disable = false;
     public boolean debug = false;
     public boolean taskShortWait = true;
     public List<Integer> floorsBlacklist = new ArrayList<>();
-    public List<TaskRange> ranges = new ArrayList<>();
+    public List<TaskRegion> ranges = new ArrayList<>();
     public List<String> blockWhitelist = getDefaultBlockWhitelist();
-    public transient List<String> blockBlacklistServer = getDefaultBlockBlacklistServer();
 
+    public transient List<String> blockBlacklistServer = getDefaultBlockBlacklistServer();
     public transient Direction[] pistonDirections = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     public transient Direction[] pistonFacings = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
-
     public transient Direction[] redstoneTorchDirections = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     public transient Direction[] redstoneTorchFacings = new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
 
@@ -44,9 +30,9 @@ public class Config {
         var list = new ArrayList<String>();
         list.add(BlockUtils.getBlockId(Blocks.BEDROCK));                  // 基岩
         // 防误触，取消以下默认白名单
-        // list.add(BlockUtils.getId(Blocks.END_PORTAL));               // 末地传送门
-        // list.add(BlockUtils.getId(Blocks.END_PORTAL_FRAME));         // 末地传送门-框架
-        // list.add(BlockUtils.getId(Blocks.END_GATEWAY));              // 末地折跃门
+        // list.addTask(BlockUtils.getId(Blocks.END_PORTAL));               // 末地传送门
+        // list.addTask(BlockUtils.getId(Blocks.END_PORTAL_FRAME));         // 末地传送门-框架
+        // list.addTask(BlockUtils.getId(Blocks.END_GATEWAY));              // 末地折跃门
         return list;
     }
 
@@ -90,38 +76,7 @@ public class Config {
         return false;
     }
 
-    public static Config load() {
-        Config config = null;
-        Gson gson = new Gson();
-        try (Reader reader = new FileReader(CONFIG_FILE)) {
-            config = gson.fromJson(reader, Config.class);
-            Debug.alwaysWrite("已成功加载配置文件");
-        } catch (Exception e) {
-            if (CONFIG_FILE.exists()) {
-                if (CONFIG_FILE.delete()) {
-                    Debug.alwaysWrite("无法加载配置,已成功删除配置文件");
-                } else {
-                    Debug.alwaysWrite("无法加载配置,删除配置文件失败");
-                }
-            } else {
-                Debug.alwaysWrite("找不到配置文件");
-            }
-        }
-        if (config == null) {
-            Debug.alwaysWrite("使用默认配置");
-            config = new Config();
-            save();
-        }
-        return config;
-    }
-
-    public static void save() {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
-            gson.toJson(INSTANCE, writer);
-        } catch (IOException e) {
-            Debug.alwaysWrite("无法保存配置文件");
-            e.printStackTrace();
-        }
+    public void save() {
+        APIs.getInstance().getConfigManager().saveConfig();
     }
 }

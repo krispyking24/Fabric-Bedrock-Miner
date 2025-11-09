@@ -14,12 +14,15 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BedrockMiner implements ModInitializer {
+public class BedrockMiner implements ModInitializer  {
     public static final String MOD_NAME = "Bedrock Miner";
     public static final String MOD_ID = "bedrockminer";
     public static final String COMMAND_PREFIX = "bedrockMiner";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
     public static final boolean TEST = false;
+
+
+
 
     // 常用游戏变量(通过 mixin 从 ClientPlayerInteractionManager 更新)
     public static MinecraftClient client;

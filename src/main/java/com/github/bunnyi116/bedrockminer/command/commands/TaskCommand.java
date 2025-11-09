@@ -1,12 +1,13 @@
 package com.github.bunnyi116.bedrockminer.command.commands;
 
 import com.github.bunnyi116.bedrockminer.BedrockMiner;
+import com.github.bunnyi116.bedrockminer.APIs;
 import com.github.bunnyi116.bedrockminer.I18n;
 import com.github.bunnyi116.bedrockminer.command.CommandBase;
 import com.github.bunnyi116.bedrockminer.command.argument.BlockPosArgumentType;
-import com.github.bunnyi116.bedrockminer.config.Config;
+import com.github.bunnyi116.bedrockminer.config.ConfigManager;
 import com.github.bunnyi116.bedrockminer.task.TaskManager;
-import com.github.bunnyi116.bedrockminer.task.TaskRange;
+import com.github.bunnyi116.bedrockminer.task.TaskRegion;
 import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 import com.github.bunnyi116.bedrockminer.util.StringReaderUtils;
 import com.mojang.brigadier.Command;
@@ -17,7 +18,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,36 +43,28 @@ public class TaskCommand extends CommandBase {
                                     } else {
                                         MessageUtils.addMessage(I18n.COMMAND_TASK_SHORT_WAIT_NORMAL);
                                     }
-                                    Config.INSTANCE.taskShortWait = b;
-                                    Config.save();
+                                    APIs.getInstance().getConfig().taskShortWait = b;
+                                    APIs.getInstance().getConfig().save();
                                     return Command.SINGLE_SUCCESS;
                                 })
                         )
                 )
 
-                .then(literal("add")
+                .then(literal("addRegionTaskConfig")
                         .then(argument("name", StringArgumentType.string())
                                 .then(argument("blockPos1", BlockPosArgumentType.blockPos())
                                         .then(argument("blockPos2", BlockPosArgumentType.blockPos())
-                                                .executes(context -> {
-                                                    final var name = StringArgumentType.getString(context, "name");
-                                                    final var blockPos1 = BlockPosArgumentType.getBlockPos(context, "blockPos1");
-                                                    final var blockPos2 = BlockPosArgumentType.getBlockPos(context, "blockPos2");
-                                                    boolean b = true;
-                                                    for (final var item : Config.INSTANCE.ranges) {
-                                                        if (item.name.equals(name)) {
-                                                            b = false;
-                                                            break;
-                                                        }
-                                                    }
-                                                    if (b) {
-                                                        final var range = new TaskRange(name, BedrockMiner.world, blockPos1, blockPos2);
-                                                        Config.INSTANCE.ranges.add(range);
-                                                        Config.save();
-                                                        MessageUtils.addMessage(Text.literal("已成功添加: " + name));
-                                                    }
-                                                    return Command.SINGLE_SUCCESS;
-                                                })
+                                                .executes(context -> addRegionTask(context, true))
+                                        )
+                                )
+                        )
+                )
+
+                .then(literal("addRegionTask")
+                        .then(argument("name", StringArgumentType.string())
+                                .then(argument("blockPos1", BlockPosArgumentType.blockPos())
+                                        .then(argument("blockPos2", BlockPosArgumentType.blockPos())
+                                                .executes(context -> addRegionTask(context, false))
                                         )
                                 )
                         )
@@ -84,7 +76,7 @@ public class TaskCommand extends CommandBase {
                                     var reader = new StringReader(suggestionsBuilder.getInput());
                                     reader.setCursor(suggestionsBuilder.getStart());
                                     var input = StringReaderUtils.readUnquotedString(reader);
-                                    for (var item : Config.INSTANCE.ranges) {
+                                    for (var item : APIs.getInstance().getConfig().ranges) {
                                         if (item.name.contains(input)) {
                                             suggestionsBuilder.suggest(item.name);
                                         }
@@ -93,16 +85,16 @@ public class TaskCommand extends CommandBase {
                                 })
                                 .executes(context -> {
                                     final var name = StringArgumentType.getString(context, "name");
-                                    @Nullable TaskRange range = null;
-                                    for (final var item : Config.INSTANCE.ranges) {
+                                    @Nullable TaskRegion range = null;
+                                    for (final var item : APIs.getInstance().getConfig().ranges) {
                                         if (item.name.equals(name)) {
                                             range = item;
                                             break;
                                         }
                                     }
                                     if (range != null) {
-                                        Config.INSTANCE.ranges.remove(range);
-                                        Config.save();
+                                        APIs.getInstance().getConfig().ranges.remove(range);
+                                        APIs.getInstance().getConfig().save();
                                         MessageUtils.addMessage(Text.literal("已成功删除: " + name));
                                     }
                                     return Command.SINGLE_SUCCESS;
@@ -111,9 +103,46 @@ public class TaskCommand extends CommandBase {
                 )
 
                 .then(literal("clear").executes(context -> {
-                    TaskManager.INSTANCE.clearTask();
+                    APIs.getInstance().getTaskManager().removeBlockTaskAll();
+                    APIs.getInstance().getTaskManager().removeRegionTaskAll();
                     return Command.SINGLE_SUCCESS;
                 }));
 
+    }
+
+    private int addRegionTask(CommandContext<FabricClientCommandSource> context, boolean isConfig) {
+        final var name = StringArgumentType.getString(context, "name");
+        final var blockPos1 = BlockPosArgumentType.getBlockPos(context, "blockPos1");
+        final var blockPos2 = BlockPosArgumentType.getBlockPos(context, "blockPos2");
+        if (isConfig) {
+            boolean b = true;
+            for (final var item : ConfigManager.getInstance().getConfig().ranges) {
+                if (item.name.equals(name)) {
+                    b = false;
+                    break;
+                }
+            }
+            if (b) {
+                final var range = new TaskRegion(name, BedrockMiner.world, blockPos1, blockPos2);
+                ConfigManager.getInstance().getConfig().ranges.add(range);
+                ConfigManager.getInstance().getConfig().save();
+                MessageUtils.addMessage(Text.literal("已成功添加到配置文件: " + name));
+            }
+        } else {
+            boolean b = true;
+            for (final var item : TaskManager.getInstance().getPendingRegionTasks()) {
+                if (item.name.equals(name)) {
+                    b = false;
+                    break;
+                }
+            }
+            if (b) {
+                final var range = new TaskRegion(name, BedrockMiner.world, blockPos1, blockPos2);
+                TaskManager.getInstance().getPendingRegionTasks().add(range);
+                MessageUtils.addMessage(Text.literal("已成功添加: " + name));
+            }
+        }
+
+        return Command.SINGLE_SUCCESS;
     }
 }

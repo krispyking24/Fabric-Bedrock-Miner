@@ -1,6 +1,7 @@
 package com.github.bunnyi116.bedrockminer.task;
 
 import com.github.bunnyi116.bedrockminer.config.Config;
+import com.github.bunnyi116.bedrockminer.config.ConfigManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.world.ClientWorld;
@@ -16,9 +17,9 @@ import java.util.List;
  */
 public class TaskPlanTools {
 
-    public static TaskPlanItem[] findAllPossible(BlockPos targetPos, ClientWorld world) {
+    public static List<TaskPlanItem> findAllPossible(BlockPos targetPos, ClientWorld world) {
         final var schemes = new ArrayList<TaskPlanItem>();
-        for (Direction direction : Config.INSTANCE.pistonDirections) {
+        for (Direction direction : ConfigManager.getInstance().getConfig().pistonDirections) {
             final var pistons = findPistonPossible(direction, targetPos);
             for (TaskPlan piston : pistons) {
                 final var redstoneTorches = findRedstoneTorchPossible(direction, targetPos, piston);
@@ -28,17 +29,14 @@ public class TaskPlanTools {
                 }
             }
         }
-        // 重新排序
-        schemes.sort(Comparator
-                .comparingInt((TaskPlanItem scheme) -> scheme.piston.level + scheme.redstoneTorch.level)
-        );
-        return schemes.toArray(TaskPlanItem[]::new);
+//        return schemes.toArray(TaskPlanItem[]::new);
+        return schemes;
     }
 
     private static TaskPlan[] findPistonPossible(Direction direction, BlockPos targetPos) {
         final var list = new ArrayList<TaskPlan>();
         final var pistonPos = targetPos.offset(direction);
-        for (Direction pistonFacing : Config.INSTANCE.pistonFacings) {
+        for (Direction pistonFacing : ConfigManager.getInstance().getConfig().pistonFacings) {
             // 活塞臂在目标方块位置
             final var pistonHeadPos = pistonPos.offset(pistonFacing);
             if (pistonHeadPos.equals(targetPos))
@@ -60,7 +58,7 @@ public class TaskPlanTools {
         // 活塞在目标方块上方，红石火把通过在目标方块下方，充能目标方块激活活塞
         if (direction == Direction.UP) {
             final var redstoneTorchPos = targetPos.offset(direction.getOpposite());
-            for (Direction redstoneTorchFacing : Config.INSTANCE.redstoneTorchFacings) {
+            for (Direction redstoneTorchFacing : ConfigManager.getInstance().getConfig().redstoneTorchFacings) {
                 final var basePos = redstoneTorchPos.offset(redstoneTorchFacing.getOpposite());
                 if (basePos.equals(pistonInfo.pos) || basePos.equals(pistonHeadPos))
                     continue;
@@ -80,14 +78,14 @@ public class TaskPlanTools {
             }
         }
 
-        for (Direction redstoneTorchDirection : Config.INSTANCE.redstoneTorchDirections) {
+        for (Direction redstoneTorchDirection : ConfigManager.getInstance().getConfig().redstoneTorchDirections) {
             final var redstoneTorchPos = pistonInfo.pos.offset(redstoneTorchDirection);
             // 红石火把位置与活塞臂伸出的位置重叠
             if (pistonHeadPos.equals(redstoneTorchPos))
                 continue;
 
             // 常规位置
-            for (Direction redstoneTorchFacing : Config.INSTANCE.redstoneTorchFacings) {
+            for (Direction redstoneTorchFacing : ConfigManager.getInstance().getConfig().redstoneTorchFacings) {
                 final var basePos = redstoneTorchPos.offset(redstoneTorchFacing.getOpposite());
 
                 // 过滤红石火把附在活塞上位置

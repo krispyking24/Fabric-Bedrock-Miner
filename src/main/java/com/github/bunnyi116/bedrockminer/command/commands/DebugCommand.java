@@ -1,8 +1,8 @@
 package com.github.bunnyi116.bedrockminer.command.commands;
 
+import com.github.bunnyi116.bedrockminer.APIs;
 import com.github.bunnyi116.bedrockminer.I18n;
 import com.github.bunnyi116.bedrockminer.command.CommandBase;
-import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.BoolArgumentType;
@@ -23,14 +23,14 @@ public class DebugCommand extends CommandBase {
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandRegistryAccess registryAccess) {
         builder
                 .executes(context -> {
-                    final boolean b = !Config.INSTANCE.debug;
+                    final boolean b = !APIs.getInstance().getConfig().debug;
                     if (b) {
                         MessageUtils.addMessage(I18n.DEBUG_ON);
                     } else {
                         MessageUtils.addMessage(I18n.DEBUG_OFF);
                     }
-                    Config.INSTANCE.debug = b;
-                    Config.save();
+                    APIs.getInstance().getConfig().debug = b;
+                    APIs.getInstance().getConfig().save();
                     return Command.SINGLE_SUCCESS;
                 })
 
@@ -42,8 +42,8 @@ public class DebugCommand extends CommandBase {
                             } else {
                                 MessageUtils.addMessage(I18n.DEBUG_OFF);
                             }
-                            Config.INSTANCE.debug = b;
-                            Config.save();
+                            APIs.getInstance().getConfig().debug = b;
+                            APIs.getInstance().getConfig().save();
                             return Command.SINGLE_SUCCESS;
                         })
                 );

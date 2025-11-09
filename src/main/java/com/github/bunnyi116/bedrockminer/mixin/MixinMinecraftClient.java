@@ -1,5 +1,6 @@
 package com.github.bunnyi116.bedrockminer.mixin;
 
+import com.github.bunnyi116.bedrockminer.APIs;
 import com.github.bunnyi116.bedrockminer.BedrockMiner;
 import com.github.bunnyi116.bedrockminer.task.TaskManager;
 import com.github.bunnyi116.bedrockminer.util.ClientPlayerInteractionManagerUtils;
@@ -55,7 +56,7 @@ public abstract class MixinMinecraftClient {
         var blockPos = blockHitResult.getBlockPos();
         var blockState = world.getBlockState(blockPos);
         var block = blockState.getBlock();
-        TaskManager.INSTANCE.switchOnOff(block);
+        TaskManager.getInstance().switchOnOff(block);
     }
 
     @Inject(method = "handleBlockBreaking", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;updateBlockBreakingProgress(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/Direction;)Z"), locals = LocalCapture.CAPTURE_FAILSOFT, cancellable = true)
@@ -65,8 +66,8 @@ public abstract class MixinMinecraftClient {
         }
         var blockState = world.getBlockState(blockPos);
         var block = blockState.getBlock();
-        TaskManager.INSTANCE.addTask(block, blockPos, world);
-        if (TaskManager.INSTANCE.isProcessing() || ClientPlayerInteractionManagerUtils.isBreakingBlock()) {    // 避免冲突, 当模组正在破坏时, 拦截玩家破坏操作
+        TaskManager.getInstance().addBlockTask(world, blockPos, block);
+        if (TaskManager.getInstance().isProcessing() || ClientPlayerInteractionManagerUtils.isBreakingBlock()) {    // 避免冲突, 当模组正在破坏时, 拦截玩家破坏操作
             ci.cancel();
         }
     }
@@ -74,7 +75,7 @@ public abstract class MixinMinecraftClient {
     @Inject(method = "handleInputEvents", at = @At(value = "HEAD"))
     public void tick(CallbackInfo ci) {
         updateGameVariable();
-        TaskManager.INSTANCE.tick();
+        TaskManager.getInstance().tick();
         ClientPlayerInteractionManagerUtils.autoResetBreaking();    // 自动解除拦截玩家破坏机制，避免任务阻塞或玩家离开任务方块破坏范围
     }
 
