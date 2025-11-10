@@ -50,7 +50,7 @@ public class TaskCommand extends CommandBase {
                         )
                 )
 
-                .then(literal("addRegionTaskConfig")
+                .then(literal("addToConfig")
                         .then(argument("name", StringArgumentType.string())
                                 .then(argument("blockPos1", BlockPosArgumentType.blockPos())
                                         .then(argument("blockPos2", BlockPosArgumentType.blockPos())
@@ -60,7 +60,7 @@ public class TaskCommand extends CommandBase {
                         )
                 )
 
-                .then(literal("addRegionTask")
+                .then(literal("add")
                         .then(argument("name", StringArgumentType.string())
                                 .then(argument("blockPos1", BlockPosArgumentType.blockPos())
                                         .then(argument("blockPos2", BlockPosArgumentType.blockPos())
@@ -78,7 +78,7 @@ public class TaskCommand extends CommandBase {
                                     var input = StringReaderUtils.readUnquotedString(reader);
                                     for (var item : APIs.getInstance().getConfig().ranges) {
                                         if (item.name.contains(input)) {
-                                            suggestionsBuilder.suggest(item.name);
+                                            suggestionsBuilder.suggest(StringArgumentType.escapeIfRequired(item.name));
                                         }
                                     }
                                     return suggestionsBuilder.buildFuture();
@@ -114,8 +114,8 @@ public class TaskCommand extends CommandBase {
         final var name = StringArgumentType.getString(context, "name");
         final var blockPos1 = BlockPosArgumentType.getBlockPos(context, "blockPos1");
         final var blockPos2 = BlockPosArgumentType.getBlockPos(context, "blockPos2");
+        boolean b = true;
         if (isConfig) {
-            boolean b = true;
             for (final var item : ConfigManager.getInstance().getConfig().ranges) {
                 if (item.name.equals(name)) {
                     b = false;
@@ -129,7 +129,6 @@ public class TaskCommand extends CommandBase {
                 MessageUtils.addMessage(Text.literal("已成功添加到配置文件: " + name));
             }
         } else {
-            boolean b = true;
             for (final var item : TaskManager.getInstance().getPendingRegionTasks()) {
                 if (item.name.equals(name)) {
                     b = false;

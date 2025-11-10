@@ -32,7 +32,7 @@ public class ConfigManager implements IConfigManager {
     }
 
     public void saveConfig() {
-        save(MOD_FILE, CONFIG);
+        save(MOD_FILE, getConfig());
     }
 
     public static <T> @Nullable T load(File file, Class<T> clazz) {
