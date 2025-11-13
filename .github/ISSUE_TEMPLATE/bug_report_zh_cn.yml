@@ -57,8 +57,8 @@ body:
   - type: input
     id: mod-version
     attributes:
-      label: TemplateMod 版本
-      description: 出现此 Bug 的 TemplateMod 版本。
+      label: Mod 版本
+      description: 出现此 Bug 的 Mod 版本。
       placeholder: 1.2.3
     validations:
       required: true
