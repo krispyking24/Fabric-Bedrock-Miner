@@ -196,7 +196,7 @@ public class Task {
             }
             BlockPlacerUtils.placement(planItem.redstoneTorch.pos, planItem.redstoneTorch.facing, Items.REDSTONE_TORCH);
             if (placeBlockState.isOf(Blocks.REDSTONE_WALL_TORCH)) {
-                world.setBlockState(planItem.piston.pos, placeBlockState.with(WallRedstoneTorchBlock.FACING, planItem.piston.facing));
+                world.setBlockState(planItem.piston.pos, placeBlockState.with(WallRedstoneTorchBlock.FACING, planItem.redstoneTorch.facing));
             }
             this.addRecycled(planItem.redstoneTorch.pos);
             if (Config.getInstance().taskShort) {
