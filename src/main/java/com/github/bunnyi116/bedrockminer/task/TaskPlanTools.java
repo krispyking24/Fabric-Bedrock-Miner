@@ -3,6 +3,7 @@ package com.github.bunnyi116.bedrockminer.task;
 import com.github.bunnyi116.bedrockminer.config.ConfigManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.RedstoneTorchBlock;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -128,14 +129,23 @@ public class TaskPlanTools {
     // 查找活塞附近的火把
     public static BlockPos[] findPistonNearbyRedstoneTorch(BlockPos pistonPos, ClientWorld world) {
         List<BlockPos> list = new ArrayList<>();
-        // 查找活塞2格范围内的红石火把, 之所以是2格, 是为了避免强充能方块边上被激活
-        int range = 2;
+        int range = 3;
         for (Direction direction : Direction.values()) {
             for (int i = 0; i < range; i++) {
                 BlockPos pos = pistonPos.offset(direction, i);
-                BlockState blockState = world.getBlockState(pos);
-                if (blockState.isOf(Blocks.REDSTONE_TORCH) || blockState.isOf(Blocks.REDSTONE_WALL_TORCH)) {
+                BlockState posState = world.getBlockState(pos);
+                if (posState.getBlock() instanceof RedstoneTorchBlock) {
                     list.add(pos);
+                }
+                BlockPos posUp = pos.up();
+                BlockState posUpState = world.getBlockState(posUp);
+                if (posUpState.getBlock() instanceof RedstoneTorchBlock) {
+                    list.add(posUp);
+                }
+                BlockPos posDown = pos.down();
+                BlockState posDownState = world.getBlockState(posDown);
+                if (posDownState.getBlock() instanceof RedstoneTorchBlock) {
+                    list.add(posDown);
                 }
             }
         }

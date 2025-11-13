@@ -215,6 +215,13 @@ public class Task {
             this.currentState = TaskState.FIND;
             return;
         }
+        // 打掉附近红石火把(范围处理时候, 不打掉可能会卡主任务失败一直尝试)
+        final var nearbyRedstoneTorch = TaskPlanTools.findPistonNearbyRedstoneTorch(planItem.piston.pos, world);
+        for (final var pos : nearbyRedstoneTorch) {
+            if (world.getBlockState(pos).getBlock() instanceof RedstoneTorchBlock) {
+                ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(pos);
+            }
+        }
         debug("放置活塞");
         BlockState placeBlockState = Blocks.PISTON.getDefaultState().with(PistonBlock.FACING, planItem.piston.facing);
         if (BlockPlacerUtils.canPlace(world, planItem.piston.pos, placeBlockState)) {
