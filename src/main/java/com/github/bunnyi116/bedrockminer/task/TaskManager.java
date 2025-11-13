@@ -102,15 +102,6 @@ public class TaskManager implements ITaskManager {
                                 for (int z = -blockInteractionRange; z <= blockInteractionRange; z++) {
                                     final var blockPos = player.getBlockPos().add(x, y, z);
                                     final var blockState = world.getBlockState(blockPos);
-                                    // 将错误的活塞臂设置为空气
-                                    if (blockState.getBlock() instanceof PistonHeadBlock) {
-                                        final var pistonHeadFacing = blockState.get(PistonHeadBlock.FACING);
-                                        final var pistonPos = blockPos.offset(pistonHeadFacing.getOpposite());
-                                        final var pistonState = world.getBlockState(pistonPos);
-                                        if (!(pistonState.getBlock() instanceof PistonBlock)) {
-                                            world.setBlockState(blockPos, Blocks.AIR.getDefaultState());
-                                        }
-                                    }
                                     // 开始处理任务
                                     final var box = new BlockBox(blockPos);
                                     if (rangeBox.intersects(box)) {
