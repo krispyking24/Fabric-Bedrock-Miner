@@ -232,7 +232,7 @@ public class Task {
                 this.setWait(TaskState.WAIT_GAME_UPDATE, 1);
             } else {
                 BlockState redstoneTorchState = world.getBlockState(planItem.redstoneTorch.pos);
-                if (redstoneTorchState.getBlock() instanceof RedstoneTorchBlock) {
+                if (redstoneTorchState.getBlock() instanceof RedstoneTorchBlock) {  // 红石火把已放，需要等待一个TICK
                     this.setWait(TaskState.WAIT_GAME_UPDATE, 1);
                 } else {
                     this.currentState = TaskState.WAIT_GAME_UPDATE;
