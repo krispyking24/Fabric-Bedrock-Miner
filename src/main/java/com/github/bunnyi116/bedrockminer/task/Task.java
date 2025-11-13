@@ -187,7 +187,7 @@ public class Task {
         if (planItem.redstoneTorch.facing.getAxis().isVertical()) {
             placeBlockState = Blocks.REDSTONE_TORCH.getDefaultState();
         } else {
-            placeBlockState = Blocks.REDSTONE_WALL_TORCH.getDefaultState().with(WallRedstoneTorchBlock.FACING, planItem.piston.facing);
+            placeBlockState = Blocks.REDSTONE_WALL_TORCH.getDefaultState().with(WallRedstoneTorchBlock.FACING, planItem.redstoneTorch.facing);
         }
         if (BlockPlacerUtils.canPlace(world, planItem.redstoneTorch.pos, placeBlockState)) {
             if (planItem.redstoneTorch.isNeedModify() && !planItem.redstoneTorch.modify) {
