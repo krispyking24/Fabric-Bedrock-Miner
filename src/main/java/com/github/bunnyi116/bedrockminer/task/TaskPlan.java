@@ -1,7 +1,7 @@
 package com.github.bunnyi116.bedrockminer.task;
 
-import com.github.bunnyi116.bedrockminer.util.BlockUtils;
-import com.github.bunnyi116.bedrockminer.util.PlayerUtils;
+import com.github.bunnyi116.bedrockminer.util.block.BlockUtils;
+import com.github.bunnyi116.bedrockminer.util.player.PlayerUtils;
 import net.minecraft.block.Block;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
@@ -22,9 +22,9 @@ public class TaskPlan {
         this.redstoneTorch = redstoneTorch;
         this.slimeBlock = slimeBlock;
         this.level = switch (direction) {
-            case UP -> 10;
-            case DOWN -> 20;
-            case NORTH, SOUTH, WEST, EAST -> 30;
+            case UP -> 1;
+            case DOWN -> 2;
+            case NORTH, SOUTH, WEST, EAST -> 4;
         };
     }
 

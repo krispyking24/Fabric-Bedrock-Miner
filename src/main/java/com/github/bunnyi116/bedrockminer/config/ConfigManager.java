@@ -52,9 +52,12 @@ public class ConfigManager implements IConfigManager {
                 Debug.alwaysWrite("找不到配置文件");
             }
         }
+
         try {
-            Debug.alwaysWrite("使用默认配置");
-            config = clazz.getDeclaredConstructor().newInstance(); // 使用反射创建实例
+            if (config==null){
+                Debug.alwaysWrite("使用默认配置");
+                config = clazz.getDeclaredConstructor().newInstance(); // 使用反射创建实例
+            }
             save(file, config);
             return config;
         } catch (Exception e) {

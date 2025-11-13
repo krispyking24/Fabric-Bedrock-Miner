@@ -1,6 +1,5 @@
 package com.github.bunnyi116.bedrockminer.mixin;
 
-import com.github.bunnyi116.bedrockminer.APIs;
 import com.github.bunnyi116.bedrockminer.BedrockMiner;
 import com.github.bunnyi116.bedrockminer.task.TaskManager;
 import com.github.bunnyi116.bedrockminer.util.ClientPlayerInteractionManagerUtils;
@@ -56,7 +55,7 @@ public abstract class MixinMinecraftClient {
         var blockPos = blockHitResult.getBlockPos();
         var blockState = world.getBlockState(blockPos);
         var block = blockState.getBlock();
-        TaskManager.getInstance().switchOnOff(block);
+        TaskManager.getInstance().switchToggle(block);
     }
 
     @Inject(method = "handleBlockBreaking", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;updateBlockBreakingProgress(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/Direction;)Z"), locals = LocalCapture.CAPTURE_FAILSOFT, cancellable = true)

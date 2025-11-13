@@ -3,8 +3,11 @@ package com.github.bunnyi116.bedrockminer.task;
 import com.github.bunnyi116.bedrockminer.BedrockMiner;
 import com.github.bunnyi116.bedrockminer.Debug;
 import com.github.bunnyi116.bedrockminer.I18n;
-import com.github.bunnyi116.bedrockminer.config.ConfigManager;
+import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.util.*;
+import com.github.bunnyi116.bedrockminer.util.block.BlockUtils;
+import com.github.bunnyi116.bedrockminer.util.player.PlayerLookManager;
+import com.github.bunnyi116.bedrockminer.util.player.PlayerUtils;
 import com.google.common.collect.Queues;
 import net.minecraft.block.*;
 import net.minecraft.client.world.ClientWorld;
@@ -180,14 +183,29 @@ public class Task {
             return;
         }
         debug("红石火把");
-        if (planItem.redstoneTorch.isNeedModify() && !planItem.redstoneTorch.modify) {
-            setModifyLook(planItem.redstoneTorch);
-            return;
+        BlockState placeBlockState;
+        if (planItem.redstoneTorch.facing.getAxis().isVertical()) {
+            placeBlockState = Blocks.REDSTONE_TORCH.getDefaultState();
+        } else {
+            placeBlockState = Blocks.REDSTONE_WALL_TORCH.getDefaultState().with(WallRedstoneTorchBlock.FACING, planItem.piston.facing);
         }
-        BlockPlacerUtils.placement(planItem.redstoneTorch.pos, planItem.redstoneTorch.facing, Items.REDSTONE_TORCH);
-        this.addRecycled(planItem.redstoneTorch.pos);
-        this.setWait(TaskState.WAIT_GAME_UPDATE, ConfigManager.getInstance().getConfig().taskShortWait && !planItem.redstoneTorch.isNeedModify() ? 1 : 2);
-        this.resetModifyLook();
+        if (BlockPlacerUtils.canPlace(world, planItem.redstoneTorch.pos, placeBlockState)) {
+            if (planItem.redstoneTorch.isNeedModify() && !planItem.redstoneTorch.modify) {
+                setModifyLook(planItem.redstoneTorch);
+                return;
+            }
+            BlockPlacerUtils.placement(planItem.redstoneTorch.pos, planItem.redstoneTorch.facing, Items.REDSTONE_TORCH);
+            if (placeBlockState.isOf(Blocks.REDSTONE_WALL_TORCH)) {
+                world.setBlockState(planItem.piston.pos, placeBlockState.with(WallRedstoneTorchBlock.FACING, planItem.piston.facing));
+            }
+            this.addRecycled(planItem.redstoneTorch.pos);
+            if (Config.getInstance().taskShort) {
+                this.setWait(TaskState.WAIT_GAME_UPDATE, 1);
+            } else {
+                this.setWait(TaskState.WAIT_GAME_UPDATE, 3);
+            }
+            this.resetModifyLook();
+        }
     }
 
     private void placePiston() {
@@ -196,15 +214,22 @@ public class Task {
             return;
         }
         debug("放置活塞");
-        var placeBlockState = Blocks.PISTON.getDefaultState().with(PistonBlock.FACING, planItem.piston.facing);
+        BlockState placeBlockState = Blocks.PISTON.getDefaultState().with(PistonBlock.FACING, planItem.piston.facing);
         if (BlockPlacerUtils.canPlace(world, planItem.piston.pos, placeBlockState)) {
             if (planItem.piston.isNeedModify() && !planItem.piston.modify) {
                 setModifyLook(planItem.piston);
                 return;
             }
             BlockPlacerUtils.placement(planItem.piston.pos, planItem.piston.facing, Items.PISTON);
+            if (placeBlockState.getBlock() instanceof PistonBlock) {
+                world.setBlockState(planItem.piston.pos, placeBlockState.with(PistonBlock.FACING, planItem.piston.facing));
+            }
             this.addRecycled(planItem.piston.pos);
-            this.setWait(TaskState.WAIT_GAME_UPDATE, ConfigManager.getInstance().getConfig().taskShortWait && !planItem.redstoneTorch.isNeedModify() ? 1 : 3);
+            if (planItem.piston.isNeedModify()) {
+                this.setWait(TaskState.WAIT_GAME_UPDATE, 1);
+            } else {
+                this.currentState = TaskState.WAIT_GAME_UPDATE;
+            }
             this.resetModifyLook();
         } else {
             this.planItem = null;
@@ -217,15 +242,18 @@ public class Task {
             debug("查找方案");
             for (TaskPlan item : planItems) {
                 var slimeBlockState = world.getBlockState(item.slimeBlock.pos);
-                if (BlockUtils.isReplaceable(slimeBlockState)) {
+                if (InventoryManagerUtils.getInventoryItemCount(Items.SLIME_BLOCK) < 1) {
+                    item.slimeBlock.level -= 1000;
+                } else if (BlockUtils.isReplaceable(slimeBlockState)) {
                     item.slimeBlock.level += 1;
                 } else if (sideCoversSmallSquare(world, item.slimeBlock.pos, item.slimeBlock.facing)) {
                     item.slimeBlock.level -= 1;
+                } else {
+                    item.slimeBlock.level += 1;
                 }
             }
             planItems.sort(Comparator
-                    .comparingInt((TaskPlan scheme)
-                            -> scheme.level + scheme.piston.level + scheme.redstoneTorch.level + scheme.redstoneTorch.level)
+                    .comparingInt((TaskPlan scheme) -> scheme.level + scheme.piston.level + scheme.redstoneTorch.level + scheme.slimeBlock.level)
             );
             for (TaskPlan item : planItems) {
                 if (!item.isWorldValid()) {
@@ -290,8 +318,7 @@ public class Task {
                 recycledQueue.remove(blockPos);
                 recycledItems();
             }
-            var instant = world.getBlockState(blockPos).calcBlockBreakingDelta(player, world, blockPos)
-                    >= ClientPlayerInteractionManagerUtils.BREAKING_PROGRESS_MAX;
+            var instant = PlayerUtils.canInstantlyMineBlock(blockState);
             if (!instant) {
                 InventoryManagerUtils.autoSwitch(blockState);
             }
@@ -324,7 +351,7 @@ public class Task {
             return;
         } else {
             // 切换到工具
-            if (world.getBlockState(planItem.piston.pos).calcBlockBreakingDelta(player, world, planItem.piston.pos) < 1F) {
+            if (!PlayerUtils.canInstantlyMineBlock(world.getBlockState(planItem.piston.pos))) {
                 InventoryManagerUtils.autoSwitch(world.getBlockState(planItem.piston.pos));
                 this.setWait(TaskState.EXECUTE, 1);
                 return;
@@ -347,7 +374,12 @@ public class Task {
             }
             this.executed = true;
         }
-        this.setWait(TaskState.WAIT_GAME_UPDATE, 4);
+        this.currentState = TaskState.WAIT_GAME_UPDATE;
+//        if (Config.getInstance().taskShortWait) {
+//            this.setWait(TaskState.WAIT_GAME_UPDATE, 1);
+//        } else {
+//            this.setWait(TaskState.WAIT_GAME_UPDATE, 4);
+//        }
     }
 
     private void waitCustom() {
@@ -437,6 +469,20 @@ public class Task {
     }
 
     private void init() {
+        final var nearbyRedstoneTorch = TaskPlanTools.findPistonNearbyRedstoneTorch(pos, world);
+        for (final var pos : nearbyRedstoneTorch) {
+            if (world.getBlockState(pos).getBlock() instanceof RedstoneTorchBlock) {
+                ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(pos);
+            }
+        }
+
+        for (final var direction : Direction.values()) {
+            BlockPos pistonPos = pos.offset(direction);
+            BlockState pistonState = world.getBlockState(pistonPos);
+            if (pistonState.getBlock() instanceof PistonBlock && PlayerUtils.canInstantlyMineBlock(pistonState)) {
+                ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(pos);
+            }
+        }
         this.nextState = null;
         this.tickTotalCount = 0;
         this.ticksTotalMax = 100;

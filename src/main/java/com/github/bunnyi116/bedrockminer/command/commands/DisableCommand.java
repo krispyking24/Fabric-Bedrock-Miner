@@ -1,8 +1,8 @@
 package com.github.bunnyi116.bedrockminer.command.commands;
 
-import com.github.bunnyi116.bedrockminer.APIs;
 import com.github.bunnyi116.bedrockminer.I18n;
 import com.github.bunnyi116.bedrockminer.command.CommandBase;
+import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.util.MessageUtils;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.BoolArgumentType;
@@ -23,26 +23,26 @@ public class DisableCommand extends CommandBase {
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandRegistryAccess registryAccess) {
         builder
                 .executes(context -> {
-                    if (APIs.getInstance().getConfig().disable) {
-                        APIs.getInstance().getConfig().disable = false;
+                    if (Config.getInstance().disable) {
+                        Config.getInstance().disable = false;
                         MessageUtils.addMessage(I18n.COMMAND_DISABLE_OFF);
                     } else {
-                        APIs.getInstance().getConfig().disable = true;
+                        Config.getInstance().disable = true;
                         MessageUtils.addMessage(I18n.COMMAND_DISABLE_ON);
                     }
-                    APIs.getInstance().getConfig().save();
+                    Config.getInstance().save();
                     return Command.SINGLE_SUCCESS;
                 })
 
                 .then(argument("bool", BoolArgumentType.bool())
                         .executes(context -> {
-                            APIs.getInstance().getConfig().disable = BoolArgumentType.getBool(context, "bool");
-                            if (APIs.getInstance().getConfig().disable) {
+                            Config.getInstance().disable = BoolArgumentType.getBool(context, "bool");
+                            if (Config.getInstance().disable) {
                                 MessageUtils.addMessage(I18n.COMMAND_DISABLE_ON);
                             } else {
                                 MessageUtils.addMessage(I18n.COMMAND_DISABLE_OFF);
                             }
-                            APIs.getInstance().getConfig().save();
+                            Config.getInstance().save();
                             return Command.SINGLE_SUCCESS;
                         })
                 );

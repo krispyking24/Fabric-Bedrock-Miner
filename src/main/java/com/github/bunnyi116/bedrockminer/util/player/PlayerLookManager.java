@@ -1,4 +1,4 @@
-package com.github.bunnyi116.bedrockminer.util;
+package com.github.bunnyi116.bedrockminer.util.player;
 
 import com.github.bunnyi116.bedrockminer.task.Task;
 import net.minecraft.client.network.ClientPlayNetworkHandler;

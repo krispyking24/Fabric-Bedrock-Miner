@@ -1,4 +1,4 @@
-package com.github.bunnyi116.bedrockminer.util;
+package com.github.bunnyi116.bedrockminer.util.player;
 
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;

@@ -1,5 +1,7 @@
 package com.github.bunnyi116.bedrockminer.util;
 
+import com.github.bunnyi116.bedrockminer.util.player.PlayerInventoryUtils;
+import com.github.bunnyi116.bedrockminer.util.player.PlayerUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -14,7 +16,6 @@ import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.screen.slot.SlotActionType;
@@ -42,12 +43,10 @@ public class InventoryManagerUtils {
                 continue;
             }
             // 选取最快工具
-            float blockBreakingTotalTime = InventoryManagerUtils.getBlockBreakingTotalTime(blockState, itemStack);
-            if (blockBreakingTotalTime != -1) {
-                if (lastTime == -1 || lastTime > blockBreakingTotalTime) {
-                    lastTime = blockBreakingTotalTime;
-                    lastSlot = i;
-                }
+            float blockBreakingTotalTime = PlayerUtils.getBlockBreakingSpeed(blockState, itemStack);
+            if (lastTime == -1 || lastTime < blockBreakingTotalTime) {
+                lastTime = blockBreakingTotalTime;
+                lastSlot = i;
             }
         }
         if (lastSlot != -1) {
@@ -159,124 +158,13 @@ public class InventoryManagerUtils {
      * @return 如果可以瞬间破坏活塞方块则返回true，否则返回false
      */
     public static boolean canInstantlyMinePiston() {
-        var client = MinecraftClient.getInstance();
-        var player = client.player;
-        if (player == null) return false;
         var playerInventory = player.getInventory();
         for (int i = 0; i < playerInventory.size(); i++) {
-            if (isInstantBreakingBlock(Blocks.PISTON.getDefaultState(), playerInventory.getStack(i))) {
+            if (PlayerUtils.canInstantlyMineBlock(Blocks.PISTON.getDefaultState(), playerInventory.getStack(i))) {
                 return true;
             }
         }
         return false;
-    }
-
-    /**
-     * 是否可以瞬间破坏方块
-     *
-     * @param blockState 要破坏的方块状态
-     * @param itemStack  使用工具/物品破坏方块
-     * @return true为可以瞬间破坏
-     */
-    public static boolean isInstantBreakingBlock(BlockState blockState, ItemStack itemStack) {
-        float hardness = blockState.getBlock().getHardness();       // 当前方块硬度
-        if (hardness < 0) return false;                             // 无硬度(如基岩无法破坏)
-        float speed = getBlockBreakingSpeed(blockState, itemStack); // 当前破坏速度
-        return speed > (hardness * 30);
-    }
-
-    /**
-     * 获取方块破坏所需的总时间
-     *
-     * @param blockState 要破坏的方块状态
-     * @param itemStack  使用工具/物品破坏方块
-     * @return 当前物品破坏该方块所需的时间 (单位为秒)
-     */
-    public static float getBlockBreakingTotalTime(BlockState blockState, ItemStack itemStack) {
-        var hardness = blockState.getBlock().getHardness();         // 当前方块硬度
-        if (hardness < 0) return -1;
-        var speed = getBlockBreakingSpeed(blockState, itemStack);   // 当前工具的破坏速度系数
-        return (float) ((hardness * 1.5) / speed);
-    }
-
-    /**
-     * 获取当前物品能够破坏指定方块的破坏速度.
-     *
-     * @param blockState 要破坏的方块状态
-     * @param itemStack  使用工具/物品破坏方块
-     * @return 当前物品破坏该方块所需的时间（单位为 tick）
-     */
-    private static float getBlockBreakingSpeed(BlockState blockState, ItemStack itemStack) {
-        var f = itemStack.getMiningSpeedMultiplier(blockState);  // 当前物品的破坏系数速度
-        //#if MC > 12006
-        // 根据工具的"效率"附魔增加破坏速度
-        if (f > 1.0F) {
-            // 获取itemStack的附魔集合
-            for (var enchantment : itemStack.getEnchantments().getEnchantments()) {
-                var enchantmentKey = enchantment.getKey();
-                if (enchantmentKey.isPresent()) {
-                    // 获取效率附魔等级
-                    if (enchantmentKey.get() == Enchantments.EFFICIENCY) {
-                        int toolLevel = EnchantmentHelper.getLevel(enchantment, itemStack);
-                        if (toolLevel > 0 && !itemStack.isEmpty()) {
-                            f += (float) (toolLevel * toolLevel + 1);
-                        }
-                    }
-                }
-            }
-        }
-        //#else
-        //$$ if (f > 1.0F) {
-        //$$     int level = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, itemStack);
-        //$$     if (level > 0 && !itemStack.isEmpty()) {
-        //$$         f += (float)(level * level + 1);
-        //$$     }
-        //$$ }
-        //#endif
-
-
-
-
-
-        // 根据玩家"急迫"状态效果增加破坏速度
-        if (StatusEffectUtil.hasHaste(player)) {
-            f *= 1.0F + (float) (StatusEffectUtil.getHasteAmplifier(player) + 1) * 0.2F;
-        }
-
-        // 根据玩家"挖掘疲劳"状态效果减缓破坏速度
-        if (player.hasStatusEffect(StatusEffects.MINING_FATIGUE)) {
-            float g = switch (Objects.requireNonNull(player.getStatusEffect(StatusEffects.MINING_FATIGUE)).getAmplifier()) {
-                case 0 -> 0.3F;
-                case 1 -> 0.09F;
-                case 2 -> 0.0027F;
-                default -> 8.1E-4F;
-            };
-            f *= g;
-        }
-
-        // 如果玩家在水中并且没有"水下速掘"附魔，则减缓破坏速度
-        //#if MC > 12006
-        f *= (float) player.getAttributeValue(EntityAttributes.BLOCK_BREAK_SPEED);
-        if (player.isSubmergedIn(FluidTags.WATER)) {
-            var submergedMiningSpeed = player.getAttributeInstance(EntityAttributes.SUBMERGED_MINING_SPEED);
-            if (submergedMiningSpeed != null) {
-                f *= (float) submergedMiningSpeed.getValue();
-            }
-        }
-        //#else
-        //$$ if (player.isSubmergedIn(FluidTags.WATER) && !EnchantmentHelper.hasAquaAffinity(player)) {
-        //$$     f /= 5.0F;
-        //$$ }
-        //#endif
-
-        if (!player.isOnGround()) { // 如果玩家不在地面上，则减缓破坏速度
-            f /= 5.0F;
-        }
-        // 如果玩家不在地面上，则减缓破坏速度
-        if (!player.isOnGround()) {
-            f /= 5.0F;
-        }
-        return f;
     }
 
     /*** 获取背包物品数量 ***/

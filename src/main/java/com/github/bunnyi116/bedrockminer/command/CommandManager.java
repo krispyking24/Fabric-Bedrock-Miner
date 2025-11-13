@@ -7,7 +7,6 @@ import com.github.bunnyi116.bedrockminer.command.commands.BehaviorCommand;
 import com.github.bunnyi116.bedrockminer.command.commands.DebugCommand;
 import com.github.bunnyi116.bedrockminer.command.commands.DisableCommand;
 import com.github.bunnyi116.bedrockminer.command.commands.TaskCommand;
-import com.github.bunnyi116.bedrockminer.task.TaskManager;
 import com.mojang.brigadier.Command;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 
@@ -33,7 +32,7 @@ public class CommandManager {
     public static void init() {
         final var root = literal(getCommandPrefix())
                 .executes(context -> {
-                            APIs.getInstance().getTaskManager().switchOnOff();
+                            APIs.getInstance().getTaskManager().switchToggle();
                             return Command.SINGLE_SUCCESS;
                         }
                 );

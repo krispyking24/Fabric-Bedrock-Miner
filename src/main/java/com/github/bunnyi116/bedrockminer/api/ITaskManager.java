@@ -49,20 +49,26 @@ public interface ITaskManager {
 
     /**
      * 工作切换开关
+     * @param block 传入方块类型, 用于检查该方块是否允许切换开关
      */
-    void switchOnOff();
+    void switchToggle(@Nullable Block block);
+
+    /**
+     * 工作切换开关
+     */
+    void switchToggle();
 
     /**
      * 设置工作状态
      * @param working 是否正在工作
      */
-    void setWorking(boolean working);
+    void setRunning(boolean running);
 
     /**
      * 是否正在工作
      * @return 正在工作为: TRUE
      */
-    boolean isWorking();
+    boolean isRunning();
 
     /**
      * 是否正在处理任务
