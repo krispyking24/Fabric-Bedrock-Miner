@@ -107,11 +107,7 @@ public class TaskManager implements ITaskManager {
                                         final var pistonHeadFacing = blockState.get(PistonHeadBlock.FACING);
                                         final var pistonPos = blockPos.offset(pistonHeadFacing.getOpposite());
                                         final var pistonState = world.getBlockState(pistonPos);
-                                        if (pistonState.getBlock() instanceof PistonBlock) {
-                                            if (pistonState.get(PistonHeadBlock.FACING) != pistonHeadFacing) {
-                                                world.setBlockState(blockPos, Blocks.AIR.getDefaultState());
-                                            }
-                                        } else {
+                                        if (!(pistonState.getBlock() instanceof PistonBlock)) {
                                             world.setBlockState(blockPos, Blocks.AIR.getDefaultState());
                                         }
                                     }
