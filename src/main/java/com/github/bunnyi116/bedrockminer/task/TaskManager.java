@@ -200,7 +200,6 @@ public class TaskManager implements ITaskManager {
     @Override
     public void removeBlockTaskAll() {
         pendingBlockTasks.clear();
-        MessageUtils.addMessage(COMMAND_TASK_CLEAR);
     }
 
     @Override
@@ -223,12 +222,17 @@ public class TaskManager implements ITaskManager {
                 return;
             }
         }
-        MessageUtils.addMessage(COMMAND_TASK_CLEAR);
     }
 
     @Override
     public void removeRegionTaskAll() {
         pendingRegionTasks.clear();
+    }
+
+    public void removeAll() {
+        removeBlockTaskAll();
+        removeRegionTaskAll();
+        MessageUtils.addMessage(COMMAND_TASK_CLEAR);
     }
 
     public void switchToggle(@Nullable Block block) {
@@ -240,7 +244,7 @@ public class TaskManager implements ITaskManager {
     @Override
     public void switchToggle() {
         if (this.isRunning()) {
-            this.clearTask();
+            this.removeAll();
             this.setRunning(false);
         } else {
             if (gameMode.isCreative()) { // 仅生存模式开启
@@ -313,7 +317,7 @@ public class TaskManager implements ITaskManager {
     }
 
     public static void clearTask() {
-        TaskManager.getInstance().removeBlockTaskAll();
+        TaskManager.getInstance().removeAll();
     }
     //endregion
 
