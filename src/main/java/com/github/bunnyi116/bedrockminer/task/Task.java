@@ -195,8 +195,10 @@ public class Task {
                 return;
             }
             BlockPlacerUtils.placement(planItem.redstoneTorch.pos, planItem.redstoneTorch.facing, Items.REDSTONE_TORCH);
-            if (planItem.redstoneTorch.facing.getAxis().isVertical() && placeBlockState.getBlock() instanceof WallRedstoneTorchBlock) {
-                world.setBlockState(planItem.piston.pos, placeBlockState.with(WallRedstoneTorchBlock.FACING, planItem.redstoneTorch.facing));
+
+            BlockState blockState = world.getBlockState(planItem.redstoneTorch.pos);
+            if (planItem.redstoneTorch.facing.getAxis().isHorizontal() && blockState.getBlock() instanceof WallRedstoneTorchBlock) {
+                world.setBlockState(planItem.piston.pos, blockState.with(WallRedstoneTorchBlock.FACING, planItem.redstoneTorch.facing));
             }
             this.addRecycled(planItem.redstoneTorch.pos);
             if (Config.getInstance().taskShort) {
@@ -221,8 +223,9 @@ public class Task {
                 return;
             }
             BlockPlacerUtils.placement(planItem.piston.pos, planItem.piston.facing, Items.PISTON);
-            if (placeBlockState.getBlock() instanceof PistonBlock) {
-                world.setBlockState(planItem.piston.pos, placeBlockState.with(PistonBlock.FACING, planItem.piston.facing));
+            BlockState blockState = world.getBlockState(planItem.redstoneTorch.pos);
+            if (blockState.getBlock() instanceof PistonBlock) {
+                world.setBlockState(planItem.piston.pos, blockState.with(PistonBlock.FACING, planItem.piston.facing));
             }
             this.addRecycled(planItem.piston.pos);
             if (planItem.piston.isNeedModify()) {
