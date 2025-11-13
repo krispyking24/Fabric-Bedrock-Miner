@@ -7,7 +7,6 @@ on:
       - "gradle.properties"
       - "src/**"
       - "versions/**"
-      - ".github/**"
       - "settings.json"
   pull_request:
 
