@@ -1,6 +1,5 @@
 package com.github.bunnyi116.bedrockminer.task;
 
-import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.config.ConfigManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -9,7 +8,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -17,15 +15,15 @@ import java.util.List;
  */
 public class TaskPlanTools {
 
-    public static List<TaskPlanItem> findAllPossible(BlockPos targetPos, ClientWorld world) {
-        final var schemes = new ArrayList<TaskPlanItem>();
+    public static List<TaskPlan> findAllPossible(BlockPos targetPos, ClientWorld world) {
+        final var schemes = new ArrayList<TaskPlan>();
         for (Direction direction : ConfigManager.getInstance().getConfig().pistonDirections) {
             final var pistons = findPistonPossible(direction, targetPos);
-            for (TaskPlan piston : pistons) {
+            for (TaskPlanItem piston : pistons) {
                 final var redstoneTorches = findRedstoneTorchPossible(direction, targetPos, piston);
-                for (TaskPlan redstoneTorch : redstoneTorches) {
+                for (TaskPlanItem redstoneTorch : redstoneTorches) {
                     final var slimeBlock = findSlimeBlockPossible(redstoneTorch);
-                    schemes.add(new TaskPlanItem(direction, piston, redstoneTorch, slimeBlock));
+                    schemes.add(new TaskPlan(direction, piston, redstoneTorch, slimeBlock));
                 }
             }
         }
@@ -33,8 +31,8 @@ public class TaskPlanTools {
         return schemes;
     }
 
-    private static TaskPlan[] findPistonPossible(Direction direction, BlockPos targetPos) {
-        final var list = new ArrayList<TaskPlan>();
+    private static TaskPlanItem[] findPistonPossible(Direction direction, BlockPos targetPos) {
+        final var list = new ArrayList<TaskPlanItem>();
         final var pistonPos = targetPos.offset(direction);
         for (Direction pistonFacing : ConfigManager.getInstance().getConfig().pistonFacings) {
             // 活塞臂在目标方块位置
@@ -46,13 +44,13 @@ public class TaskPlanTools {
                 case DOWN -> 1;
                 case NORTH, SOUTH, WEST, EAST -> 2;
             };
-            list.add(new TaskPlan(pistonPos, pistonFacing, level));
+            list.add(new TaskPlanItem(pistonPos, pistonFacing, level));
         }
-        return list.toArray(TaskPlan[]::new);
+        return list.toArray(TaskPlanItem[]::new);
     }
 
-    private static TaskPlan[] findRedstoneTorchPossible(Direction direction, BlockPos targetPos, TaskPlan pistonInfo) {
-        final var list = new ArrayList<TaskPlan>();
+    private static TaskPlanItem[] findRedstoneTorchPossible(Direction direction, BlockPos targetPos, TaskPlanItem pistonInfo) {
+        final var list = new ArrayList<TaskPlanItem>();
         final var pistonHeadPos = pistonInfo.pos.offset(pistonInfo.facing);
 
         // 活塞在目标方块上方，红石火把通过在目标方块下方，充能目标方块激活活塞
@@ -74,7 +72,7 @@ public class TaskPlanTools {
                     default -> throw new IllegalStateException("Unexpected value: " + redstoneTorchFacing);
                 };
                 // 添加到方案
-                list.add(new TaskPlan(1, redstoneTorchPos, redstoneTorchFacing, level));
+                list.add(new TaskPlanItem(1, redstoneTorchPos, redstoneTorchFacing, level));
             }
         }
 
@@ -105,7 +103,7 @@ public class TaskPlanTools {
 
                 // 添加到方案
                 if (!redstoneTorchPos.equals(targetPos)) {
-                    list.add(new TaskPlan(redstoneTorchPos, redstoneTorchFacing, level));
+                    list.add(new TaskPlanItem(redstoneTorchPos, redstoneTorchFacing, level));
                 }
 
                 var redstoneTorchPosUp = redstoneTorchPos.up();
@@ -114,17 +112,17 @@ public class TaskPlanTools {
                     final var baseUpPos = redstoneTorchPos.offset(redstoneTorchFacing.getOpposite());
                     if (baseUpPos.equals(pistonInfo.pos) || baseUpPos.equals(pistonHeadPos))
                         continue;
-                    list.add(new TaskPlan(redstoneTorchPos.up(), redstoneTorchFacing, level + 1));
+                    list.add(new TaskPlanItem(redstoneTorchPos.up(), redstoneTorchFacing, level + 1));
                 }
             }
         }
-        return list.toArray(TaskPlan[]::new);
+        return list.toArray(TaskPlanItem[]::new);
     }
 
-    private static TaskPlan findSlimeBlockPossible(TaskPlan redstoneTorchInfo) {
+    private static TaskPlanItem findSlimeBlockPossible(TaskPlanItem redstoneTorchInfo) {
         final var pos = redstoneTorchInfo.pos;
         final var facing = redstoneTorchInfo.facing;
-        return new TaskPlan(pos.offset(facing.getOpposite()), facing, facing.getAxis().isVertical() ? 0 : 1);
+        return new TaskPlanItem(pos.offset(facing.getOpposite()), facing, facing.getAxis().isVertical() ? 0 : 1);
     }
 
     // 查找活塞附近的火把

@@ -1,6 +1,5 @@
 package com.github.bunnyi116.bedrockminer.task;
 
-import com.github.bunnyi116.bedrockminer.APIs;
 import com.github.bunnyi116.bedrockminer.BedrockMiner;
 import com.github.bunnyi116.bedrockminer.Debug;
 import com.github.bunnyi116.bedrockminer.I18n;
@@ -31,8 +30,8 @@ public class Task {
     private TaskState lastState;
     private @Nullable TaskState nextState;
 
-    public final List<TaskPlanItem> planItems;
-    public @Nullable TaskPlanItem planItem;
+    public final List<TaskPlan> planItems;
+    public @Nullable TaskPlan planItem;
 
     public final Queue<BlockPos> recycledQueue;
     public boolean executeModify;
@@ -75,7 +74,7 @@ public class Task {
         this.currentState = TaskState.WAIT_CUSTOM;
     }
 
-    private void setModifyLook(TaskPlan blockInfo) {
+    private void setModifyLook(TaskPlanItem blockInfo) {
         if (blockInfo != null) {
             debug("修改视角");
             setModifyLook(blockInfo.facing);
@@ -216,7 +215,7 @@ public class Task {
     private void find() {
         if (this.planItem == null) {
             debug("查找方案");
-            for (TaskPlanItem item : planItems) {
+            for (TaskPlan item : planItems) {
                 var slimeBlockState = world.getBlockState(item.slimeBlock.pos);
                 if (BlockUtils.isReplaceable(slimeBlockState)) {
                     item.slimeBlock.level += 1;
@@ -225,10 +224,10 @@ public class Task {
                 }
             }
             planItems.sort(Comparator
-                    .comparingInt((TaskPlanItem scheme)
+                    .comparingInt((TaskPlan scheme)
                             -> scheme.level + scheme.piston.level + scheme.redstoneTorch.level + scheme.redstoneTorch.level)
             );
-            for (TaskPlanItem item : planItems) {
+            for (TaskPlan item : planItems) {
                 if (!item.isWorldValid()) {
                     continue;
                 }
