@@ -3,6 +3,9 @@ package com.github.bunnyi116.bedrockminer.task;
 import com.github.bunnyi116.bedrockminer.api.ITaskManager;
 import com.github.bunnyi116.bedrockminer.config.ConfigManager;
 import com.github.bunnyi116.bedrockminer.util.*;
+import com.github.bunnyi116.bedrockminer.util.block.BlockUtils;
+import com.github.bunnyi116.bedrockminer.util.player.PlayerLookManager;
+import com.github.bunnyi116.bedrockminer.util.player.PlayerUtils;
 import net.minecraft.block.Block;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Items;
@@ -19,11 +22,10 @@ import static com.github.bunnyi116.bedrockminer.I18n.*;
 
 public class TaskManager implements ITaskManager {
     private static volatile @Nullable TaskManager INSTANCE;
-
     private final ArrayList<Task> pendingBlockTasks = new ArrayList<>();
     private final List<TaskRegion> pendingRegionTasks = new ArrayList<>();
     private @Nullable Task currentTask;
-    private boolean working;
+    private boolean running;
     private boolean processing;
     private int resetCount;
 
@@ -31,7 +33,7 @@ public class TaskManager implements ITaskManager {
         if (!gameVariableIsValid()) {
             return;
         }
-        if (ConfigManager.getInstance().getConfig().disable || !this.isWorking()) {
+        if (ConfigManager.getInstance().getConfig().disable || !this.isRunning()) {
             PlayerLookManager.INSTANCE.tick();
             return;
         }
@@ -132,14 +134,6 @@ public class TaskManager implements ITaskManager {
         }
     }
 
-    public void clearTask() {
-        pendingBlockTasks.clear();
-        if (PlayerLookManager.INSTANCE.isModify()) { // 如果有任务正在修改事件, 则还原玩家视角
-            PlayerLookManager.INSTANCE.reset();
-        }
-        MessageUtils.addMessage(COMMAND_TASK_CLEAR);
-    }
-
     public boolean isAllowExecutionEnvironment(boolean setOverlayMessage) {
         var msg = (Text) null;
         if (gameMode.isCreative()) {
@@ -166,7 +160,7 @@ public class TaskManager implements ITaskManager {
 
     @Override
     public void addBlockTask(ClientWorld world, BlockPos pos, Block block) {
-        if (ConfigManager.getInstance().getConfig().disable || !isWorking()) {
+        if (ConfigManager.getInstance().getConfig().disable || !isRunning()) {
             return;
         }
         if (!isAllowExecutionEnvironment(true)) {
@@ -206,6 +200,7 @@ public class TaskManager implements ITaskManager {
     @Override
     public void removeBlockTaskAll() {
         pendingBlockTasks.clear();
+        MessageUtils.addMessage(COMMAND_TASK_CLEAR);
     }
 
     @Override
@@ -228,6 +223,7 @@ public class TaskManager implements ITaskManager {
                 return;
             }
         }
+        MessageUtils.addMessage(COMMAND_TASK_CLEAR);
     }
 
     @Override
@@ -235,23 +231,23 @@ public class TaskManager implements ITaskManager {
         pendingRegionTasks.clear();
     }
 
-    public void switchOnOff(@Nullable Block block) {
+    public void switchToggle(@Nullable Block block) {
         if (ConfigManager.getInstance().getConfig().disable || !ConfigManager.getInstance().getConfig().isAllowBlock(block))
             return;
-        this.switchOnOff();
+        this.switchToggle();
     }
 
     @Override
-    public void switchOnOff() {
-        if (this.isWorking()) {
+    public void switchToggle() {
+        if (this.isRunning()) {
             this.clearTask();
-            this.setWorking(false);
+            this.setRunning(false);
         } else {
             if (gameMode.isCreative()) { // 仅生存模式开启
                 MessageUtils.addMessage(FAIL_MISSING_SURVIVAL);
                 return;
             }
-            this.setWorking(true);
+            this.setRunning(true);
             if (!client.isInSingleplayer()) {   // 服务器开启时发送警告提示
                 MessageUtils.addMessage(WARN_MULTIPLAYER);
             }
@@ -259,18 +255,18 @@ public class TaskManager implements ITaskManager {
     }
 
     @Override
-    public void setWorking(boolean working) {
+    public void setRunning(boolean working) {
         if (working) {
             MessageUtils.addMessage(TOGGLE_ON);
         } else {
             MessageUtils.addMessage(TOGGLE_OFF);
         }
-        this.working = working;
+        this.running = working;
     }
 
     @Override
-    public boolean isWorking() {
-        return working;
+    public boolean isRunning() {
+        return running;
     }
 
     @Override
@@ -301,4 +297,24 @@ public class TaskManager implements ITaskManager {
         }
         return INSTANCE;
     }
+
+
+    //region 为 BiliXWhite/litematica-printer 提供兼容方法 (作者更新不及时)
+    public static void addTask(Block block, BlockPos pos, ClientWorld world) {
+        TaskManager.getInstance().addBlockTask(world, pos, block);
+    }
+
+    public static boolean isWorking() {
+        return TaskManager.getInstance().isRunning();
+    }
+
+    public static void setWorking(boolean working) {
+        TaskManager.getInstance().setRunning(working);
+    }
+
+    public static void clearTask() {
+        TaskManager.getInstance().removeBlockTaskAll();
+    }
+    //endregion
+
 }
