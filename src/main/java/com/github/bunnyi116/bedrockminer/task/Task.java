@@ -390,7 +390,7 @@ public class Task {
             this.executed = true;
         }
         if (Config.getInstance().taskShort) {
-            this.currentState = TaskState.WAIT_GAME_UPDATE;
+            this.setWait(TaskState.WAIT_GAME_UPDATE, 1);
         } else {
             this.setWait(TaskState.WAIT_GAME_UPDATE, 3);
         }
