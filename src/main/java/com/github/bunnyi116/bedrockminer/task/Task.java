@@ -231,7 +231,12 @@ public class Task {
             if (planItem.piston.isNeedModify()) {
                 this.setWait(TaskState.WAIT_GAME_UPDATE, 1);
             } else {
-                this.currentState = TaskState.WAIT_GAME_UPDATE;
+                BlockState redstoneTorchState = world.getBlockState(planItem.redstoneTorch.pos);
+                if (redstoneTorchState.getBlock() instanceof RedstoneTorchBlock) {
+                    this.setWait(TaskState.WAIT_GAME_UPDATE, 1);
+                } else {
+                    this.currentState = TaskState.WAIT_GAME_UPDATE;
+                }
             }
             this.resetModifyLook();
         } else {
@@ -377,12 +382,11 @@ public class Task {
             }
             this.executed = true;
         }
-        this.currentState = TaskState.WAIT_GAME_UPDATE;
-//        if (Config.getInstance().taskShortWait) {
-//            this.setWait(TaskState.WAIT_GAME_UPDATE, 1);
-//        } else {
-//            this.setWait(TaskState.WAIT_GAME_UPDATE, 4);
-//        }
+        if (Config.getInstance().taskShort) {
+            this.currentState = TaskState.WAIT_GAME_UPDATE;
+        } else {
+            this.setWait(TaskState.WAIT_GAME_UPDATE, 3);
+        }
     }
 
     private void waitCustom() {
@@ -472,18 +476,16 @@ public class Task {
     }
 
     private void init() {
-        final var nearbyRedstoneTorch = TaskPlanTools.findPistonNearbyRedstoneTorch(pos, world);
-        for (final var pos : nearbyRedstoneTorch) {
-            if (world.getBlockState(pos).getBlock() instanceof RedstoneTorchBlock) {
-                ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(pos);
-            }
-        }
-
         for (final var direction : Direction.values()) {
-            BlockPos pistonPos = pos.offset(direction);
-            BlockState pistonState = world.getBlockState(pistonPos);
+            BlockPos pos1 = pos.offset(direction);
+            BlockPos pos2 = pos1.up();
+            BlockState pistonState = world.getBlockState(pos1);
             if (pistonState.getBlock() instanceof PistonBlock && PlayerUtils.canInstantlyMineBlock(pistonState)) {
                 ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(pos);
+            }
+            BlockState pistonUpState = world.getBlockState(pos2);
+            if (pistonUpState.getBlock() instanceof PistonBlock && PlayerUtils.canInstantlyMineBlock(pistonUpState)) {
+                ClientPlayerInteractionManagerUtils.updateBlockBreakingProgress(pos2);
             }
         }
         this.nextState = null;
