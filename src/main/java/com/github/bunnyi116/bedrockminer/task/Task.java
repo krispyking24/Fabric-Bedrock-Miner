@@ -201,7 +201,7 @@ public class Task {
                 world.setBlockState(planItem.redstoneTorch.pos, blockState.with(WallRedstoneTorchBlock.FACING, planItem.redstoneTorch.facing));
             }
             this.addRecycled(planItem.redstoneTorch.pos);
-            if (Config.getInstance().taskShort) {
+            if (Config.getInstance().shortTsk) {
                 this.setWait(TaskState.WAIT_GAME_UPDATE, 1);
             } else {
                 this.setWait(TaskState.WAIT_GAME_UPDATE, 3);
@@ -389,7 +389,7 @@ public class Task {
             }
             this.executed = true;
         }
-        if (Config.getInstance().taskShort) {
+        if (Config.getInstance().shortTsk) {
             this.setWait(TaskState.WAIT_GAME_UPDATE, 3);
         } else {
             this.setWait(TaskState.WAIT_GAME_UPDATE, 3);

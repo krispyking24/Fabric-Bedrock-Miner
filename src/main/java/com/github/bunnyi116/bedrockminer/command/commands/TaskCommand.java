@@ -44,7 +44,7 @@ public class TaskCommand extends CommandBase {
                                     } else {
                                         MessageUtils.addMessage(I18n.COMMAND_TASK_SHORT_WAIT_NORMAL);
                                     }
-                                    Config.getInstance().taskShort = b;
+                                    Config.getInstance().shortTsk = b;
                                     Config.getInstance().save();
                                     return Command.SINGLE_SUCCESS;
                                 })
