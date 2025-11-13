@@ -130,6 +130,22 @@ public class InventoryManagerUtils {
         }
     }
 
+    public static boolean isOf(int minDamage, Item... items) {
+        final DefaultedList<ItemStack> MainStacks = PlayerInventoryUtils.getMainStacks(playerInventory);
+        for (ItemStack stack : MainStacks) {
+            if (stack.isEmpty()) {
+                continue;
+            }
+            for (Item item : items) {
+                if (stack.isOf(item)) {
+                    // 检查耐久是否发起警告(剩余耐久<=检查值)
+                    return minDamage <= 0 || !InventoryManagerUtils.isItemDamageWarning(stack, minDamage);
+                }
+            }
+        }
+        return false;
+    }
+
 
     public static void switchToItem(Item... items) {
         switchToItem(-1, items);
@@ -160,7 +176,8 @@ public class InventoryManagerUtils {
     public static boolean canInstantlyMinePiston() {
         var playerInventory = player.getInventory();
         for (int i = 0; i < playerInventory.size(); i++) {
-            if (PlayerUtils.canInstantlyMineBlock(Blocks.PISTON.getDefaultState(), playerInventory.getStack(i))) {
+            if (PlayerUtils.canInstantlyMineBlock(Blocks.PISTON.getDefaultState(), playerInventory.getStack(i))
+                    && InventoryManagerUtils.isOf(5, playerInventory.getStack(i).getItem())) {
                 return true;
             }
         }

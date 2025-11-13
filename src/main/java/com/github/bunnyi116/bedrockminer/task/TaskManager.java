@@ -7,6 +7,9 @@ import com.github.bunnyi116.bedrockminer.util.block.BlockUtils;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerLookManager;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerUtils;
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.PistonBlock;
+import net.minecraft.block.PistonHeadBlock;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
@@ -98,9 +101,24 @@ public class TaskManager implements ITaskManager {
                             for (int x = -blockInteractionRange; x <= blockInteractionRange; x++) {
                                 for (int z = -blockInteractionRange; z <= blockInteractionRange; z++) {
                                     final var blockPos = player.getBlockPos().add(x, y, z);
+                                    final var blockState = world.getBlockState(blockPos);
+                                    // 将错误的活塞臂设置为空气
+                                    if (blockState.getBlock() instanceof PistonHeadBlock) {
+                                        final var pistonHeadFacing = blockState.get(PistonHeadBlock.FACING);
+                                        final var pistonPos = blockPos.offset(pistonHeadFacing.getOpposite());
+                                        final var pistonState = world.getBlockState(pistonPos);
+                                        if (pistonState.getBlock() instanceof PistonBlock) {
+                                            if (pistonState.get(PistonHeadBlock.FACING) != pistonHeadFacing) {
+                                                world.setBlockState(blockPos, Blocks.AIR.getDefaultState());
+                                            }
+                                        } else {
+                                            world.setBlockState(blockPos, Blocks.AIR.getDefaultState());
+                                        }
+                                    }
+                                    // 开始处理任务
                                     final var box = new BlockBox(blockPos);
                                     if (rangeBox.intersects(box)) {
-                                        final var blockState = world.getBlockState(blockPos);
+
                                         final var block = blockState.getBlock();
                                         if (blockState.isAir() || BlockUtils.isReplaceable(blockState)) {
                                             continue;

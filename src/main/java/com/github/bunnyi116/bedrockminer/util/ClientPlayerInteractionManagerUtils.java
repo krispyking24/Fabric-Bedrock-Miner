@@ -41,8 +41,8 @@ public class ClientPlayerInteractionManagerUtils {
                 return new PlayerActionC2SPacket(Action.START_DESTROY_BLOCK, pos, direction, sequence);
             }, beforeBreaking, afterBreaking);
             setBreakingBlock(false);
-        } else if (!(breakingBlock) || !interactionManager.isCurrentlyBreaking(pos)) {
-            if ((breakingBlock)) {
+        } else if (!(breakingBlock || interactionManager.breakingBlock) || !interactionManager.isCurrentlyBreaking(pos)) {
+            if ((breakingBlock || interactionManager.breakingBlock)) {
                 networkHandler.sendPacket(new PlayerActionC2SPacket(Action.ABORT_DESTROY_BLOCK, interactionManager.currentBreakingPos, direction));
                 setBreakingBlock(false);
             }
@@ -91,7 +91,7 @@ public class ClientPlayerInteractionManagerUtils {
             ++breakingTickMax;
             return true;
         }
-        if ((breakingBlock) && interactionManager.isCurrentlyBreaking(pos)) {
+        if ((breakingBlock || interactionManager.breakingBlock) && interactionManager.isCurrentlyBreaking(pos)) {
             BlockState blockState = world.getBlockState(pos);
             if (blockState.isAir()) {
                 setBreakingBlock(false);
