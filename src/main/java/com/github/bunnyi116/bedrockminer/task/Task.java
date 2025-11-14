@@ -394,7 +394,7 @@ public class Task {
             this.executed = true;
         }
         if (Config.getInstance().shortTsk) {
-            this.setWait(TaskState.WAIT_GAME_UPDATE, 3);
+            this.setWait(TaskState.WAIT_GAME_UPDATE, 1);
         } else {
             this.setWait(TaskState.WAIT_GAME_UPDATE, 3);
         }

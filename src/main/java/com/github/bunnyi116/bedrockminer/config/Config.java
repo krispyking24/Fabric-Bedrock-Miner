@@ -14,7 +14,7 @@ import java.util.List;
 public class Config {
     public boolean disable = false;
     public boolean debug = false;
-    public boolean shortTsk = false;
+    public boolean shortTsk = true;
     public List<Integer> floorsBlacklist = new ArrayList<>();
     public List<TaskRegion> ranges = new ArrayList<>();
     public List<String> blockWhitelist = getDefaultBlockWhitelist();

@@ -29,7 +29,7 @@ public class BehaviorCommand extends CommandBase {
     @Override
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandRegistryAccess registryAccess) {
         builder.then(literal("floor")
-                        .then(literal("addTask")
+                        .then(literal("add")
                                 .then(argument("floor", IntegerArgumentType.integer())
                                         .executes(this::addFloor)
                                 )
