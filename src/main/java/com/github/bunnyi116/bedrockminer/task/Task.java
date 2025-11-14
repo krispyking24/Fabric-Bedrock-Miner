@@ -12,6 +12,7 @@ import com.google.common.collect.Queues;
 import net.minecraft.block.*;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Items;
+import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -294,6 +295,9 @@ public class Task {
                     )) {
                         continue;
                     }
+                }
+                if (world.getFluidState(item.redstoneTorch.pos).isIn(FluidTags.WATER)) {
+                    continue;
                 }
                 if (BlockPlacerUtils.canPlace(world, item.slimeBlock.pos, Blocks.SLIME_BLOCK.getDefaultState())
                         || sideCoversSmallSquare(world, item.slimeBlock.pos, item.slimeBlock.facing)) {// 特殊放置方案类型1, 需要检查目标方块是否能能被……充
