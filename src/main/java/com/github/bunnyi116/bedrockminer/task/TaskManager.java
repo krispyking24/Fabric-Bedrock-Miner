@@ -52,8 +52,8 @@ public class TaskManager implements ITaskManager {
         if (!isAllowExecutionEnvironment(currentTask != null)) return;
 
         if (this.currentTask != null) {
-            // 当玩家不在处理范围时, 等待60TICK约3秒时间, 如果玩家未回处理位置, 将重新选择任务
-            if (this.resetCount++ >= 60) {
+            // 当玩家不在处理范围时, 等待40TICK约2秒时间, 如果玩家未回处理位置, 将重新选择任务
+            if (this.resetCount++ >= 40) {
                 // 检查现有任务, 如果只有一个任务, 就没必要重新选择新任务了(因为不存在其他任务)
                 if (this.pendingBlockTasks.size() > 1 || !this.pendingRegionTasks.isEmpty() || !Config.getInstance().ranges.isEmpty()) {
                     this.currentTask = null;
@@ -74,7 +74,7 @@ public class TaskManager implements ITaskManager {
         }
 
         // 没有正在处理的任务, 准备选择一个新的任务
-        if (this.currentTask == null && !pendingBlockTasks.isEmpty()) {
+        if (this.currentTask == null) {
             final var iterator1 = pendingBlockTasks.iterator();
             while (iterator1.hasNext()) {
                 var task = iterator1.next();
@@ -94,7 +94,7 @@ public class TaskManager implements ITaskManager {
         }
 
         // 没有正在处理的任务, 准备选择一个新的任务
-        if (this.currentTask == null && (!Config.getInstance().ranges.isEmpty() || !pendingRegionTasks.isEmpty())) {
+        if (this.currentTask == null) {
             // 组合迭代器(避免创建新的数组, 浪费内存)
             final var iterator2 = new CombinedIterator<>(Config.getInstance().ranges, pendingRegionTasks);
             while (iterator2.hasNext()) {
