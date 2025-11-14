@@ -27,4 +27,12 @@ public class CombinedIterator<T> implements Iterator<T> {
             return iterator2.next();
         }
     }
+
+    public Iterator<T> getIterator1() {
+        return iterator1;
+    }
+
+    public Iterator<T> getIterator2() {
+        return iterator2;
+    }
 }

@@ -1,6 +1,7 @@
 package com.github.bunnyi116.bedrockminer.task;
 
 import com.github.bunnyi116.bedrockminer.api.ITaskManager;
+import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.config.ConfigManager;
 import com.github.bunnyi116.bedrockminer.util.*;
 import com.github.bunnyi116.bedrockminer.util.block.BlockUtils;
@@ -36,100 +37,108 @@ public class TaskManager implements ITaskManager {
         if (!gameVariableIsValid()) {
             return;
         }
-        if (ConfigManager.getInstance().getConfig().disable || !this.isRunning()) {
+        if (Config.getInstance().disable || !this.isRunning()) {
             PlayerLookManager.INSTANCE.tick();
             return;
         }
-        if (this.pendingBlockTasks.isEmpty() && this.pendingRegionTasks.isEmpty() && ConfigManager.getInstance().getConfig().ranges.isEmpty()) {
+
+        if (this.pendingBlockTasks.isEmpty()
+                && this.pendingRegionTasks.isEmpty()
+                && Config.getInstance().ranges.isEmpty()) {
             this.currentTask = null;
             return;
         }
-        final var setOverlayMessage = currentTask != null;
-        if (isAllowExecutionEnvironment(setOverlayMessage)) {
-            if (this.currentTask != null) {
-                if (this.currentTask.world == world && this.currentTask.canInteractWithBlockAt()) {
-                    this.processing = true;
-                    this.currentTask.tick();
-                    this.resetCount = 0;
-                    this.processing = false;
-                    if (this.currentTask.isComplete()) {
-                        this.pendingBlockTasks.remove(this.currentTask);
-                        this.currentTask = null;
-                    } else {
-                        return;
-                    }
-                } else if ((this.pendingBlockTasks.size() > 1 || !ConfigManager.getInstance().getConfig().ranges.isEmpty())) {
-                    this.currentTask = null;
-                    this.resetCount = 0;
-                } else if (this.resetCount++ >= 40) {
+
+        if (!isAllowExecutionEnvironment(currentTask != null)) return;
+
+        if (this.currentTask != null) {
+            // 当玩家不在处理范围时, 等待60TICK约3秒时间, 如果玩家未回处理位置, 将重新选择任务
+            if (this.resetCount++ >= 60) {
+                // 检查现有任务, 如果只有一个任务, 就没必要重新选择新任务了(因为不存在其他任务)
+                if (this.pendingBlockTasks.size() > 1 || !this.pendingRegionTasks.isEmpty() || !Config.getInstance().ranges.isEmpty()) {
                     this.currentTask = null;
                     this.resetCount = 0;
                 }
-            }
-            if (this.currentTask == null) {
-                final var iterator1 = pendingBlockTasks.iterator();
-                while (iterator1.hasNext()) {
-                    var task = iterator1.next();
-                    if (!task.canInteractWithBlockAt()) {
-                        continue;
-                    }
-                    if (PlayerLookManager.INSTANCE.isModify() && PlayerLookManager.INSTANCE.getTask() != task) {
-                        continue;
-                    }
-                    if (task.world != world) {
-                        iterator1.remove();
-                        continue;
-                    }
-                    this.currentTask = task;
-                    return;
+            } else if (this.currentTask.world == world && this.currentTask.canInteractWithBlockAt()) {
+                this.processing = true;
+                this.currentTask.tick();
+                this.resetCount = 0;    // 执行一次TICK, 进行重置
+                this.processing = false;
+                if (this.currentTask.isComplete()) {
+                    this.pendingBlockTasks.remove(this.currentTask);
+                    this.currentTask = null;
+                } else {
+                    return; // 任务没有处理完成, 返回等待下一个TICK继续处理
                 }
             }
+        }
 
-            if (this.currentTask == null) {
-                final var iterator2 = new CombinedIterator<>(ConfigManager.getInstance().getConfig().ranges, pendingRegionTasks);
-                while (iterator2.hasNext()) {
-                    var range = iterator2.next();
-                    if (!range.isForWorld(world)) {
-                        continue;
-                    }
-                    var rangeBox = BlockBox.create(range.pos1, range.pos2);
-                    var playerBox = new BlockBox(player.getBlockPos());
-                    var playerExpandBox = playerBox.expand((int) PlayerUtils.getBlockInteractionRange());
-                    if (rangeBox.intersects(playerExpandBox)) {
-                        final var blockInteractionRange = (int) PlayerUtils.getBlockInteractionRange() - 1;
-                        for (int y = blockInteractionRange; y > -blockInteractionRange; y--) {
-                            for (int x = -blockInteractionRange; x <= blockInteractionRange; x++) {
-                                for (int z = -blockInteractionRange; z <= blockInteractionRange; z++) {
-                                    final var blockPos = player.getBlockPos().add(x, y, z);
-                                    final var blockState = world.getBlockState(blockPos);
-                                    // 开始处理任务
-                                    final var box = new BlockBox(blockPos);
-                                    if (rangeBox.intersects(box)) {
+        // 没有正在处理的任务, 准备选择一个新的任务
+        if (this.currentTask == null && !pendingBlockTasks.isEmpty()) {
+            final var iterator1 = pendingBlockTasks.iterator();
+            while (iterator1.hasNext()) {
+                var task = iterator1.next();
+                if (!task.canInteractWithBlockAt()) {
+                    continue;
+                }
+                if (PlayerLookManager.INSTANCE.isModify() && PlayerLookManager.INSTANCE.getTask() != task) {
+                    continue;
+                }
+                if (task.world != world) {
+                    iterator1.remove();
+                    continue;
+                }
+                this.currentTask = task;
+                return;
+            }
+        }
 
-                                        final var block = blockState.getBlock();
-                                        if (blockState.isAir() || BlockUtils.isReplaceable(blockState)) {
-                                            continue;
-                                        }
-                                        if (!ConfigManager.getInstance().getConfig().isAllowBlock(block)) {
-                                            continue;
-                                        }
-                                        if (ConfigManager.getInstance().getConfig().isFloorsBlacklist(blockPos)) {
-                                            continue;
-                                        }
-                                        var task = new Task(world, block, blockPos);
-                                        if (!task.canInteractWithBlockAt()) {
-                                            continue;
-                                        }
-                                        if (PlayerLookManager.INSTANCE.isModify() && PlayerLookManager.INSTANCE.getTask() != task) {
-                                            continue;
-                                        }
-                                        if (task.world != world) {
-                                            iterator2.remove();
-                                            continue;
-                                        }
-                                        this.currentTask = task;
-                                        return;
+        // 没有正在处理的任务, 准备选择一个新的任务
+        if (this.currentTask == null && (!Config.getInstance().ranges.isEmpty() || !pendingRegionTasks.isEmpty())) {
+            // 组合迭代器(避免创建新的数组, 浪费内存)
+            final var iterator2 = new CombinedIterator<>(Config.getInstance().ranges, pendingRegionTasks);
+            while (iterator2.hasNext()) {
+                var range = iterator2.next();
+                if (!range.isForWorld(world)) {
+                    continue;
+                }
+                var rangeBox = BlockBox.create(range.pos1, range.pos2);
+                var playerBox = new BlockBox(player.getBlockPos());
+                var playerExpandBox = playerBox.expand((int) PlayerUtils.getBlockInteractionRange());
+                // 检查玩家位置是否与待处理范围相交
+                if (rangeBox.intersects(playerExpandBox)) {
+                    final var blockInteractionRange = (int) PlayerUtils.getBlockInteractionRange() - 1;
+                    for (int y = blockInteractionRange; y > -blockInteractionRange; y--) {
+                        for (int x = -blockInteractionRange; x <= blockInteractionRange; x++) {
+                            for (int z = -blockInteractionRange; z <= blockInteractionRange; z++) {
+                                final var blockPos = player.getBlockPos().add(x, y, z);
+                                final var blockState = world.getBlockState(blockPos);
+                                // 开始处理任务
+                                final var box = new BlockBox(blockPos);
+                                if (rangeBox.intersects(box)) {
+                                    final var block = blockState.getBlock();
+                                    if (blockState.isAir() || BlockUtils.isReplaceable(blockState)) {
+                                        continue;
                                     }
+                                    if (!Config.getInstance().isAllowBlock(block)) {
+                                        continue;
+                                    }
+                                    if (Config.getInstance().isFloorsBlacklist(blockPos)) {
+                                        continue;
+                                    }
+                                    var task = new Task(world, block, blockPos);
+                                    if (!task.canInteractWithBlockAt()) {
+                                        continue;
+                                    }
+                                    if (PlayerLookManager.INSTANCE.isModify() && PlayerLookManager.INSTANCE.getTask() != task) {
+                                        continue;
+                                    }
+                                    if (task.world != world) {
+                                        iterator2.remove();
+                                        continue;
+                                    }
+                                    this.currentTask = task;
+                                    return;
                                 }
                             }
                         }
@@ -165,7 +174,7 @@ public class TaskManager implements ITaskManager {
 
     @Override
     public void addBlockTask(ClientWorld world, BlockPos pos, Block block) {
-        if (ConfigManager.getInstance().getConfig().disable || !isRunning()) {
+        if (Config.getInstance().disable || !isRunning()) {
             return;
         }
         if (!isAllowExecutionEnvironment(true)) {
@@ -174,10 +183,10 @@ public class TaskManager implements ITaskManager {
         if (!gameMode.isSurvivalLike()) {
             return;
         }
-        if (!ConfigManager.getInstance().getConfig().isAllowBlock(block)) {
+        if (!Config.getInstance().isAllowBlock(block)) {
             return;
         }
-        if (ConfigManager.getInstance().getConfig().isFloorsBlacklist(pos)) {  // 楼层限制
+        if (Config.getInstance().isFloorsBlacklist(pos)) {  // 楼层限制
             var msg = FLOOR_BLACK_LIST_WARN.getString().replace("(#floor#)", String.valueOf(pos.getY()));
             MessageUtils.setOverlayMessage(Text.literal(msg));
             return;
@@ -241,7 +250,7 @@ public class TaskManager implements ITaskManager {
     }
 
     public void switchToggle(@Nullable Block block) {
-        if (ConfigManager.getInstance().getConfig().disable || !ConfigManager.getInstance().getConfig().isAllowBlock(block))
+        if (Config.getInstance().disable || !Config.getInstance().isAllowBlock(block))
             return;
         this.switchToggle();
     }
