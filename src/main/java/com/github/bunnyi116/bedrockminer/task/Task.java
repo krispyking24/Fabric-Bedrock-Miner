@@ -260,8 +260,13 @@ public class Task {
             debug("查找方案");
             for (TaskPlan item : planItems) {
                 var slimeBlockState = world.getBlockState(item.slimeBlock.pos);
+                if (item.canInteractWithBlockAt()) {
+                    item.slimeBlock.level -= 1;
+                } else {
+                    item.slimeBlock.level += 1000;
+                }
                 if (InventoryManagerUtils.getInventoryItemCount(Items.SLIME_BLOCK) < 1) {
-                    item.slimeBlock.level -= 1000;
+                    item.slimeBlock.level += 1000;
                 } else if (BlockUtils.isReplaceable(slimeBlockState)) {
                     item.slimeBlock.level += 1;
                 } else if (sideCoversSmallSquare(world, item.slimeBlock.pos, item.slimeBlock.facing)) {

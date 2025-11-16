@@ -29,6 +29,7 @@ public class TaskManager implements ITaskManager {
     private boolean running;
     private boolean processing;
     private int resetCount;
+    private int resetCountMax = 40;
 
     public void tick() {
         if (!gameVariableIsValid()) {
@@ -67,6 +68,8 @@ public class TaskManager implements ITaskManager {
                 } else {
                     return; // 任务没有处理完成, 返回等待下一个TICK继续处理
                 }
+            } else {
+                MessageUtils.setOverlayMessage(Text.literal("远离当前正在处理的方块位置，冷却TICK剩余: " + (resetCountMax - resetCount)));
             }
         }
 
@@ -96,56 +99,45 @@ public class TaskManager implements ITaskManager {
             final var iterator2 = new CombinedIterator<>(Config.getInstance().ranges, pendingRegionTasks);
             while (iterator2.hasNext()) {
                 var range = iterator2.next();
-                if (!range.isForWorld(world)) {
-                    continue;
-                }
-                var rangeBox = BlockBox.create(range.pos1, range.pos2);
-                var playerBox = new BlockBox(player.getBlockPos());
-                var playerExpandBox = playerBox.expand((int) PlayerUtils.getBlockInteractionRange());
-                // 检查玩家位置是否与待处理范围相交
-                if (rangeBox.intersects(playerExpandBox)) {
-                    final double blockInteractionRange = PlayerUtils.getBlockInteractionRange() - 1;
-                    final int radius = (int) Math.ceil(blockInteractionRange);
-                    for (int dy = radius; dy > -blockInteractionRange; dy--) {
-                        for (int dx = -radius; dx <= blockInteractionRange; dx++) {
-                            for (int dz = -radius; dz <= blockInteractionRange; dz++) {
-                                final BlockPos blockPos = player.getBlockPos().add(dx, dy, dz);
-                                if (!PlayerUtils.canInteractWithBlockAt(blockPos, 1.0F)) {
-                                    continue;
-                                }
-                                final BlockState blockState = world.getBlockState(blockPos);
-                                // 开始处理任务
-                                final BlockBox box = new BlockBox(blockPos);
-                                if (rangeBox.intersects(box)) {
-                                    final Block block = blockState.getBlock();
-                                    if (blockState.isAir() || BlockUtils.isReplaceable(blockState)) {
-                                        continue;
-                                    }
-                                    if (!Config.getInstance().isAllowBlock(block)) {
-                                        continue;
-                                    }
-                                    if (Config.getInstance().isFloorsBlacklist(blockPos)) {
-                                        continue;
-                                    }
-                                    final Task task = new Task(world, block, blockPos);
-                                    if (!task.canInteractWithBlockAt()) {
-                                        continue;
-                                    }
-                                    if (PlayerLookManager.INSTANCE.isModify() && PlayerLookManager.INSTANCE.getTask() != task) {
-                                        continue;
-                                    }
-                                    if (task.world != world) {
-                                        iterator2.remove();
-                                        continue;
-                                    }
-                                    this.currentTask = task;
-                                    if (PlayerLookManager.INSTANCE.isModify()) {
-                                        return;
-                                    } else {
-                                        break;
-                                    }
-                                }
+                if (!range.isForWorld(world)) continue;
+                final BlockPos playerBlockPos = player.getBlockPos();
+                final BlockBox rangeBox = BlockBox.create(range.pos1, range.pos2);
+                final BlockBox playerBox = new BlockBox(playerBlockPos);
+                final double playerBlockInteractionRange = PlayerUtils.getBlockInteractionRange();
+                final int radius = (int) Math.ceil(playerBlockInteractionRange) - 1;
+                final BlockBox playerExpandBox = playerBox.expand(radius);
+                if (!rangeBox.intersects(playerExpandBox)) continue;
+                for (int dy = radius; dy > -playerBlockInteractionRange; dy--) {
+                    for (int dx = -radius; dx <= playerBlockInteractionRange; dx++) {
+                        for (int dz = -radius; dz <= playerBlockInteractionRange; dz++) {
+                            final BlockPos blockPos = playerBlockPos.add(dx, dy, dz);
+                            if (!PlayerUtils.canInteractWithBlockAt(blockPos, 1.0F)) {
+                                continue;
                             }
+                            final BlockState blockState = world.getBlockState(blockPos);
+                            final Block block = blockState.getBlock();
+                            if (blockState.isAir() || BlockUtils.isReplaceable(blockState)) {
+                                continue;
+                            }
+                            if (!Config.getInstance().isAllowBlock(block)) {
+                                continue;
+                            }
+                            if (Config.getInstance().isFloorsBlacklist(blockPos)) {
+                                continue;
+                            }
+                            final Task task = new Task(world, block, blockPos);
+                            if (!task.canInteractWithBlockAt()) {
+                                continue;
+                            }
+                            if (PlayerLookManager.INSTANCE.isModify() && PlayerLookManager.INSTANCE.getTask() != task) {
+                                continue;
+                            }
+                            if (task.world != world) {
+                                iterator2.remove();
+                                continue;
+                            }
+                            this.currentTask = task;
+                            return;
                         }
                     }
                 }

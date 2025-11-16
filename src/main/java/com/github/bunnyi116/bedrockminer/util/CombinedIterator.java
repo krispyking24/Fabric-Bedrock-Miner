@@ -14,13 +14,11 @@ public class CombinedIterator<T> implements Iterator<T> {
 
     @Override
     public boolean hasNext() {
-        // 任一迭代器有下一个元素就继续
         return iterator1.hasNext() || iterator2.hasNext();
     }
 
     @Override
     public T next() {
-        // 优先返回iterator1的元素，耗尽后返回iterator2的
         if (iterator1.hasNext()) {
             return iterator1.next();
         } else {
