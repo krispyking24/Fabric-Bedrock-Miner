@@ -20,7 +20,7 @@
     ]
   },
   "mixins": [
-    "bedrock-miner.mixins.json"
+    "bedrockminer.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",
@@ -29,5 +29,5 @@
   "suggests": {
     "another-mod": "*"
   },
-  "accessWidener": "bedrock-miner.accesswidener"
+  "accessWidener": "bedrockminer.accesswidener"
 }
