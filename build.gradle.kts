@@ -81,7 +81,7 @@ tasks.register("buildAndGather") {
     doFirst {
         println("Gathering builds")
         val buildLibs = { p: Project ->
-            p.buildDir.toPath().resolve("libs")
+            p.layout.buildDirectory.dir("libs").get().asFile.toPath()
         }
         delete(fileTree(buildLibs(rootProject)) {
             include("*")
