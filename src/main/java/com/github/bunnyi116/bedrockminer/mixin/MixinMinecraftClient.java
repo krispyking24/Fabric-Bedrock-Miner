@@ -55,7 +55,9 @@ public abstract class MixinMinecraftClient {
         var blockPos = blockHitResult.getBlockPos();
         var blockState = world.getBlockState(blockPos);
         var block = blockState.getBlock();
-        TaskManager.getInstance().switchToggle(block);
+        if (TaskManager.getInstance().isBedrockMinerFeatureEnable()) {
+            TaskManager.getInstance().switchToggle(block);
+        }
     }
 
     @Inject(method = "handleBlockBreaking", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;updateBlockBreakingProgress(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/Direction;)Z"), locals = LocalCapture.CAPTURE_FAILSOFT, cancellable = true)
@@ -65,7 +67,9 @@ public abstract class MixinMinecraftClient {
         }
         var blockState = world.getBlockState(blockPos);
         var block = blockState.getBlock();
-        TaskManager.getInstance().addBlockTask(world, blockPos, block);
+        if (TaskManager.getInstance().isBedrockMinerFeatureEnable()) {
+            TaskManager.getInstance().addBlockTask(world, blockPos, block);
+        }
         if (TaskManager.getInstance().isProcessing() || ClientPlayerInteractionManagerUtils.isBreakingBlock()) {    // 避免冲突, 当模组正在破坏时, 拦截玩家破坏操作
             ci.cancel();
         }

@@ -28,8 +28,8 @@ public class TaskManager implements ITaskManager {
     private @Nullable Task currentTask;
     private boolean running;
     private boolean processing;
+    private boolean bedrockMinerFeatureEnable;
     private int resetCount;
-    private int resetCountMax = 40;
 
     public void tick() {
         if (!gameVariableIsValid()) {
@@ -51,7 +51,8 @@ public class TaskManager implements ITaskManager {
 
         if (this.currentTask != null) {
             // 当玩家不在处理范围时, 等待40TICK约2秒时间, 如果玩家未回处理位置, 将重新选择任务
-            if (this.resetCount++ >= 40) {
+            int resetCountMax = 20;
+            if (this.resetCount++ >= resetCountMax) {
                 // 检查现有任务, 如果只有一个任务, 就没必要重新选择新任务了(因为不存在其他任务)
                 if (this.pendingBlockTasks.size() > 1 || !this.pendingRegionTasks.isEmpty() || !Config.getInstance().ranges.isEmpty()) {
                     this.currentTask = null;
@@ -270,13 +271,20 @@ public class TaskManager implements ITaskManager {
     }
 
     @Override
-    public void setRunning(boolean working) {
-        if (working) {
-            MessageUtils.addMessage(TOGGLE_ON);
-        } else {
-            MessageUtils.addMessage(TOGGLE_OFF);
+    public void setRunning(boolean running) {
+        this.setRunning(running, true);
+    }
+
+    @Override
+    public void setRunning(boolean running, boolean showMessage) {
+        if (showMessage) {
+            if (running) {
+                MessageUtils.addMessage(TOGGLE_ON);
+            } else {
+                MessageUtils.addMessage(TOGGLE_OFF);
+            }
         }
-        this.running = working;
+        this.running = running;
     }
 
     @Override
@@ -290,11 +298,31 @@ public class TaskManager implements ITaskManager {
     }
 
     @Override
+    public boolean isInTasks(ClientWorld world, BlockPos pos) {
+        for (var targetBlock : pendingBlockTasks) {
+            if (targetBlock.pos.equals(pos)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public @Nullable Task getCurrentTask() {
         return currentTask;
     }
 
-    public ArrayList<Task> getPendingBlockTasks() {
+    @Override
+    public boolean isBedrockMinerFeatureEnable() {
+        return bedrockMinerFeatureEnable;
+    }
+
+    @Override
+    public void setBedrockMinerFeatureEnable(boolean bedrockMinerFeatureEnable) {
+        this.bedrockMinerFeatureEnable = bedrockMinerFeatureEnable;
+    }
+
+    public List<Task> getPendingBlockTasks() {
         return pendingBlockTasks;
     }
 
@@ -312,7 +340,6 @@ public class TaskManager implements ITaskManager {
         }
         return INSTANCE;
     }
-
 
     //region 为 BiliXWhite/litematica-printer 提供兼容方法 (作者更新不及时)
     public static void addTask(Block block, BlockPos pos, ClientWorld world) {
