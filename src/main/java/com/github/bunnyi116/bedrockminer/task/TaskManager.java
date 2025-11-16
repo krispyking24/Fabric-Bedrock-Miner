@@ -2,15 +2,12 @@ package com.github.bunnyi116.bedrockminer.task;
 
 import com.github.bunnyi116.bedrockminer.api.ITaskManager;
 import com.github.bunnyi116.bedrockminer.config.Config;
-import com.github.bunnyi116.bedrockminer.config.ConfigManager;
 import com.github.bunnyi116.bedrockminer.util.*;
 import com.github.bunnyi116.bedrockminer.util.block.BlockUtils;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerLookManager;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerUtils;
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.PistonBlock;
-import net.minecraft.block.PistonHeadBlock;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
@@ -107,16 +104,20 @@ public class TaskManager implements ITaskManager {
                 var playerExpandBox = playerBox.expand((int) PlayerUtils.getBlockInteractionRange());
                 // 检查玩家位置是否与待处理范围相交
                 if (rangeBox.intersects(playerExpandBox)) {
-                    final var blockInteractionRange = (int) PlayerUtils.getBlockInteractionRange() - 1;
-                    for (int y = blockInteractionRange; y > -blockInteractionRange; y--) {
-                        for (int x = -blockInteractionRange; x <= blockInteractionRange; x++) {
-                            for (int z = -blockInteractionRange; z <= blockInteractionRange; z++) {
-                                final var blockPos = player.getBlockPos().add(x, y, z);
-                                final var blockState = world.getBlockState(blockPos);
+                    final double blockInteractionRange = PlayerUtils.getBlockInteractionRange() - 1;
+                    final int radius = (int) Math.ceil(blockInteractionRange);
+                    for (int dy = radius; dy > -blockInteractionRange; dy--) {
+                        for (int dx = -radius; dx <= blockInteractionRange; dx++) {
+                            for (int dz = -radius; dz <= blockInteractionRange; dz++) {
+                                final BlockPos blockPos = player.getBlockPos().add(dx, dy, dz);
+                                if (!PlayerUtils.canInteractWithBlockAt(blockPos, 1.0F)) {
+                                    continue;
+                                }
+                                final BlockState blockState = world.getBlockState(blockPos);
                                 // 开始处理任务
-                                final var box = new BlockBox(blockPos);
+                                final BlockBox box = new BlockBox(blockPos);
                                 if (rangeBox.intersects(box)) {
-                                    final var block = blockState.getBlock();
+                                    final Block block = blockState.getBlock();
                                     if (blockState.isAir() || BlockUtils.isReplaceable(blockState)) {
                                         continue;
                                     }
@@ -126,7 +127,7 @@ public class TaskManager implements ITaskManager {
                                     if (Config.getInstance().isFloorsBlacklist(blockPos)) {
                                         continue;
                                     }
-                                    var task = new Task(world, block, blockPos);
+                                    final Task task = new Task(world, block, blockPos);
                                     if (!task.canInteractWithBlockAt()) {
                                         continue;
                                     }
@@ -138,7 +139,11 @@ public class TaskManager implements ITaskManager {
                                         continue;
                                     }
                                     this.currentTask = task;
-                                    return;
+                                    if (PlayerLookManager.INSTANCE.isModify()) {
+                                        return;
+                                    } else {
+                                        break;
+                                    }
                                 }
                             }
                         }
