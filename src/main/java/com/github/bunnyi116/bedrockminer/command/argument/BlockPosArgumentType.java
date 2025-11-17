@@ -7,11 +7,11 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.argument.Vec3ArgumentType;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.commands.arguments.coordinates.Vec3Argument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,7 +42,8 @@ public class BlockPosArgumentType implements ArgumentType<BlockPos> {
             }
         }
         reader.setCursor(i);
-        throw Vec3ArgumentType.INCOMPLETE_EXCEPTION.createWithContext(reader);
+
+        throw Vec3Argument.ERROR_NOT_COMPLETE.createWithContext(reader);
     }
 
     @Override
@@ -76,7 +77,7 @@ public class BlockPosArgumentType implements ArgumentType<BlockPos> {
             zString = reader.getString().substring(cursor, reader.getCursor());
         }
 
-        var hitResult = MinecraftClient.getInstance().crosshairTarget;
+        var hitResult = Minecraft.getInstance().hitResult;
         if (hitResult != null && hitResult.getType() == HitResult.Type.BLOCK) {
             var blockHitResult = (BlockHitResult) hitResult;
             var blockPos = blockHitResult.getBlockPos();
@@ -121,7 +122,7 @@ public class BlockPosArgumentType implements ArgumentType<BlockPos> {
                     offset = reader.readInt();
                 }
                 // 玩家位置
-                var player = MinecraftClient.getInstance().player;
+                var player = Minecraft.getInstance().player;
                 if (type == 0) {
                     return (player == null ? 0 : player.getBlockX()) + offset;
                 } else if (type == 1) {

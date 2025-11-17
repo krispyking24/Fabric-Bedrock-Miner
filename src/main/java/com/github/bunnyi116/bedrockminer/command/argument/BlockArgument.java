@@ -10,9 +10,9 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.block.Block;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 
 public class BlockArgument implements ArgumentType<Block> {
     private static final DynamicCommandExceptionType INVALID_STRING_EXCEPTION = new DynamicCommandExceptionType(input
-            -> Text.literal(I18n.COMMAND_EXCEPTION_INVALID_STRING.getString().replace("#input#", input.toString())));
+            -> Component.literal(I18n.COMMAND_EXCEPTION_INVALID_STRING.getString().replace("#input#", input.toString())));
 
     private static final Collection<String> EXAMPLES = Arrays.asList("Stone", "Bedrock", "石头", "基岩");
 
@@ -43,7 +43,7 @@ public class BlockArgument implements ArgumentType<Block> {
     public Block parse(StringReader reader) throws CommandSyntaxException {
         var input = StringReaderUtils.readUnquotedString(reader);
         var blockResult = (Block) null;
-        for (var block : Registries.BLOCK) {
+        for (var block : BuiltInRegistries.BLOCK) {
             if (block.getName().getString().equals(input)) {
                 blockResult = block;
                 break;
@@ -63,7 +63,7 @@ public class BlockArgument implements ArgumentType<Block> {
         var reader = new StringReader(builder.getInput());
         reader.setCursor(builder.getStart());
         var input = StringReaderUtils.readUnquotedString(reader);
-        for (var block : Registries.BLOCK) {
+        for (var block : BuiltInRegistries.BLOCK) {
             var blockName = block.getName().getString();
             if (blockName.contains(input)) {
                 if (filter != null && filter.test(block)) {

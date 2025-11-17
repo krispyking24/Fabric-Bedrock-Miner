@@ -1,9 +1,9 @@
 package com.github.bunnyi116.bedrockminer.api;
 
 import com.github.bunnyi116.bedrockminer.task.Task;
-import net.minecraft.block.Block;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
 
 public interface ITaskManager {
@@ -14,7 +14,7 @@ public interface ITaskManager {
      * @param pos   所在位置
      * @param block 方块类型(用于检查是否成功)
      */
-    void addBlockTask(ClientWorld world, BlockPos pos, Block block);
+    void addBlockTask(ClientLevel world, BlockPos pos, Block block);
 
     /**
      * 移除一个方块任务(基本用不到)
@@ -22,7 +22,7 @@ public interface ITaskManager {
      * @param world 所在世界
      * @param pos   所在位置
      */
-    void removeBlockTask(ClientWorld world, BlockPos pos);
+    void removeBlockTask(ClientLevel world, BlockPos pos);
 
     /**
      * 移除所有方块任务
@@ -37,7 +37,7 @@ public interface ITaskManager {
      * @param pos1  位置1
      * @param pos2  位置2
      */
-    void addRegionTask(String name, ClientWorld world, BlockPos pos1, BlockPos pos2);
+    void addRegionTask(String name, ClientLevel world, BlockPos pos1, BlockPos pos2);
 
     /**
      * 移除一个区域任务
@@ -97,7 +97,7 @@ public interface ITaskManager {
      * @param world 所在世界
      * @param pos 所在位置
      */
-    boolean isInTasks(ClientWorld world, BlockPos pos);
+    boolean isInTasks(ClientLevel world, BlockPos pos);
 
     /**
      * 获取当前正在执行的任务

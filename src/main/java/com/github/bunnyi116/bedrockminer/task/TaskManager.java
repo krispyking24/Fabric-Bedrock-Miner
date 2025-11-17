@@ -6,13 +6,13 @@ import com.github.bunnyi116.bedrockminer.util.*;
 import com.github.bunnyi116.bedrockminer.util.block.BlockUtils;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerLookManager;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerUtils;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.Items;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockBox;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ public class TaskManager implements ITaskManager {
     private @Nullable Task currentTask;
     private boolean running;
     private boolean processing;
-    private boolean bedrockMinerFeatureEnable;
+    private boolean bedrockMinerFeatureEnable = true;
     private int resetCount;
 
     public void tick() {
@@ -70,7 +70,7 @@ public class TaskManager implements ITaskManager {
                     return; // 任务没有处理完成, 返回等待下一个TICK继续处理
                 }
             } else {
-                MessageUtils.setOverlayMessage(Text.literal("远离当前正在处理的方块位置，冷却TICK剩余: " + (resetCountMax - resetCount)));
+                MessageUtils.setOverlayMessage(Component.literal("远离当前正在处理的方块位置，冷却TICK剩余: " + (resetCountMax - resetCount)));
             }
         }
 
@@ -101,17 +101,17 @@ public class TaskManager implements ITaskManager {
             while (iterator2.hasNext()) {
                 var range = iterator2.next();
                 if (!range.isForWorld(world)) continue;
-                final BlockPos playerBlockPos = player.getBlockPos();
-                final BlockBox rangeBox = BlockBox.create(range.pos1, range.pos2);
-                final BlockBox playerBox = new BlockBox(playerBlockPos);
+                final BlockPos playerBlockPos = player.blockPosition();
+                final BoundingBox rangeBox = BoundingBox.fromCorners(range.pos1, range.pos2);
+                final BoundingBox playerBox = new BoundingBox(playerBlockPos);
                 final double playerBlockInteractionRange = PlayerUtils.getBlockInteractionRange();
                 final int radius = (int) Math.ceil(playerBlockInteractionRange) - 1;
-                final BlockBox playerExpandBox = playerBox.expand(radius);
+                final BoundingBox playerExpandBox = playerBox.inflatedBy(radius);
                 if (!rangeBox.intersects(playerExpandBox)) continue;
                 for (int dy = radius; dy > -playerBlockInteractionRange; dy--) {
                     for (int dx = -radius; dx <= playerBlockInteractionRange; dx++) {
                         for (int dz = -radius; dz <= playerBlockInteractionRange; dz++) {
-                            final BlockPos blockPos = playerBlockPos.add(dx, dy, dz);
+                            final BlockPos blockPos = playerBlockPos.offset(dx, dy, dz);
                             if (!PlayerUtils.canInteractWithBlockAt(blockPos, 1.0F)) {
                                 continue;
                             }
@@ -147,11 +147,11 @@ public class TaskManager implements ITaskManager {
     }
 
     public boolean isAllowExecutionEnvironment(boolean setOverlayMessage) {
-        var msg = (Text) null;
+        var msg = (Component) null;
         if (gameMode.isCreative()) {
             msg = FAIL_MISSING_SURVIVAL;
         }
-        if (client.interactionManager != null && !client.interactionManager.getCurrentGameMode().isSurvivalLike()) {
+        if (interactionManager != null && !interactionManager.getPlayerMode().isSurvival()) {
             msg = FAIL_MISSING_SURVIVAL;
         }
         if (InventoryManagerUtils.getInventoryItemCount(Items.PISTON) < 2) {
@@ -171,14 +171,14 @@ public class TaskManager implements ITaskManager {
     }
 
     @Override
-    public void addBlockTask(ClientWorld world, BlockPos pos, Block block) {
+    public void addBlockTask(ClientLevel world, BlockPos pos, Block block) {
         if (Config.getInstance().disable || !isRunning()) {
             return;
         }
         if (!isAllowExecutionEnvironment(true)) {
             return;
         }
-        if (!gameMode.isSurvivalLike()) {
+        if (!gameMode.isSurvival()) {
             return;
         }
         if (!Config.getInstance().isAllowBlock(block)) {
@@ -186,7 +186,7 @@ public class TaskManager implements ITaskManager {
         }
         if (Config.getInstance().isFloorsBlacklist(pos)) {  // 楼层限制
             var msg = FLOOR_BLACK_LIST_WARN.getString().replace("(#floor#)", String.valueOf(pos.getY()));
-            MessageUtils.setOverlayMessage(Text.literal(msg));
+            MessageUtils.setOverlayMessage(Component.literal(msg));
             return;
         }
         for (var targetBlock : pendingBlockTasks) {
@@ -198,7 +198,7 @@ public class TaskManager implements ITaskManager {
     }
 
     @Override
-    public void removeBlockTask(ClientWorld world, BlockPos pos) {
+    public void removeBlockTask(ClientLevel world, BlockPos pos) {
         final var iterator = pendingBlockTasks.iterator();
         while (iterator.hasNext()) {
             var task = iterator.next();
@@ -215,7 +215,7 @@ public class TaskManager implements ITaskManager {
     }
 
     @Override
-    public void addRegionTask(String name, ClientWorld world, BlockPos pos1, BlockPos pos2) {
+    public void addRegionTask(String name, ClientLevel world, BlockPos pos1, BlockPos pos2) {
         for (TaskRegion range : this.pendingRegionTasks) {
             if (range.name.equals(name)) {
                 return;
@@ -264,7 +264,7 @@ public class TaskManager implements ITaskManager {
                 return;
             }
             this.setRunning(true);
-            if (!client.isInSingleplayer()) {   // 服务器开启时发送警告提示
+            if (!client.isLocalServer()) {   // 服务器开启时发送警告提示
                 MessageUtils.addMessage(WARN_MULTIPLAYER);
             }
         }
@@ -298,7 +298,7 @@ public class TaskManager implements ITaskManager {
     }
 
     @Override
-    public boolean isInTasks(ClientWorld world, BlockPos pos) {
+    public boolean isInTasks(ClientLevel world, BlockPos pos) {
         for (var targetBlock : pendingBlockTasks) {
             if (targetBlock.pos.equals(pos)) {
                 return true;
@@ -342,7 +342,7 @@ public class TaskManager implements ITaskManager {
     }
 
     //region 为 BiliXWhite/litematica-printer 提供兼容方法 (作者更新不及时)
-    public static void addTask(Block block, BlockPos pos, ClientWorld world) {
+    public static void addTask(Block block, BlockPos pos, ClientLevel world) {
         TaskManager.getInstance().addBlockTask(world, pos, block);
     }
 

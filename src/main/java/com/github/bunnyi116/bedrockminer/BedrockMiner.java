@@ -2,14 +2,19 @@ package com.github.bunnyi116.bedrockminer;
 
 import com.github.bunnyi116.bedrockminer.command.CommandManager;
 import net.fabricmc.api.ModInitializer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.world.GameMode;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,18 +26,15 @@ public class BedrockMiner implements ModInitializer  {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
     public static final boolean TEST = false;
 
-
-
-
-    // 常用游戏变量(通过 mixin 从 ClientPlayerInteractionManager 更新)
-    public static MinecraftClient client;
-    public static ClientWorld world;
-    public static ClientPlayerEntity player;
-    public static PlayerInventory playerInventory;
+    // 常用游戏变量(通过 mixin 从 MultiPlayerGameMode 更新)
+    public static Minecraft client;
+    public static ClientLevel world;
+    public static LocalPlayer player;
+    public static Inventory playerInventory;
     public static @Nullable HitResult crosshairTarget;
-    public static ClientPlayNetworkHandler networkHandler;
-    public static ClientPlayerInteractionManager interactionManager;
-    public static GameMode gameMode;
+    public static ClientPacketListener networkHandler;
+    public static MultiPlayerGameMode interactionManager;
+    public static GameType gameMode;
 
     @Override
     public void onInitialize() {
@@ -42,18 +44,18 @@ public class BedrockMiner implements ModInitializer  {
     }
 
     public static void initGameVariable() {
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         BedrockMiner.client = mc;
-        BedrockMiner.world = mc.world;
+        BedrockMiner.world = mc.level;
         BedrockMiner.player = mc.player;
         if (mc.player != null) {
             BedrockMiner.playerInventory = mc.player.getInventory();
         }
-        BedrockMiner.crosshairTarget = mc.crosshairTarget;
-        BedrockMiner.networkHandler = mc.getNetworkHandler();
-        BedrockMiner.interactionManager = mc.interactionManager;
-        if (mc.interactionManager != null) {
-            BedrockMiner.gameMode = mc.interactionManager.getCurrentGameMode();
+        BedrockMiner.crosshairTarget = mc.hitResult;
+        BedrockMiner.networkHandler = mc.getConnection();
+        BedrockMiner.interactionManager = mc.gameMode;
+        if (mc.gameMode!= null) {
+            BedrockMiner.gameMode = mc.gameMode.getPlayerMode();
         }
     }
 

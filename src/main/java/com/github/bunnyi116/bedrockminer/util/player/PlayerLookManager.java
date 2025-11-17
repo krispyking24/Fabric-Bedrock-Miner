@@ -1,10 +1,11 @@
 package com.github.bunnyi116.bedrockminer.util.player;
 
 import com.github.bunnyi116.bedrockminer.task.Task;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
-import net.minecraft.util.math.Direction;
+import com.github.bunnyi116.bedrockminer.util.network.NetworkUtils;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import org.jetbrains.annotations.Nullable;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.networkHandler;
@@ -28,35 +29,32 @@ public class PlayerLookManager {
         return this.modifyPitch ? this.pitch : pitch;
     }
 
-    public static PlayerMoveC2SPacket getLookPacket(ClientPlayerEntity player, float yaw, float pitch) {
+    public static ServerboundMovePlayerPacket getLookPacket(LocalPlayer player, float yaw, float pitch) {
         //#if MC > 12101
-        return new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround(), false);
+        return new ServerboundMovePlayerPacket.Rot(yaw, pitch, player.onGround(), false);
         //#else
-        //$$ return new PlayerMoveC2SPacket.LookAndOnGround(yaw, pitch, player.isOnGround());
+        //$$ return new ServerboundMovePlayerPacket.Rot(yaw, pitch, player.onGround());
         //#endif
+
     }
 
-    public static void sendLookPacket(ClientPlayNetworkHandler networkHandler, PlayerMoveC2SPacket packet) {
-        if (networkHandler != null) {
-            networkHandler.sendPacket(packet);
-        }
+    public static void sendLookPacket(ClientPacketListener networkHandler, ServerboundMovePlayerPacket packet) {
+        NetworkUtils.sendPacket(packet);
     }
 
-    public static void sendLookPacket(ClientPlayNetworkHandler networkHandler, float yaw, float pitch) {
-        final PlayerMoveC2SPacket packet = PlayerLookManager.getLookPacket(player, yaw, pitch);
+    public static void sendLookPacket(ClientPacketListener networkHandler, float yaw, float pitch) {
+        final ServerboundMovePlayerPacket packet = PlayerLookManager.getLookPacket(player, yaw, pitch);
         PlayerLookManager.sendLookPacket(networkHandler, packet);
     }
 
-    private PlayerMoveC2SPacket getLookPacket(ClientPlayerEntity player) {
-        var yaw = this.modifyYaw ? this.yaw : player.getYaw();
-        var pitch = this.modifyPitch ? this.pitch : player.getPitch();
+    private ServerboundMovePlayerPacket getLookPacket(LocalPlayer player) {
+        var yaw = this.modifyYaw ? this.yaw : player.getYRot();
+        var pitch = this.modifyPitch ? this.pitch : player.getXRot();
         return getLookPacket(player, yaw, pitch);
     }
 
     public void sendLookPacket() {
-        if (networkHandler != null && player != null) {
-            networkHandler.sendPacket(this.getLookPacket(player));
-        }
+        NetworkUtils.sendPacket(this.getLookPacket(player));
     }
 
     public void setYaw(float yaw) {
@@ -82,7 +80,7 @@ public class PlayerLookManager {
             case EAST -> 90F;
             case NORTH -> 0F;
             case WEST -> -90F;
-            default -> player == null ? 0F : player.getYaw();
+            default -> player == null ? 0F : player.getYRot();
         };
         final var pitch = switch (facing) {
             case UP -> 90F;

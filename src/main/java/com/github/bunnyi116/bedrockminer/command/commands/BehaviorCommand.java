@@ -11,9 +11,9 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.block.Block;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.text.Text;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.Block;
 
 import static com.github.bunnyi116.bedrockminer.util.block.BlockUtils.getBlockId;
 import static com.github.bunnyi116.bedrockminer.util.block.BlockUtils.getBlockName;
@@ -27,7 +27,7 @@ public class BehaviorCommand extends CommandBase {
     }
 
     @Override
-    public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandRegistryAccess registryAccess) {
+    public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandBuildContext registryAccess) {
         builder.then(literal("floor")
                         .then(literal("add")
                                 .then(argument("floor", IntegerArgumentType.integer())
@@ -68,7 +68,7 @@ public class BehaviorCommand extends CommandBase {
             }
         }
         MessageUtils.addMessage(
-                Text.literal(I18n.FLOOR_BLACK_LIST_SHOW.getString()
+                Component.literal(I18n.FLOOR_BLACK_LIST_SHOW.getString()
                         .replace("%listFloor%", sb.toString())
                 )
         );
@@ -82,7 +82,7 @@ public class BehaviorCommand extends CommandBase {
             Config.getInstance().save();
         }
         MessageUtils.addMessage(
-                Text.literal(I18n.FLOOR_BLACK_LIST_ADD.getString()
+                Component.literal(I18n.FLOOR_BLACK_LIST_ADD.getString()
                         .replace("%count%", String.valueOf(floor))
                 )
         );
@@ -96,7 +96,7 @@ public class BehaviorCommand extends CommandBase {
             Config.getInstance().save();
         }
         MessageUtils.addMessage(
-                Text.literal(I18n.FLOOR_BLACK_LIST_REMOVE.getString()
+                Component.literal(I18n.FLOOR_BLACK_LIST_REMOVE.getString()
                         .replace("%count%", String.valueOf(floor))
                 )
         );
@@ -126,7 +126,7 @@ public class BehaviorCommand extends CommandBase {
     }
 
     private boolean isFilterBlock(Block block) {
-        return block.getDefaultState().isAir() || BlockUtils.isReplaceable(block.getDefaultState());
+        return block.defaultBlockState().isAir() || BlockUtils.isReplaceable(block.defaultBlockState());
     }
 
     private Boolean filterBlockWhitelist(Block block) {
@@ -140,8 +140,8 @@ public class BehaviorCommand extends CommandBase {
         return !Config.getInstance().blockWhitelist.contains(getBlockId(block));
     }
 
-    private void sendChat(Text text, Block block) {
+    private void sendChat(Component text, Block block) {
         var msg = text.getString().replace("#blockName#", getBlockName(block));
-        MessageUtils.addMessage(Text.literal(msg));
+        MessageUtils.addMessage(Component.literal(msg));
     }
 }

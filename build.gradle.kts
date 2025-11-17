@@ -45,10 +45,10 @@ preprocess {
     val mc1_21_10 = createNode("1.21.10", 1_21_10, "")
 
     mc1_21_10.link(mc1_21_09, null)
-    mc1_21_09.link(mc1_21_08, file("versions/mapping-1.21.8-1.21.9.txt"))
+    mc1_21_09.link(mc1_21_08, null)
     mc1_21_08.link(mc1_21_07, null)
     mc1_21_07.link(mc1_21_06, null)
-    mc1_21_06.link(mc1_21_05, file("versions/mapping-1.21.6-1.21.8.txt"))
+    mc1_21_06.link(mc1_21_05, null)
     mc1_21_05.link(mc1_21_04, null)
     mc1_21_04.link(mc1_21_03, null)
     mc1_21_03.link(mc1_21_02, null)

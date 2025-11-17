@@ -9,14 +9,14 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 public class OperatorArgument implements ArgumentType<Operator> {
-    private static final DynamicCommandExceptionType INVALID_STRING_EXCEPTION = new DynamicCommandExceptionType(input -> Text.literal(I18n.COMMAND_EXCEPTION_INVALID_STRING.getString().replace("%input%", input.toString())));
+    private static final DynamicCommandExceptionType INVALID_STRING_EXCEPTION = new DynamicCommandExceptionType(input -> Component.literal(I18n.COMMAND_EXCEPTION_INVALID_STRING.getString().replace("%input%", input.toString())));
 
     private static final Collection<String> EXAMPLES = Arrays.asList(">", ">=", "==", "<=", "<");
 

@@ -1,15 +1,15 @@
 package com.github.bunnyi116.bedrockminer.util;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.client;
 
 public class MessageUtils {
-    public static void setOverlayMessage(Text message) {
-        client.inGameHud.setOverlayMessage(message, false);
+    public static void setOverlayMessage(Component message) {
+        client.gui.setOverlayMessage(message, false);
     }
 
-    public static void addMessage(Text message) {
-        client.inGameHud.getChatHud().addMessage(message);
+    public static void addMessage(Component message) {
+        client.gui.getChat().addMessage(message);
     }
 }

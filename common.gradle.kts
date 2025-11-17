@@ -1,4 +1,4 @@
-plugins {
+    plugins {
 //    id("java") // 启用 Java 插件 - 当前被注释掉，但通常是必需的。
     id("maven-publish") // 启用 Maven 发布插件 (用于发布构建产物到仓库)
     id("fabric-loom") // 启用 Fabric Loom 插件 (Minecraft Mod 开发工具链)
@@ -48,7 +48,8 @@ configurations {
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion") // Minecraft 客户端依赖
-    mappings("net.fabricmc:yarn:$yarnMappings:v2") // Yarn 混淆映射
+//    mappings("net.fabricmc:yarn:$yarnMappings:v2") // Yarn 混淆映射
+    mappings(loom.officialMojangMappings())
     modImplementation("net.fabricmc:fabric-loader:$loaderVersion") // Fabric 加载器依赖
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion") // Fabric API 依赖
 }

@@ -1,23 +1,17 @@
 package com.github.bunnyi116.bedrockminer.util;
 
 import com.github.bunnyi116.bedrockminer.util.network.NetworkUtils;
-import com.github.bunnyi116.bedrockminer.util.player.PlayerInventoryUtils;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockState;
-import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket.Action;
-import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
+import static net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.*;
 
 @Environment(EnvType.CLIENT)
 public class ClientPlayerInteractionManagerUtils {
@@ -26,24 +20,26 @@ public class ClientPlayerInteractionManagerUtils {
     private static int breakingTicks;
     private static int breakingTickMax;
 
+
     public static boolean attackBlock(BlockPos pos, Direction direction, @Nullable Runnable beforeBreaking, @Nullable Runnable afterBreaking) {
-        interactionManager.syncSelectedSlot();
-        if (player.isBlockBreakingRestricted(world, pos, gameMode)) {
+        interactionManager.ensureHasSentCarriedItem();
+
+        if (player.blockActionRestricted(world, pos, gameMode)) {
             return false;
         }
-        if (!world.getWorldBorder().contains(pos)) {
+        if (!world.getWorldBorder().isWithinBounds(pos)) {
             return false;
         }
         if (gameMode.isCreative()) {
             setBreakingBlock(true);
             NetworkUtils.sendSequencedPacket((sequence) -> {
-                interactionManager.breakBlock(pos);
-                return new PlayerActionC2SPacket(Action.START_DESTROY_BLOCK, pos, direction, sequence);
+                interactionManager.destroyBlock(pos);
+                return new ServerboundPlayerActionPacket(Action.START_DESTROY_BLOCK, pos, direction, sequence);
             }, beforeBreaking, afterBreaking);
             setBreakingBlock(false);
-        } else if (!(breakingBlock || interactionManager.breakingBlock) || !interactionManager.isCurrentlyBreaking(pos)) {
-            if ((breakingBlock || interactionManager.breakingBlock)) {
-                networkHandler.sendPacket(new PlayerActionC2SPacket(Action.ABORT_DESTROY_BLOCK, interactionManager.currentBreakingPos, direction));
+        } else if (!(breakingBlock || interactionManager.isDestroying) || !interactionManager.sameDestroyTarget(pos)) {
+            if ((breakingBlock || interactionManager.isDestroying)) {
+                NetworkUtils.sendPacket(new ServerboundPlayerActionPacket(Action.ABORT_DESTROY_BLOCK, interactionManager.destroyBlockPos, direction));
                 setBreakingBlock(false);
             }
             BlockState blockState = world.getBlockState(pos);
@@ -52,22 +48,22 @@ public class ClientPlayerInteractionManagerUtils {
                 setBreakingBlock(true);
                 NetworkUtils.sendSequencedPacket((sequence) -> {
                     if (!blockState.isAir()) {
-                        interactionManager.breakBlock(pos);
+                        interactionManager.destroyBlock(pos);
                     }
-                    return new PlayerActionC2SPacket(Action.START_DESTROY_BLOCK, pos, direction, sequence);
+                    return new ServerboundPlayerActionPacket(Action.START_DESTROY_BLOCK, pos, direction, sequence);
                 }, beforeBreaking, afterBreaking);
                 setBreakingBlock(false);
             } else {
                 NetworkUtils.sendSequencedPacket((sequence) -> {
-                    if (!blockState.isAir() && interactionManager.currentBreakingProgress == 0.0F) {
-                        blockState.onBlockBreakStart(world, pos, player);
+                    if (!blockState.isAir() && interactionManager.destroyProgress == 0.0F) {
+                        blockState.attack(world, pos, player);
                     }
                     setBreakingBlock(true);
-                    interactionManager.currentBreakingPos = pos;
-                    interactionManager.selectedStack = player.getMainHandStack();
-                    interactionManager.currentBreakingProgress = 0.0F;
-                    world.setBlockBreakingInfo(player.getId(), interactionManager.currentBreakingPos, getBlockBreakingProgress());
-                    return new PlayerActionC2SPacket(Action.START_DESTROY_BLOCK, pos, direction, sequence);
+                    interactionManager.destroyBlockPos = pos;
+                    interactionManager.destroyingItem = player.getMainHandItem();
+                    interactionManager.destroyProgress = 0.0F;
+                    world.destroyBlockProgress(player.getId(), interactionManager.destroyBlockPos, getBlockBreakingProgress());
+                    return new ServerboundPlayerActionPacket(Action.START_DESTROY_BLOCK, pos, direction, sequence);
                 });
             }
         }
@@ -80,46 +76,47 @@ public class ClientPlayerInteractionManagerUtils {
     }
 
     public static boolean updateBlockBreakingProgress(BlockPos pos, Direction direction, @Nullable Runnable beforeBreaking, @Nullable Runnable afterBreaking) {
-        interactionManager.syncSelectedSlot();
-        if (gameMode.isCreative() && world.getWorldBorder().contains(pos)) {
+        interactionManager.ensureHasSentCarriedItem();
+        if (gameMode.isCreative() && world.getWorldBorder().isWithinBounds(pos)) {
             setBreakingBlock(true);
             NetworkUtils.sendSequencedPacket((sequence) -> {
-                interactionManager.breakBlock(pos);
-                return new PlayerActionC2SPacket(Action.START_DESTROY_BLOCK, pos, direction, sequence);
+                interactionManager.destroyBlock(pos);
+                return new ServerboundPlayerActionPacket(Action.START_DESTROY_BLOCK, pos, direction, sequence);
             }, beforeBreaking, afterBreaking);
             setBreakingBlock(false);
             ++breakingTickMax;
             return true;
         }
-        if ((breakingBlock || interactionManager.breakingBlock) && interactionManager.isCurrentlyBreaking(pos)) {
+        if ((breakingBlock || interactionManager.isDestroying()) && interactionManager.sameDestroyTarget(pos)) {
             BlockState blockState = world.getBlockState(pos);
             if (blockState.isAir()) {
                 setBreakingBlock(false);
                 return false;
             }
             setBreakingBlock(true);
-            interactionManager.currentBreakingProgress += PlayerUtils.calcBlockBreakingDelta(blockState);
-            if (interactionManager.currentBreakingProgress >= BREAKING_PROGRESS_MAX) {
+            interactionManager.destroyProgress += PlayerUtils.calcBlockBreakingDelta(blockState);
+            if (interactionManager.destroyProgress >= BREAKING_PROGRESS_MAX) {
                 NetworkUtils.sendSequencedPacket((sequence) -> {
-                    interactionManager.breakBlock(pos);
-                    return new PlayerActionC2SPacket(Action.STOP_DESTROY_BLOCK, pos, direction, sequence);
+                    interactionManager.destroyBlock(pos);
+                    return new ServerboundPlayerActionPacket(Action.STOP_DESTROY_BLOCK, pos, direction, sequence);
                 }, beforeBreaking, afterBreaking);
-                interactionManager.currentBreakingProgress = 0.0F;
+                interactionManager.destroyProgress = 0.0F;
                 setBreakingBlock(false);
             }
-            world.setBlockBreakingInfo(player.getId(), interactionManager.currentBreakingPos, getBlockBreakingProgress());
+            world.destroyBlockProgress(player.getId(), interactionManager.destroyBlockPos, getBlockBreakingProgress());
             ++breakingTickMax;
             return true;
         }
         return attackBlock(pos, direction, beforeBreaking, afterBreaking);
     }
 
+
     public static void updateBlockBreakingProgress(BlockPos pos) {
         updateBlockBreakingProgress(pos, PlayerUtils.getClosestFace(pos), null, null);
     }
 
     public static int getBlockBreakingProgress() {
-        return interactionManager.currentBreakingProgress > 0.0F ? (int) (interactionManager.currentBreakingProgress * 10.0F) : -1;
+        return interactionManager.destroyProgress > 0.0F ? (int) (interactionManager.destroyProgress * 10.0F) : -1;
     }
 
     public static void resetBreaking() {
@@ -143,6 +140,6 @@ public class ClientPlayerInteractionManagerUtils {
 
     public static void setBreakingBlock(boolean breakingBlock) {
         ClientPlayerInteractionManagerUtils.breakingBlock = breakingBlock;
-        interactionManager.breakingBlock = breakingBlock;
+        interactionManager.isDestroying = breakingBlock;
     }
 }

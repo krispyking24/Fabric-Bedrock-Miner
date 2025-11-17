@@ -2,9 +2,9 @@ package com.github.bunnyi116.bedrockminer.task;
 
 import com.github.bunnyi116.bedrockminer.util.block.BlockUtils;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerUtils;
-import net.minecraft.block.Block;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
 
@@ -29,7 +29,7 @@ public class TaskPlan {
     }
 
     public boolean isWorldValid() {
-        return World.isValid(piston.pos) && World.isValid(redstoneTorch.pos) && World.isValid(slimeBlock.pos);
+        return Level.isInSpawnableBounds(piston.pos) && Level.isInSpawnableBounds(redstoneTorch.pos) && Level.isInSpawnableBounds(slimeBlock.pos);
     }
 
     public boolean canInteractWithBlockAt() {
@@ -40,7 +40,7 @@ public class TaskPlan {
             if (b3 && BlockUtils.isReplaceable(world.getBlockState(slimeBlock.pos))) {
                 return true;
             }
-            return Block.sideCoversSmallSquare(world, slimeBlock.pos, slimeBlock.facing);
+            return  Block.canSupportCenter(world, slimeBlock.pos, slimeBlock.facing);
         }
         return false;
     }

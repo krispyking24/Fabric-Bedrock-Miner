@@ -1,20 +1,18 @@
 package com.github.bunnyi116.bedrockminer.util.player;
 
 import com.github.bunnyi116.bedrockminer.util.ClientPlayerInteractionManagerUtils;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.effect.StatusEffectUtil;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.tag.FluidTags;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.effect.MobEffectUtil;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Objects;
 
@@ -25,17 +23,16 @@ public class PlayerUtils {
      * 获取最近的面
      */
     public static Direction getClosestFace(BlockPos targetPos) {
-        Vec3d playerPos = player.getEyePos();
-        Vec3d targetCenterPos = Vec3d.ofCenter(targetPos);
+        Vec3 playerPos = player.getEyePosition();
+        Vec3 targetCenterPos = Vec3.atCenterOf(targetPos);
         Direction closestFace = null;
         double closestDistanceSquared = Double.MAX_VALUE;
         for (Direction direction : Direction.values()) {
-            double offsetX = direction.getOffsetX() * 0.5;
-            double offsetY = direction.getOffsetY() * 0.5;
-            double offsetZ = direction.getOffsetZ() * 0.5;
-            Vec3d facePos = targetCenterPos.add(offsetX, offsetY, offsetZ);
-            double distanceSquared = playerPos.squaredDistanceTo(facePos);
-            // 更新最近的面
+            double offsetX = direction.getStepX() * 0.5;
+            double offsetY = direction.getStepY() * 0.5;
+            double offsetZ = direction.getStepZ() * 0.5;
+            Vec3 facePos = targetCenterPos.add(offsetX, offsetY, offsetZ);
+            double distanceSquared = playerPos.distanceToSqr(facePos);
             if (distanceSquared < closestDistanceSquared) {
                 closestDistanceSquared = distanceSquared;
                 closestFace = direction;
@@ -85,12 +82,12 @@ public class PlayerUtils {
      */
     public static double getBlockInteractionRange() {
         //#if MC>=12005
-        if (MinecraftClient.getInstance().player != null) {
-            return MinecraftClient.getInstance().player.getBlockInteractionRange();
+        if (Minecraft.getInstance().player != null) {
+            return Minecraft.getInstance().player.blockInteractionRange();
         }
         //#else
-        //$$ if (MinecraftClient.getInstance().interactionManager != null) {
-        //$$    return MinecraftClient.getInstance().interactionManager.getReachDistance();
+        //$$ if (interactionManager != null) {
+        //$$    return interactionManager.getPickRange();
         //$$ }
         //#endif
         return 4.5F;
@@ -100,17 +97,17 @@ public class PlayerUtils {
      * 计算当前TICK方块破坏增量
      */
     public static float calcBlockBreakingDelta(BlockState state, ItemStack itemStack) {
-        float hardness = state.getBlock().getHardness();
+        float hardness = state.getBlock().defaultDestroyTime();
         if (hardness == -1.0F) {
             return 0.0F;
         } else {
-            int i = player.canHarvest(state) ? 30 : 100;
+            int i = player.hasCorrectToolForDrops(state) ? 30 : 100;
             return getBlockBreakingSpeed(state, itemStack) / hardness / (float) i;
         }
     }
 
     public static float calcBlockBreakingDelta(BlockState state) {
-        return calcBlockBreakingDelta(state, player.getMainHandStack());
+        return calcBlockBreakingDelta(state, player.getMainHandItem());
     }
 
     public static boolean canInstantlyMineBlock(BlockState state, ItemStack itemStack) {
@@ -118,7 +115,7 @@ public class PlayerUtils {
     }
 
     public static boolean canInstantlyMineBlock(BlockState state) {
-        return canInstantlyMineBlock(state, player.getMainHandStack());
+        return canInstantlyMineBlock(state, player.getMainHandItem());
     }
 
     /**
@@ -129,16 +126,17 @@ public class PlayerUtils {
      * @return 当前物品破坏该方块所需的时间（单位为 tick）
      */
     public static float getBlockBreakingSpeed(BlockState blockState, ItemStack itemStack) {
-        var f = itemStack.getMiningSpeedMultiplier(blockState);  // 当前物品的破坏系数速度
+        var f = itemStack.getDestroySpeed(blockState);  // 当前物品的破坏系数速度
+
 
         // 根据工具的"效率"附魔增加破坏速度
         //#if MC > 12006
         if (f > 1.0F) {
-            for (var enchantment : itemStack.getEnchantments().getEnchantments()) {
-                var enchantmentKey = enchantment.getKey();
+            for (var enchantment : itemStack.getEnchantments().keySet()) {
+                var enchantmentKey = enchantment.unwrapKey();
                 if (enchantmentKey.isPresent()) {
                     if (enchantmentKey.get() == Enchantments.EFFICIENCY) {
-                        int level = EnchantmentHelper.getLevel(enchantment, itemStack);
+                        int level = EnchantmentHelper.getItemEnchantmentLevel(enchantment, itemStack);
                         if (level > 0 && !itemStack.isEmpty()) {
                             f += (float) (level * level + 1);
                         }
@@ -148,7 +146,7 @@ public class PlayerUtils {
         }
         //#else
         //$$ if (f > 1.0F) {
-        //$$     int level = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, itemStack);
+        //$$     int level = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.EFFICIENCY, itemStack);
         //$$     if (level > 0 && !itemStack.isEmpty()) {
         //$$         f += (float)(level * level + 1);
         //$$     }
@@ -156,13 +154,13 @@ public class PlayerUtils {
         //#endif
 
         // 根据玩家"急迫"状态效果增加破坏速度
-        if (StatusEffectUtil.hasHaste(player)) {
-            f *= 1.0F + (float) (StatusEffectUtil.getHasteAmplifier(player) + 1) * 0.2F;
+        if (MobEffectUtil.hasDigSpeed(player)) {
+            f *= 1.0F + (float)(MobEffectUtil.getDigSpeedAmplification(player) + 1) * 0.2F;
         }
 
         // 根据玩家"挖掘疲劳"状态效果减缓破坏速度
-        if (player.hasStatusEffect(StatusEffects.MINING_FATIGUE)) {
-            float g = switch (Objects.requireNonNull(player.getStatusEffect(StatusEffects.MINING_FATIGUE)).getAmplifier()) {
+        if (player.hasEffect(MobEffects.MINING_FATIGUE)) {
+            float g = switch (Objects.requireNonNull(player.getEffect(MobEffects.MINING_FATIGUE)).getAmplifier()) {
                 case 0 -> 0.3F;
                 case 1 -> 0.09F;
                 case 2 -> 0.0027F;
@@ -173,26 +171,24 @@ public class PlayerUtils {
 
         // 如果玩家在水中并且没有"水下速掘"附魔，则减缓破坏速度
         //#if MC > 12006
-        f *= (float) player.getAttributeValue(EntityAttributes.BLOCK_BREAK_SPEED);
-        if (player.isSubmergedIn(FluidTags.WATER)) {
-            var submergedMiningSpeed = player.getAttributeInstance(EntityAttributes.SUBMERGED_MINING_SPEED);
+        f *= (float) player.getAttributeValue(Attributes.BLOCK_BREAK_SPEED);
+        if (player.isEyeInFluid(FluidTags.WATER)) {
+            var submergedMiningSpeed = player.getAttribute(Attributes.SUBMERGED_MINING_SPEED);
             if (submergedMiningSpeed != null) {
                 f *= (float) submergedMiningSpeed.getValue();
             }
         }
         //#else
-        //$$ if (player.isSubmergedIn(FluidTags.WATER) && !EnchantmentHelper.hasAquaAffinity(player)) {
+        //$$ if (player.isEyeInFluid(FluidTags.WATER) && !EnchantmentHelper.hasAquaAffinity(player)) {
         //$$     f /= 5.0F;
         //$$ }
         //#endif
 
-        if (!player.isOnGround()) { // 如果玩家不在地面上，则减缓破坏速度
-            f /= 5.0F;
-        }
         // 如果玩家不在地面上，则减缓破坏速度
-        if (!player.isOnGround()) {
+        if (!player.onGround()) {
             f /= 5.0F;
         }
         return f;
     }
+
 }

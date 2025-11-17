@@ -18,8 +18,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.text.Text;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
@@ -33,7 +33,7 @@ public class TaskCommand extends CommandBase {
     }
 
     @Override
-    public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandRegistryAccess registryAccess) {
+    public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandBuildContext registryAccess) {
         builder
                 .then(literal("short")
                         .then(argument("bool", BoolArgumentType.bool())
@@ -109,7 +109,7 @@ public class TaskCommand extends CommandBase {
                                     if (range != null) {
                                         Config.getInstance().ranges.remove(range);
                                         Config.getInstance().save();
-                                        MessageUtils.addMessage(Text.literal("已成功删除: " + name));
+                                        MessageUtils.addMessage(Component.literal("已成功删除: " + name));
                                     }
                                     return Command.SINGLE_SUCCESS;
                                 })
@@ -140,7 +140,7 @@ public class TaskCommand extends CommandBase {
                 final var range = new TaskRegion(name, BedrockMiner.world, blockPos1, blockPos2);
                 ConfigManager.getInstance().getConfig().ranges.add(range);
                 ConfigManager.getInstance().getConfig().save();
-                MessageUtils.addMessage(Text.literal("已成功添加到配置文件: " + name));
+                MessageUtils.addMessage(Component.literal("已成功添加到配置文件: " + name));
             }
         } else {
             for (final var item : TaskManager.getInstance().getPendingRegionTasks()) {
@@ -152,7 +152,7 @@ public class TaskCommand extends CommandBase {
             if (b) {
                 final var range = new TaskRegion(name, BedrockMiner.world, blockPos1, blockPos2);
                 TaskManager.getInstance().getPendingRegionTasks().add(range);
-                MessageUtils.addMessage(Text.literal("已成功添加: " + name));
+                MessageUtils.addMessage(Component.literal("已成功添加: " + name));
             }
         }
 

@@ -1,12 +1,12 @@
 package com.github.bunnyi116.bedrockminer.task;
 
 import com.github.bunnyi116.bedrockminer.config.ConfigManager;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.RedstoneTorchBlock;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.RedstoneTorchBlock;
+import net.minecraft.world.level.block.state.BlockState;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class TaskPlanTools {
 
-    public static List<TaskPlan> findAllPossible(BlockPos targetPos, ClientWorld world) {
+    public static List<TaskPlan> findAllPossible(BlockPos targetPos) {
         final var schemes = new ArrayList<TaskPlan>();
         for (Direction direction : ConfigManager.getInstance().getConfig().pistonDirections) {
             final var pistons = findPistonPossible(direction, targetPos);
@@ -34,10 +34,10 @@ public class TaskPlanTools {
 
     private static TaskPlanItem[] findPistonPossible(Direction direction, BlockPos targetPos) {
         final var list = new ArrayList<TaskPlanItem>();
-        final var pistonPos = targetPos.offset(direction);
+        final var pistonPos = targetPos.relative(direction);
         for (Direction pistonFacing : ConfigManager.getInstance().getConfig().pistonFacings) {
             // 活塞臂在目标方块位置
-            final var pistonHeadPos = pistonPos.offset(pistonFacing);
+            final var pistonHeadPos = pistonPos.relative(pistonFacing);
             if (pistonHeadPos.equals(targetPos))
                 continue;
             int level = switch (pistonFacing) {
@@ -52,13 +52,13 @@ public class TaskPlanTools {
 
     private static TaskPlanItem[] findRedstoneTorchPossible(Direction direction, BlockPos targetPos, TaskPlanItem pistonInfo) {
         final var list = new ArrayList<TaskPlanItem>();
-        final var pistonHeadPos = pistonInfo.pos.offset(pistonInfo.facing);
+        final var pistonHeadPos = pistonInfo.pos.relative(pistonInfo.facing);
 
         // 活塞在目标方块上方，红石火把通过在目标方块下方，充能目标方块激活活塞
         if (direction == Direction.UP) {
-            final var redstoneTorchPos = targetPos.offset(direction.getOpposite());
+            final var redstoneTorchPos = targetPos.relative(direction.getOpposite());
             for (Direction redstoneTorchFacing : ConfigManager.getInstance().getConfig().redstoneTorchFacings) {
-                final var basePos = redstoneTorchPos.offset(redstoneTorchFacing.getOpposite());
+                final var basePos = redstoneTorchPos.relative(redstoneTorchFacing.getOpposite());
                 if (basePos.equals(pistonInfo.pos) || basePos.equals(pistonHeadPos))
                     continue;
 
@@ -78,14 +78,14 @@ public class TaskPlanTools {
         }
 
         for (Direction redstoneTorchDirection : ConfigManager.getInstance().getConfig().redstoneTorchDirections) {
-            final var redstoneTorchPos = pistonInfo.pos.offset(redstoneTorchDirection);
+            final var redstoneTorchPos = pistonInfo.pos.relative(redstoneTorchDirection);
             // 红石火把位置与活塞臂伸出的位置重叠
             if (pistonHeadPos.equals(redstoneTorchPos))
                 continue;
 
             // 常规位置
             for (Direction redstoneTorchFacing : ConfigManager.getInstance().getConfig().redstoneTorchFacings) {
-                final var basePos = redstoneTorchPos.offset(redstoneTorchFacing.getOpposite());
+                final var basePos = redstoneTorchPos.relative(redstoneTorchFacing.getOpposite());
 
                 // 过滤红石火把附在活塞上位置
                 if (basePos.equals(pistonInfo.pos) || basePos.equals(pistonHeadPos))
@@ -107,13 +107,13 @@ public class TaskPlanTools {
                     list.add(new TaskPlanItem(redstoneTorchPos, redstoneTorchFacing, level));
                 }
 
-                var redstoneTorchPosUp = redstoneTorchPos.up();
+                var redstoneTorchPosUp = redstoneTorchPos.above();
                 if (!redstoneTorchPosUp.equals(targetPos) && !redstoneTorchPosUp.equals(pistonInfo.pos)) {
                     // 过滤红石火把附在活塞上位置
-                    final var baseUpPos = redstoneTorchPos.offset(redstoneTorchFacing.getOpposite());
+                    final var baseUpPos = redstoneTorchPos.relative(redstoneTorchFacing.getOpposite());
                     if (baseUpPos.equals(pistonInfo.pos) || baseUpPos.equals(pistonHeadPos))
                         continue;
-                    list.add(new TaskPlanItem(redstoneTorchPos.up(), redstoneTorchFacing, level + 1));
+                    list.add(new TaskPlanItem(redstoneTorchPosUp, redstoneTorchFacing, level + 1));
                 }
             }
         }
@@ -123,26 +123,26 @@ public class TaskPlanTools {
     private static TaskPlanItem findSlimeBlockPossible(TaskPlanItem redstoneTorchInfo) {
         final var pos = redstoneTorchInfo.pos;
         final var facing = redstoneTorchInfo.facing;
-        return new TaskPlanItem(pos.offset(facing.getOpposite()), facing, facing.getAxis().isVertical() ? 0 : 1);
+        return new TaskPlanItem(pos.relative(facing.getOpposite()), facing, facing.getAxis().isVertical() ? 0 : 1);
     }
 
     // 查找活塞附近的火把
-    public static BlockPos[] findPistonNearbyRedstoneTorch(BlockPos pistonPos, ClientWorld world) {
+    public static BlockPos[] findPistonNearbyRedstoneTorch(BlockPos pistonPos, ClientLevel world) {
         List<BlockPos> list = new ArrayList<>();
         int range = 3;
         for (Direction direction : Direction.values()) {
             for (int i = 0; i < range; i++) {
-                BlockPos pos = pistonPos.offset(direction, i);
+                BlockPos pos = pistonPos.relative(direction, i);
                 BlockState posState = world.getBlockState(pos);
                 if (posState.getBlock() instanceof RedstoneTorchBlock) {
                     list.add(pos);
                 }
-                BlockPos posUp = pos.up();
+                BlockPos posUp = pos.above();
                 BlockState posUpState = world.getBlockState(posUp);
                 if (posUpState.getBlock() instanceof RedstoneTorchBlock) {
                     list.add(posUp);
                 }
-                BlockPos posDown = pos.down();
+                BlockPos posDown = pos.below();
                 BlockState posDownState = world.getBlockState(posDown);
                 if (posDownState.getBlock() instanceof RedstoneTorchBlock) {
                     list.add(posDown);

@@ -3,15 +3,16 @@ package com.github.bunnyi116.bedrockminer.util;
 import com.github.bunnyi116.bedrockminer.util.block.BlockUtils;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerLookManager;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerUtils;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.item.Item;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
@@ -38,7 +39,7 @@ public class BlockPlacerUtils {
                 case EAST -> 90F;
                 case NORTH -> 0F;
                 case WEST -> -90F;
-                default -> player.getYaw();
+                default -> player.getYRot();
             };
             var pitch = switch (facing) {
                 case UP -> 90F;
@@ -49,19 +50,19 @@ public class BlockPlacerUtils {
         }
 
         // 模拟选中位置(凭空放置)
-        var hitPos = blockPos.offset(facing.getOpposite());
-        var hitVec3d = Vec3d.ofCenter(hitPos).offset(facing, 0.5F);   // 放置面中心坐标
+        var hitPos = blockPos.relative(facing.getOpposite());
+        var hitVec3d = Vec3.atCenterOf(hitPos).relative(facing, 0.5F);   // 放置面中心坐标
         var hitResult = new BlockHitResult(hitVec3d, facing, blockPos, false);
 
         // 发送交互方块数据包
-        interactionManager.interactBlock(player, Hand.MAIN_HAND, hitResult);
+        interactionManager.useItemOn(player, InteractionHand.MAIN_HAND, hitResult);
     }
 
     public static void placement(BlockPos blockPos, Direction facing) {
         placement(blockPos, facing, (Item) null);
     }
 
-    public static boolean canPlace(ClientWorld world, BlockPos blockPos, BlockState placeBlockState) {
+    public static boolean canPlace(ClientLevel world, BlockPos blockPos, BlockState placeBlockState) {
         // 目标位置的方块是否可以被替换
         if (!BlockUtils.isReplaceable(world.getBlockState(blockPos))) {
             return false;
@@ -71,11 +72,12 @@ public class BlockPlacerUtils {
         if (collisionShape.isEmpty()) {
             return true; // 放置的方块是没有没有碰撞体积，可以放置
         }
-        for (var entity : world.getEntities()) {
+
+        for (Entity entity : world.entitiesForRendering()) {
             if (entity instanceof ItemEntity) {
                 return true;
             }
-            if (entity.collidesWithStateAtPos(blockPos, placeBlockState)) {
+            if (entity.isColliding(blockPos, placeBlockState)) {
                 return false;
             }
         }

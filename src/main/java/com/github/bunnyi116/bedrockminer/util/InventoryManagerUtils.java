@@ -1,25 +1,20 @@
 package com.github.bunnyi116.bedrockminer.util;
 
+import com.github.bunnyi116.bedrockminer.util.network.NetworkUtils;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerInventoryUtils;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerUtils;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.effect.StatusEffectUtil;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
-import net.minecraft.registry.tag.FluidTags;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+
 
 import java.util.Objects;
 
@@ -29,15 +24,15 @@ import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
 public class InventoryManagerUtils {
 
     public static void autoSwitch(Block block) {
-        autoSwitch(block.getDefaultState());
+        autoSwitch(block.defaultBlockState());
     }
 
     public static void autoSwitch(BlockState blockState) {
         // 选取最优工具
         float lastTime = -1;
         int lastSlot = -1;
-        for (int i = 0; i < playerInventory.size(); i++) {
-            var itemStack = playerInventory.getStack(i);
+        for (int i = 0; i < playerInventory.getContainerSize(); i++) {
+            var itemStack = playerInventory.getItem(i);
             // 检查耐久是否发起警告(剩余耐久<=检查值)
             if (InventoryManagerUtils.isItemDamageWarning(itemStack, 5)) {
                 continue;
@@ -54,42 +49,43 @@ public class InventoryManagerUtils {
         }
     }
 
-    public static void swapSlots(ClientPlayerEntity player, ClientPlayerInteractionManager interactionManager, int sourceSlot, int hotbarIndex) {
+    public static void swapSlots(LocalPlayer player, MultiPlayerGameMode interactionManager, int sourceSlot, int hotbarIndex) {
         if (player == null || interactionManager == null) {
             return;
         }
-        if (player.currentScreenHandler == player.playerScreenHandler) {
+        //  playerScreenHandler == inventoryMenu
+        if (player.containerMenu == player.inventoryMenu) {
             if (sourceSlot == hotbarIndex) {   // 同一个槽位
                 return;
             }
-            interactionManager.clickSlot(
-                    player.currentScreenHandler.syncId,  // 当前容器ID
+            interactionManager.handleInventoryMouseClick(
+                    player.containerMenu.containerId,  // 当前容器ID
                     sourceSlot,                          // 源槽编号
                     hotbarIndex,                         // 目标快捷栏编号（0–8）
-                    SlotActionType.SWAP,                 // 交换动作
+                    ClickType.SWAP,                 // 交换动作
                     player
             );
         }
     }
 
-    public static void pickFromInventory(ClientPlayerEntity player, ClientPlayerInteractionManager interactionManager, int slot) {
+    public static void pickFromInventory(LocalPlayer player, MultiPlayerGameMode interactionManager, int slot) {
         if (player == null || interactionManager == null) {
             return;
         }
 
         final var playerInventory = player.getInventory();
-        if (player.currentScreenHandler != player.playerScreenHandler) {
+        if (player.containerMenu != player.inventoryMenu) {
             return; // 确保当前不是打开箱子/界面时调用
         }
 
         // 如果点的是快捷栏内槽位（0–8），直接切换选中即可
-        if (PlayerInventory.isValidHotbarIndex(slot)) {
+        if (Inventory.isHotbarSlot(slot)) {
             PlayerInventoryUtils.setSelectedSlot(slot);
             return;
         }
 
-        for (int i = 0; i < PlayerInventory.HOTBAR_SIZE; i++) {
-            final var itemStack = playerInventory.getStack(i);
+        for (int i = 0; i < Inventory.SELECTION_SIZE; i++) {
+            final var itemStack = playerInventory.getItem(i);
             if (itemStack.isEmpty()) {
                 swapSlots(player, interactionManager, slot, i);
                 PlayerInventoryUtils.setSelectedSlot(i);
@@ -102,23 +98,23 @@ public class InventoryManagerUtils {
 
     public static void switchToSlot(int slot) {
         // 背包中没有指定的物品
-        if (PlayerInventory.isValidHotbarIndex(slot)) {
+        if (Inventory.isHotbarSlot(slot)) {
             PlayerInventoryUtils.setSelectedSlot(slot);
         } else {
             pickFromInventory(player, interactionManager, slot);
         }
-        networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(PlayerInventoryUtils.getSelectedSlot())); // 发送更新手持物品的数据包
+        NetworkUtils.sendPacket(new ServerboundSetCarriedItemPacket(PlayerInventoryUtils.getSelectedSlot())); // 发送更新手持物品的数据包
     }
 
     public static void switchToItem(int minDamage, Item... items) {
-        final DefaultedList<ItemStack> MainStacks = PlayerInventoryUtils.getMainStacks(playerInventory);
+        final NonNullList<ItemStack> MainStacks = PlayerInventoryUtils.getMainStacks(playerInventory);
         for (int i = 0; i < MainStacks.size(); i++) {
             ItemStack stack = MainStacks.get(i);
             if (stack.isEmpty()) {
                 continue;
             }
             for (Item item : items) {
-                if (stack.isOf(item)) {
+                if (stack.is(item)) {
                     // 检查耐久是否发起警告(剩余耐久<=检查值)
                     if (minDamage > 0 && InventoryManagerUtils.isItemDamageWarning(stack, minDamage)) {
                         continue;
@@ -144,7 +140,7 @@ public class InventoryManagerUtils {
     public static boolean isItemDamageWarning(ItemStack itemStack, int minDamage) {
         int damageMax = itemStack.getMaxDamage();   // 获取物品的最大耐久度
         if (damageMax > 0) {
-            int damage = itemStack.getDamage();     // 获取物品的已使用耐久度
+            int damage = itemStack.getDamageValue();     // 获取物品的已使用耐久度
             int damageSurplus = damageMax - damage; // 计算物品的剩余耐久度
             return damageSurplus <= minDamage;      // 如果剩余耐久度小于等于给定的最小值，则返回true
         }
@@ -159,7 +155,7 @@ public class InventoryManagerUtils {
     public static boolean canInstantlyMinePiston() {
         for (ItemStack stack : PlayerInventoryUtils.getMainStacks(playerInventory)) {
             if (stack.isEmpty()) continue;
-            if (PlayerUtils.canInstantlyMineBlock(Blocks.PISTON.getDefaultState(), stack)
+            if (PlayerUtils.canInstantlyMineBlock(Blocks.PISTON.defaultBlockState(), stack)
                     && !InventoryManagerUtils.isItemDamageWarning(stack, 5)) {
                 return true;
             }
@@ -169,6 +165,6 @@ public class InventoryManagerUtils {
 
     /*** 获取背包物品数量 ***/
     public static int getInventoryItemCount(Item item) {
-        return playerInventory.count(item);
+        return playerInventory.countItem(item);
     }
 }

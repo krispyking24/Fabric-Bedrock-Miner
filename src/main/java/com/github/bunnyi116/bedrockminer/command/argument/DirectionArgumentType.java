@@ -9,13 +9,13 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 
 import java.util.concurrent.CompletableFuture;
 
 public class DirectionArgumentType implements ArgumentType<Direction> {
-    private static final DynamicCommandExceptionType INVALID_STRING_EXCEPTION = new DynamicCommandExceptionType(input -> Text.literal(I18n.COMMAND_EXCEPTION_INVALID_STRING.getString().replace("%input%", input.toString())));
+    private static final DynamicCommandExceptionType INVALID_STRING_EXCEPTION = new DynamicCommandExceptionType(input -> Component.literal(I18n.COMMAND_EXCEPTION_INVALID_STRING.getString().replace("%input%", input.toString())));
 
     public static Direction getDirection(CommandContext<FabricClientCommandSource> context, String name) {
         return context.getArgument(name, Direction.class);
@@ -28,7 +28,7 @@ public class DirectionArgumentType implements ArgumentType<Direction> {
         }
         var string = reader.getString().substring(i, reader.getCursor());
         for (Direction direction : Direction.values()) {
-            if (string.equalsIgnoreCase(direction.getId())) {
+            if (string.equalsIgnoreCase(direction.getName())) {
                 return direction;
             }
         }
@@ -46,8 +46,8 @@ public class DirectionArgumentType implements ArgumentType<Direction> {
         }
         var string = reader.getString().substring(i, reader.getCursor());
         for (Direction direction : Direction.values()) {
-            if (direction.getId().contains(string)) {
-                builder.suggest(direction.getId());
+            if (direction.getName().contains(string)) {
+                builder.suggest(direction.getName());
             }
         }
         return builder.buildFuture();

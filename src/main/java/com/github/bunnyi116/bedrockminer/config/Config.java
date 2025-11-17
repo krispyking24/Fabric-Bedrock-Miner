@@ -2,11 +2,12 @@ package com.github.bunnyi116.bedrockminer.config;
 
 import com.github.bunnyi116.bedrockminer.task.TaskRegion;
 import com.github.bunnyi116.bedrockminer.util.block.BlockUtils;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,9 +51,9 @@ public class Config {
 
 
     public boolean isAllowBlock(Block block) {
-        var mc = MinecraftClient.getInstance();
+        var mc = Minecraft.getInstance();
         // 方块黑名单检查(服务器)
-        if (!mc.isInSingleplayer()) {
+        if (!mc.isLocalServer()) {
             for (var defaultBlockBlack : blockBlacklistServer) {
                 if (BlockUtils.getBlockId(block).equals(defaultBlockBlack)) {
                     return false;
