@@ -11,11 +11,10 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.Block;
 
-import static com.github.bunnyi116.bedrockminer.util.block.BlockUtils.getBlockId;
+import static com.github.bunnyi116.bedrockminer.util.block.BlockUtils.getIdentifierString;
 import static com.github.bunnyi116.bedrockminer.util.block.BlockUtils.getBlockName;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
@@ -27,7 +26,7 @@ public class BehaviorCommand extends CommandBase {
     }
 
     @Override
-    public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandBuildContext registryAccess) {
+    public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder) {
         builder.then(literal("floor")
                         .then(literal("add")
                                 .then(argument("floor", IntegerArgumentType.integer())
@@ -76,7 +75,7 @@ public class BehaviorCommand extends CommandBase {
     }
 
     private int addFloor(CommandContext<FabricClientCommandSource> context) {
-        var floor = IntegerArgumentType.getInteger(context, "floor");
+        int floor = IntegerArgumentType.getInteger(context, "floor");
         if (!Config.getInstance().floorsBlacklist.contains(floor)) {
             Config.getInstance().floorsBlacklist.add(floor);
             Config.getInstance().save();
@@ -90,7 +89,7 @@ public class BehaviorCommand extends CommandBase {
     }
 
     private int removeFloor(CommandContext<FabricClientCommandSource> context) {
-        var floor = IntegerArgumentType.getInteger(context, "floor");
+        int floor = IntegerArgumentType.getInteger(context, "floor");
         if (Config.getInstance().floorsBlacklist.contains(floor)) {
             Config.getInstance().floorsBlacklist.remove((Integer) floor);
             Config.getInstance().save();
@@ -104,8 +103,8 @@ public class BehaviorCommand extends CommandBase {
     }
 
     private int addBlockWhitelist(CommandContext<FabricClientCommandSource> context) {
-        var block = BlockArgument.getBlock(context, "block");
-        var blockId = getBlockId(block);
+        Block block = BlockArgument.getBlock(context, "block");
+        String blockId = getIdentifierString(block);
         if (!Config.getInstance().blockWhitelist.contains(blockId)) {
             Config.getInstance().blockWhitelist.add(blockId);
             Config.getInstance().save();
@@ -115,8 +114,8 @@ public class BehaviorCommand extends CommandBase {
     }
 
     private int removeBlockWhitelist(CommandContext<FabricClientCommandSource> context) {
-        var block = BlockArgument.getBlock(context, "block");
-        var blockId = getBlockId(block);
+        Block block = BlockArgument.getBlock(context, "block");
+        String blockId = getIdentifierString(block);
         if (Config.getInstance().blockWhitelist.contains(blockId)) {
             Config.getInstance().blockWhitelist.remove(blockId);
             Config.getInstance().save();
@@ -133,15 +132,15 @@ public class BehaviorCommand extends CommandBase {
         if (isFilterBlock(block)) {
             return true;
         }
-        return Config.getInstance().blockWhitelist.contains(getBlockId(block));
+        return Config.getInstance().blockWhitelist.contains(getIdentifierString(block));
     }
 
     private Boolean showBlockWhitelist(Block block) {
-        return !Config.getInstance().blockWhitelist.contains(getBlockId(block));
+        return !Config.getInstance().blockWhitelist.contains(getIdentifierString(block));
     }
 
     private void sendChat(Component text, Block block) {
-        var msg = text.getString().replace("#blockName#", getBlockName(block));
+        String msg = text.getString().replace("#blockName#", getBlockName(block));
         MessageUtils.addMessage(Component.literal(msg));
     }
 }

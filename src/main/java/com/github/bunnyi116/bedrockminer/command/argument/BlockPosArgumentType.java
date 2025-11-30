@@ -8,6 +8,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.BlockHitResult;
@@ -30,7 +31,7 @@ public class BlockPosArgumentType implements ArgumentType<BlockPos> {
 
     @Override
     public BlockPos parse(StringReader reader) throws CommandSyntaxException {
-        var i = reader.getCursor();
+        int i = reader.getCursor();
         if (reader.canRead()) {
             int x = parseCoordinate(reader, 0);
             if (reader.canRead()) {
@@ -48,13 +49,13 @@ public class BlockPosArgumentType implements ArgumentType<BlockPos> {
 
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        var remaining = builder.getRemaining();
-        var reader = new StringReader(remaining);
-        var xString = (String) null;
-        var yString = (String) null;
-        var zString = (String) null;
+        String remaining = builder.getRemaining();
+        StringReader reader = new StringReader(remaining);
+        String xString = null;
+        String yString = null;
+        String zString = null;
         if (reader.canRead() && (reader.peek() == '~' || isAllowedInteger(reader.peek()))) {
-            var cursor = reader.getCursor();
+            int cursor = reader.getCursor();
             while (reader.canRead() && reader.peek() != ' ') {
                 reader.skip();
             }
@@ -62,7 +63,7 @@ public class BlockPosArgumentType implements ArgumentType<BlockPos> {
         }
         reader.skipWhitespace();
         if (reader.canRead() && (reader.peek() == '~' || isAllowedInteger(reader.peek()))) {
-            var cursor = reader.getCursor();
+            int cursor = reader.getCursor();
             while (reader.canRead() && reader.peek() != ' ') {
                 reader.skip();
             }
@@ -70,17 +71,17 @@ public class BlockPosArgumentType implements ArgumentType<BlockPos> {
         }
         reader.skipWhitespace();
         if (reader.canRead() && (reader.peek() == '~' || isAllowedInteger(reader.peek()))) {
-            var cursor = reader.getCursor();
+            int cursor = reader.getCursor();
             while (reader.canRead() && reader.peek() != ' ') {
                 reader.skip();
             }
             zString = reader.getString().substring(cursor, reader.getCursor());
         }
 
-        var hitResult = Minecraft.getInstance().hitResult;
+        HitResult hitResult = Minecraft.getInstance().hitResult;
         if (hitResult != null && hitResult.getType() == HitResult.Type.BLOCK) {
-            var blockHitResult = (BlockHitResult) hitResult;
-            var blockPos = blockHitResult.getBlockPos();
+            BlockHitResult blockHitResult = (BlockHitResult) hitResult;
+            BlockPos blockPos = blockHitResult.getBlockPos();
             if (xString == null && yString == null && zString == null) {
                 builder.suggest(blockPos.getX());
                 builder.suggest(String.format("%s %s", blockPos.getX(), blockPos.getY()));
@@ -112,17 +113,17 @@ public class BlockPosArgumentType implements ArgumentType<BlockPos> {
 
     private int parseCoordinate(StringReader reader, int type) throws CommandSyntaxException {
         reader.skipWhitespace();
-        var i = reader.getCursor();
+        int i = reader.getCursor();
         if (reader.canRead() && reader.peek() != ' ') {
             if (reader.peek() == '~') {
                 reader.skip();
                 // 偏移量
-                var offset = 0;
+                int offset = 0;
                 if (reader.canRead() && isAllowedInteger(reader.peek())) {
                     offset = reader.readInt();
                 }
                 // 玩家位置
-                var player = Minecraft.getInstance().player;
+                LocalPlayer player = Minecraft.getInstance().player;
                 if (type == 0) {
                     return (player == null ? 0 : player.getBlockX()) + offset;
                 } else if (type == 1) {
@@ -131,7 +132,6 @@ public class BlockPosArgumentType implements ArgumentType<BlockPos> {
                     return (player == null ? 0 : player.getBlockZ()) + offset;
                 }
                 return 0;
-
             } else if (isAllowedInteger(reader.peek())) {
                 return reader.readInt();
             }

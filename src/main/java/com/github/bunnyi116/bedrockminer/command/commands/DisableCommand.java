@@ -20,7 +20,7 @@ public class DisableCommand extends CommandBase {
     }
 
     @Override
-    public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder, CommandBuildContext registryAccess) {
+    public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder) {
         builder
                 .executes(context -> {
                     if (Config.getInstance().disable) {

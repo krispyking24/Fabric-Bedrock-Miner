@@ -13,6 +13,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class DirectionListArgumentType implements ArgumentType<Direction[]> {
@@ -24,17 +25,17 @@ public class DirectionListArgumentType implements ArgumentType<Direction[]> {
 
 
     public Direction[] parse(StringReader reader) throws CommandSyntaxException {
-        var list = new ArrayList<Direction>();
+        List<Direction> list = new ArrayList<>();
         while (reader.canRead()) {
             if (reader.peek() == ',') {
                 reader.skip();
                 continue;
             }
-            var i = reader.getCursor();
+            int i = reader.getCursor();
             while (reader.peek() != ',') {
                 reader.skip();
             }
-            var string = reader.getString().substring(i, reader.getCursor());
+            String string = reader.getString().substring(i, reader.getCursor());
             Direction facing = null;
             for (Direction direction : Direction.values()) {
                 if (string.equalsIgnoreCase(direction.getName())) {
@@ -55,11 +56,11 @@ public class DirectionListArgumentType implements ArgumentType<Direction[]> {
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
         StringReader reader = new StringReader(builder.getInput());
         reader.setCursor(builder.getStart());
-        var i = reader.getCursor();
+        int i = reader.getCursor();
         while (reader.canRead()) {
             reader.skip();
         }
-        var string = reader.getString().substring(i, reader.getCursor());
+        String string = reader.getString().substring(i, reader.getCursor());
         for (Direction direction : Direction.values()) {
             if (direction.getName().contains(string)) {
                 builder.suggest(direction.getName());
