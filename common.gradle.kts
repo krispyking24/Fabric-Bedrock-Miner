@@ -1,35 +1,37 @@
-    plugins {
-//    id("java") // 启用 Java 插件 - 当前被注释掉，但通常是必需的。
+import groovy.json.JsonSlurper
+
+plugins {
+    id("java") // 启用 Java 插件
     id("maven-publish") // 启用 Maven 发布插件 (用于发布构建产物到仓库)
     id("fabric-loom") // 启用 Fabric Loom 插件 (Minecraft Mod 开发工具链)
     id("com.replaymod.preprocess") // 启用 ReplayMod 预处理器插件 (用于处理跨 Minecraft 版本的代码/资源)
     id("me.fallenbreath.yamlang") // 启用 yamlang 插件 (用于处理语言文件，例如 YAML 格式)
 }
 
-// --- 项目属性定义 ---
-// 这些属性通常从 Gradle 属性文件 (如 gradle.properties) 或 settings.gradle.kts 中传入。
-val mcVersion: Int = project.property("mcVersion") as Int
-val modId: String = project.property("mod_id") as String
-val modName: String = project.property("mod_name") as String
-val modVersion: String = project.property("mod_version") as String
-val mavenGroup: String = project.property("maven_group") as String
-val minecraftDependency: String = project.property("minecraft_dependency") as String
-val minecraftVersion: String = project.property("minecraft_version") as String
-val yarnMappings: String = project.property("yarn_mappings") as String
-val loaderVersion: String = project.property("loader_version") as String
-val fabricApiVersion: String = project.property("fabric_api_version") as String
-val archivesBaseName: String = project.property("archives_base_name") as String
+val mcVersion = project.property("mcVersion") as Int
+val modId = project.property("mod_id") as String
+val modWrapperId = project.property("mod_wrapper_id") as String
+val modName = project.property("mod_name") as String
+val modMavenGroup = project.property("mod_maven_group") as String
+val modVersion = project.property("mod_version") as String
+val modArchivesBaseName = project.property("mod_archives_base_name") as String
+val modDescription = project.property("mod_description") as String
+val modHomepage = project.property("mod_homepage") as String
+val modLicense = project.property("mod_license") as String
+val modSources = project.property("mod_sources") as String
+val loaderVersion = project.property("loader_version") as String
 
-// 常量
-val mixinConfigPath = "blockminer.mixins.json"
-val langDir = "assets/blockminer/lang"
+val minecraftDependency = project.property("minecraft_dependency") as String
+val minecraftVersion = project.property("minecraft_version") as String
+val yarnMappings = project.property("yarn_mappings") as String
+val fabricApiVersion = project.property("fabric_api_version") as String
 
 // 根据 Minecraft 版本确定所需的 Java 兼容性版本
 val javaCompatibility = when {
-    mcVersion >= 12005 -> JavaVersion.VERSION_21 // 1.20.5+ 需要 Java 21
-    mcVersion >= 11800 -> JavaVersion.VERSION_17 // 1.18 - 1.20.4 需要 Java 17
-    mcVersion >= 11700 -> JavaVersion.VERSION_16 // 1.17.x 需要 Java 16
-    else -> JavaVersion.VERSION_1_8 // 1.16.x 及以下使用 Java 8
+    mcVersion >= 12005 -> JavaVersion.VERSION_21    // 1.20.5+      需要 Java 21
+    mcVersion >= 11800 -> JavaVersion.VERSION_17    // 1.18-1.20.4  需要 Java 17
+    mcVersion >= 11700 -> JavaVersion.VERSION_16    // 1.17.x       需要 Java 16
+    else -> JavaVersion.VERSION_1_8                 // 1.16.x 及以下使用 Java 8
 }
 val mixinCompatibilityLevel = javaCompatibility // Mixin 兼容性级别与 Java 兼容性版本保持一致
 
@@ -48,33 +50,59 @@ configurations {
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion") // Minecraft 客户端依赖
-//    mappings("net.fabricmc:yarn:$yarnMappings:v2") // Yarn 混淆映射
+    // mappings("net.fabricmc:yarn:$yarnMappings:v2") // Yarn 混淆映射
     mappings(loom.officialMojangMappings())
     modImplementation("net.fabricmc:fabric-loader:$loaderVersion") // Fabric 加载器依赖
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion") // Fabric API 依赖
 }
 
 loom {
-    // 设置 Access Widener (访问增强器) 文件的路径
-    accessWidenerPath.set(file("../../src/main/resources/bedrockminer.accesswidener"))
+    accessWidenerPath.set(file("../../src/main/resources/$modId.accesswidener"))
 
-    val commonVmArgs = listOf("-Dmixin.debug.export=true", "-Dmixin.debug.countInjections=true") // 通用 JVM 参数
-    runs.configureEach {
-        // 配置 IDE 运行时设置。
-        // 确保它生成所有 "Minecraft Client (:subproject_name)" 应用程序
-        runDir = "../../run" // 设置运行目录
-        vmArgs(commonVmArgs) // 应用通用的 JVM 参数
+    var programArgs = listOf(
+        "--width", "1280",
+        "--height", "720"
+    )
+    val profileFile = file("../../profile.json")
+    if (profileFile.exists()) {
+        @Suppress("UNCHECKED_CAST")
+        val profile = JsonSlurper().parseText(profileFile.readText()) as Map<String, List<String>>
+        val username = profile["username"].toString()
+        val uuid = profile["uuid"].toString()
+        val xuid = profile["xuid"].toString()
+        val accessToken = profile["accessToken"].toString()
+        programArgs = programArgs + listOf(
+            "--username",
+            username,
+            "--uuid",
+            uuid,
+            "--xuid",
+            xuid,
+            "--accessToken",
+            accessToken,
+            "--userType",
+            "msa",
+            "--versionType",
+            "release"
+        )
     }
-
-    //  // [功能] MIXIN 审计器 (MIXIN_AUDITOR) - 被注释掉的 Mixin 审计配置
-    //  runs {
-    //     val auditVmArgs = commonVmArgs + "-DmixinAuditor.audit=true"
-    //     create("serverMixinAudit") {
-    //        server() // 配置为运行服务器
-    //        vmArgs(auditVmArgs)
-    //        ideConfigGenerated.set(false) // 禁用 IDE 配置生成
-    //     }
-    //  }
+    var commonVmArgs = listOf(
+        "-Dmixin.debug.export=true",
+        "-Dmixin.debug.countInjections=true",
+//        "-DmixinAuditor.audit=true"
+    )
+    runs {
+        named("client") {
+            client()
+            runDir = "../../run/client"
+            vmArgs(commonVmArgs)
+            programArgs(programArgs)
+        }
+        named("server") {
+            server()
+            runDir = "../../run/server"
+        }
+    }
 }
 
 // 示例版本值:
@@ -91,80 +119,82 @@ var artifactVersionSuffix = ""
 // 检测 GitHub Action 环境变量，用于设置版本后缀
 // https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
 if (System.getenv("BUILD_RELEASE") != "true") {
-    val buildNumber = System.getenv("BUILD_ID")
+//    val buildNumber = System.getenv("BUILD_ID")
+    val buildNumber = System.getenv("GITHUB_RUN_NUMBER")
     // 如果存在构建号，则使用 +build.<号>，否则使用 -SNAPSHOT
     modVersionSuffix += if (buildNumber != null) "+build.$buildNumber" else "-SNAPSHOT"
     // 非发布版本产物通常是 SNAPSHOT 版本
     artifactVersionSuffix = "-SNAPSHOT"
 }
-val fullModVersion = modVersion + modVersionSuffix // 完整的 Mod 版本 (用于 fabric.mod.json)
-var fullProjectVersion: String // 完整的项目版本 (用于 JAR 文件名)
+val fullModVersion = "${modVersion}-mc${minecraftVersion}${modVersionSuffix}" // 完整的 Mod 版本 (用于 fabric.mod.json)
+var fullProjectVersion: String  // 完整的项目版本 (用于 JAR 文件名)
 var fullArtifactVersion: String // 完整的 Maven 产物版本
-
-
 // 根据是否在 JITPACK 环境中运行进行版本和产物名称配置
 if (System.getenv("JITPACK") == "true") {
     base.archivesName.set(
-        "$archivesBaseName-mc$minecraftVersion"
+        "$modArchivesBaseName-mc$minecraftVersion"
     )
     fullProjectVersion = "v$modVersion$modVersionSuffix" // 例如 v1.0.3+build.88
     fullArtifactVersion = artifactVersion + artifactVersionSuffix // 例如 1.0.3-SNAPSHOT
 } else {
-    base.archivesName.set(archivesBaseName)
+    base.archivesName.set(modArchivesBaseName)
     fullProjectVersion = "v$modVersion-mc$minecraftVersion$modVersionSuffix" // 例如 v1.0.3-mc1.15.2+build.88
     fullArtifactVersion = "$artifactVersion-mc$minecraftVersion$artifactVersionSuffix" // 例如 1.0.3-mc1.15.2-SNAPSHOT
 }
 
-group = mavenGroup // 设置 Maven Group ID
+group = modMavenGroup // 设置 Maven Group ID
 version = fullProjectVersion // 设置项目的版本号
 
-// --- 资源处理 (Resource Processing) ---
-// 如果 IDEA 抱怨 "Cannot resolve resource filtering of MatchingCopyAction"，并且你想知道原因
-// 请参阅 https://youtrack.jetbrains.com/issue/IDEA-296490
-tasks.withType<ProcessResources> {
-    // 设置输入属性，以便 Gradle 知道在这些属性变化时需要重新运行任务
-    inputs.property("id", modId)
-    inputs.property("name", modName)
-    inputs.property("version", fullModVersion)
-    inputs.property("loader_version", loaderVersion)
-    inputs.property("minecraft_dependency", minecraftDependency)
-
-    filesMatching("fabric.mod.json") {
-        // 使用 expand 替换 fabric.mod.json 中的占位符
-        expand(
-            mapOf(
-                "id" to modId,
-                "name" to modName,
-                "version" to fullModVersion,
-                "loader_version" to loaderVersion,
-                "minecraft_dependency" to minecraftDependency,
-            )
+tasks {
+    // --- 资源处理 (Resource Processing) ---
+    // 如果 IDEA 抱怨 "Cannot resolve resource filtering of MatchingCopyAction"，并且你想知道原因
+    // 请参阅 https://youtrack.jetbrains.com/issue/IDEA-296490
+    withType<ProcessResources> {
+        val propertyMap = mapOf(
+            "mod_id" to modId,
+            "mod_wrapper_id" to modWrapperId,
+            "mod_name" to modName,
+            "mod_version" to fullModVersion,
+            "mod_description" to modDescription,
+            "mod_homepage" to modHomepage,
+            "mod_license" to modLicense,
+            "mod_sources" to modSources,
+            "loader_version" to loaderVersion,
+            "minecraft_dependency" to minecraftDependency,
+            "compatibility_level" to "JAVA_${mixinCompatibilityLevel.majorVersion}"
         )
+        inputs.properties(propertyMap)
+        filesMatching(listOf("fabric.mod.json", "*.mixins.json")) {
+            expand(propertyMap)
+        }
     }
-    filesMatching(mixinConfigPath) {
-        // 替换 Mixin 配置中的 COMPATIBILITY_LEVEL 占位符
-        filter { it.replace("{{COMPATIBILITY_LEVEL}}", "JAVA_${mixinCompatibilityLevel.ordinal + 1}") }
+
+    // --- Java 编译配置 ---
+    // 确保编码设置为 UTF-8，无论系统默认值是什么
+    // 这修复了某些特殊字符无法正确显示的边缘情况
+    // 参阅 http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
+    withType<JavaCompile> {
+        options.encoding = "UTF-8"
+        // 添加编译器参数以显示弃用和未检查的警告
+        options.compilerArgs.addAll(listOf("-Xlint:deprecation", "-Xlint:unchecked"))
+        if (javaCompatibility <= JavaVersion.VERSION_1_8) {
+            // 如果使用 Java 8 或更低版本，压制 "source/target value 8 is obsolete..." 的警告
+            options.compilerArgs.add("-Xlint:-options")
+        }
+    }
+
+    withType<Jar> {
+        // 将 LICENSE 文件添加到 JAR 包中
+        from(rootProject.file("LICENSE")) {
+            rename { "${it}_${modArchivesBaseName}" }
+        }
     }
 }
 
 // https://github.com/Fallen-Breath/yamlang
 yamlang {
     targetSourceSets.set(setOf(sourceSets.main.get())) // 指定要处理的源集
-    inputDir.set(langDir) // 指定语言文件目录
-}
-
-// --- Java 编译配置 ---
-// 确保编码设置为 UTF-8，无论系统默认值是什么
-// 这修复了某些特殊字符无法正确显示的边缘情况
-// 参阅 http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
-tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
-    // 添加编译器参数以显示弃用和未检查的警告
-    options.compilerArgs.addAll(listOf("-Xlint:deprecation", "-Xlint:unchecked"))
-    if (javaCompatibility <= JavaVersion.VERSION_1_8) {
-        // 如果使用 Java 8 或更低版本，压制 "source/target value 8 is obsolete..." 的警告
-        options.compilerArgs.add("-Xlint:-options")
-    }
+    inputDir.set("assets/${modId}/lang") // 指定语言文件目录
 }
 
 java {
@@ -174,13 +204,6 @@ java {
     // 如果存在，Loom 会自动将 sourcesJar 附加到 RemapSourcesJar 任务和 "build" 任务
     // 如果移除此行，则不会生成源码 JAR。
     withSourcesJar()
-}
-
-tasks.withType<Jar> {
-    // 将 LICENSE 文件添加到 JAR 包中
-    from(rootProject.file("LICENSE")) {
-        rename { "${it}_${archivesBaseName}" }
-    }
 }
 
 // --- Maven 发布配置 ---

@@ -1,6 +1,5 @@
 package com.github.bunnyi116.bedrockminer.util.player;
 
-import com.github.bunnyi116.bedrockminer.util.ClientPlayerInteractionManagerUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -19,6 +18,12 @@ import java.util.Objects;
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
 
 public class PlayerUtils {
+    public static double getHorizontalDistanceToPlayer(BlockPos pos) {
+        double dx = pos.getX() - player.getX();
+        double dz = pos.getZ() - player.getZ();
+        return Math.sqrt(dx * dx + dz * dz);
+    }
+
     /**
      * 获取最近的面
      */
@@ -111,7 +116,7 @@ public class PlayerUtils {
     }
 
     public static boolean canInstantlyMineBlock(BlockState state, ItemStack itemStack) {
-        return PlayerUtils.calcBlockBreakingDelta(state, itemStack) >= ClientPlayerInteractionManagerUtils.BREAKING_PROGRESS_MAX;
+        return PlayerUtils.calcBlockBreakingDelta(state, itemStack) >= PlayerInteractionUtils.BREAKING_PROGRESS_MAX;
     }
 
     public static boolean canInstantlyMineBlock(BlockState state) {

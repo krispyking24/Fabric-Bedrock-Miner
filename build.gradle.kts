@@ -1,7 +1,7 @@
 plugins {
     id("maven-publish")
     id("com.github.hierynomus.license") version "0.16.1" apply false
-    id("fabric-loom") version "1.11-SNAPSHOT" apply false
+    id("fabric-loom") version "1.13-SNAPSHOT" apply false
 
     // https://github.com/ReplayMod/preprocessor
     // https://github.com/Fallen-Breath/preprocessor
@@ -66,35 +66,71 @@ preprocess {
     mc1_19_03.link(mc1_19_02, file("versions/mapping-1.19.2-1.19.3.txt"))
     mc1_19_02.link(mc1_19_01, null)
     mc1_19_01.link(mc1_19_00, null)
-//    mc1_19_00.link(mc1_18_02, null)
+//    mc1_19_00.link(mc1_18_02, file("versions/mapping-1.18.2-1.19.txt"))
 //    mc1_18_02.link(mc1_18_01, null)
 //    mc1_18_01.link(mc1_18_00, null)
 //    mc1_18_00.link(mc1_17_01, null)
 //    mc1_17_01.link(mc1_17_00, null)
-//    mc1_17_00.link(mc1_16_05, null)
+//    mc1_17_00.link(mc1_16_05, file("versions/mapping-1.16.5-1.17.txt"))
+}
+
+
+// 获取所有子项目（排除 fabricWrapper）
+val fabricSubprojects = rootProject.subprojects.filter { it.name != "fabricWrapper" }
+
+tasks.register("build") {
+    group = "build"
+    description = "构建 fabricWrapper 版本包（推荐用于发布）"
+
+    dependsOn("buildAndGather")
 }
 
 tasks.register("buildAndGather") {
-    subprojects {
-        dependsOn(tasks.named("build"))
+    group = "build"
+    description = "收集所有子项目的构建产物到根项目的 libs 目录（开发便利工具）"
+
+    // 依赖所有子项目的构建任务
+    fabricSubprojects.forEach { sub ->
+        evaluationDependsOn(":${sub.name}")
+        dependsOn(sub.tasks.named("build"))
     }
+
     doFirst {
-        println("Gathering builds")
-        val buildLibs = { p: Project ->
-            p.layout.buildDirectory.dir("libs").get().asFile.toPath()
-        }
-        delete(fileTree(buildLibs(rootProject)) {
+        println("开始收集各个版本的构建产物...")
+        val rootLibsDir = layout.buildDirectory.dir("libs").get().asFile
+        // 清理根项目的 libs 目录
+        delete(fileTree(rootLibsDir) {
             include("*")
         })
-        subprojects {
+        // 收集各个版本的 JAR 文件
+        fabricSubprojects.forEach { sub ->
+            val subLibsDir = sub.layout.buildDirectory.dir("libs").get().asFile
             copy {
-                from(buildLibs(project)) {
+                from(subLibsDir) {
                     include("*.jar")
                     exclude("*-dev.jar", "*-sources.jar", "*-shadow.jar")
                 }
-                into(buildLibs(rootProject))
+                into(rootLibsDir)
                 duplicatesStrategy = DuplicatesStrategy.INCLUDE
             }
+            println("已收集 ${sub.name} 的构建产物")
         }
+        println("构建产物收集完成，文件位于: ${rootLibsDir.absolutePath}")
     }
+}
+
+tasks.register("buildAll") {
+    group = "build"
+    description = "构建所有子项目以及 fabricWrapper 版本包"
+
+    dependsOn(tasks.named("buildAndGather"))
+    dependsOn(":fabricWrapper:build")
+}
+
+tasks.register("buildFabricWrapper") {
+    group = "build"
+    description = "构建 fabricWrapper 版本包"
+
+    dependsOn(tasks.named("buildAndGather"))
+    dependsOn(":fabricWrapper:build")
 }

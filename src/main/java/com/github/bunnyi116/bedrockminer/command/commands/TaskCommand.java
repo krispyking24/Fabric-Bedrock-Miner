@@ -13,6 +13,7 @@ import com.github.bunnyi116.bedrockminer.util.StringReaderUtils;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -34,6 +35,17 @@ public class TaskCommand extends CommandBase {
     @Override
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder) {
         builder
+                .then(literal("limitMax")
+                        .then(argument("int", IntegerArgumentType.integer(1, 10))
+                                .executes(context -> {
+                                    int limitMax = IntegerArgumentType.getInteger(context, "int");
+                                    MessageUtils.addMessage(Component.literal("任务同步执行限制最大值已设置为: " + limitMax));
+                                    Config.getInstance().limitMax = limitMax;
+                                    Config.getInstance().save();
+                                    return Command.SINGLE_SUCCESS;
+                                })
+                        )
+                )
                 .then(literal("short")
                         .then(argument("bool", BoolArgumentType.bool())
                                 .executes(context -> {
@@ -49,7 +61,6 @@ public class TaskCommand extends CommandBase {
                                 })
                         )
                 )
-
                 .then(literal("add")
                         .then(argument("name", StringArgumentType.string())
                                 .then(argument("blockPos1", BlockPosArgumentType.blockPos())
@@ -59,7 +70,6 @@ public class TaskCommand extends CommandBase {
                                 )
                         )
                 )
-
                 .then(literal("addToConfig")
                         .then(argument("name", StringArgumentType.string())
                                 .then(argument("blockPos1", BlockPosArgumentType.blockPos())
@@ -69,7 +79,6 @@ public class TaskCommand extends CommandBase {
                                 )
                         )
                 )
-
                 .then(literal("remove")
                         .then(argument("name", StringArgumentType.string())
                                 .suggests((context, suggestionsBuilder) -> {
@@ -114,7 +123,6 @@ public class TaskCommand extends CommandBase {
                                 })
                         )
                 )
-
                 .then(literal("clear").executes(context -> {
                     TaskManager.getInstance().removeBlockTaskAll();
                     TaskManager.getInstance().removeRegionTaskAll();

@@ -1,13 +1,13 @@
 package com.github.bunnyi116.bedrockminer.util.network;
 
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.prediction.BlockStatePredictionHandler;
 import net.minecraft.client.multiplayer.prediction.PredictiveAction;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerGamePacketListener;
 import org.jetbrains.annotations.Nullable;
 
-import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
+import static com.github.bunnyi116.bedrockminer.BedrockMiner.networkHandler;
+import static com.github.bunnyi116.bedrockminer.BedrockMiner.world;
 
 public class NetworkUtils {
 

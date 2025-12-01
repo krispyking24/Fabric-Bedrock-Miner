@@ -8,7 +8,6 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.commands.CommandBuildContext;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 

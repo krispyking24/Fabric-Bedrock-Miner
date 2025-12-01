@@ -7,7 +7,7 @@
     "MixinServerboundMovePlayerPacket"
   ],
   "client": [
-    "MixinMinecraft"
+    "MixinMultiPlayerGameMode"
   ],
   "injectors": {
     "defaultRequire": 1
