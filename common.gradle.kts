@@ -97,6 +97,7 @@ loom {
             runDir = "../../run/client"
             vmArgs(commonVmArgs)
             programArgs(programArgs)
+            ideConfigGenerated(true);
         }
         named("server") {
             server()
