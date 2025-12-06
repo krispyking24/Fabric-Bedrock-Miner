@@ -34,18 +34,15 @@ jobs:
       - name: Cache Gradle dependencies
         uses: actions/cache@v3
         with:
-          # 【新增】缓存路径：覆盖Gradle依赖缓存、Wrapper缓存、项目本地构建缓存
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
             ./.gradle
-          # 【新增】缓存键：基于系统+Gradle配置文件哈希，保证配置变则缓存变
           key: ${{ runner.os }}-gradle-${{ hashFiles(
-            'gradle/wrapper/gradle-wrapper.properties',  # 【新增】匹配Gradle Wrapper版本文件
-            '**/*.gradle*',                               # 【新增】匹配所有Gradle脚本（Groovy/Kotlin格式）
-            '**/gradle.properties'                        # 【新增】匹配所有Gradle参数文件
+            'gradle/wrapper/gradle-wrapper.properties', 
+            '**/*.gradle*',
+            '**/gradle.properties'
             ) }}
-          # 【新增】恢复键：前缀匹配旧缓存，最大化复用历史缓存
           restore-keys: |
             ${{ runner.os }}-gradle-
 
