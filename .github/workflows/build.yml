@@ -31,6 +31,24 @@ jobs:
           distribution: 'temurin'
           java-version: 21
 
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
+        with:
+          # 【新增】缓存路径：覆盖Gradle依赖缓存、Wrapper缓存、项目本地构建缓存
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ./.gradle
+          # 【新增】缓存键：基于系统+Gradle配置文件哈希，保证配置变则缓存变
+          key: ${{ runner.os }}-gradle-${{ hashFiles(
+            'gradle/wrapper/gradle-wrapper.properties',  # 【新增】匹配Gradle Wrapper版本文件
+            '**/*.gradle*',                               # 【新增】匹配所有Gradle脚本（Groovy/Kotlin格式）
+            '**/gradle.properties'                        # 【新增】匹配所有Gradle参数文件
+            ) }}
+          # 【新增】恢复键：前缀匹配旧缓存，最大化复用历史缓存
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -41,11 +59,11 @@ jobs:
           chmod +x gradlew
           if [ -z "${{ inputs.target_subproject }}" ]; then
               echo "Building all subprojects"
-              ./gradlew build
+              ./gradlew build --stacktrace
           else
               args=$(echo "${{ inputs.target_subproject }}" | tr ',' '\n' | sed 's/$/:build/' | paste -sd ' ')
               echo "Building with arguments=$args"
-              ./gradlew $args
+              ./gradlew $args --stacktrace
           fi
         env:
           BUILD_ID: ${{ github.run_number }}
