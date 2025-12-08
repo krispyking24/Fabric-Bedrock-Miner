@@ -33,10 +33,10 @@ public class TaskPlan {
     }
 
     public boolean canInteractWithBlockAt() {
-        final var b1 = PlayerUtils.canInteractWithBlockAt(piston.pos, 1.0F);
-        final var b2 = PlayerUtils.canInteractWithBlockAt(redstoneTorch.pos, 1.0F);
+        final var b1 = PlayerUtils.canInteractWithBlockAt(piston.pos, 0F);
+        final var b2 = PlayerUtils.canInteractWithBlockAt(redstoneTorch.pos, 0F);
         if (b1 && b2) {
-            final var b3 = PlayerUtils.canInteractWithBlockAt(slimeBlock.pos, 1.0F);
+            final var b3 = PlayerUtils.canInteractWithBlockAt(slimeBlock.pos, 0F);
             if (b3 && BlockUtils.isReplaceable(world.getBlockState(slimeBlock.pos))) {
                 return true;
             }

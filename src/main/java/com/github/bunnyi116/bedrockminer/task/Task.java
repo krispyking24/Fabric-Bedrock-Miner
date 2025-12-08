@@ -26,7 +26,9 @@ import net.minecraft.world.level.block.piston.PistonHeadBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Queue;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.player;
 
@@ -47,14 +49,15 @@ public class Task {
     private int ticksTotalMax;
     private int ticksTimeoutMax;
     private int tickWaitMax;
-    public int retryCount = 0;
-    public int retryCountMax = 1;
+    public int retryCount;
+    public int retryCountMax;
+    public int active;
     public boolean retry;
     public boolean executed;
     public boolean recycled;
     public boolean timeout;
     private boolean tickOccupied;   // 当前TICK已被占用
-    private @Nullable LinkedHashMap<Task, Integer> activeBlockTasks;
+    private boolean requestPickaxe;
 
     public Task(ClientLevel world, Block block, BlockPos pos) {
         this.world = world;
@@ -71,7 +74,7 @@ public class Task {
 
     public boolean canInteractWithBlockAt() {
         if (this.world == BedrockMiner.world) {
-            if (PlayerUtils.canInteractWithBlockAt(pos, 0F)) {
+            if (PlayerUtils.canInteractWithBlockAt(pos, 1F)) {
                 if (planItem != null) {
                     return planItem.canInteractWithBlockAt();
                 }
@@ -108,9 +111,8 @@ public class Task {
         }
     }
 
-    public void tick(LinkedHashMap<Task, Integer> activeBlockTasks) {
+    public void tick() {
         debug("开始");
-        this.activeBlockTasks = activeBlockTasks;
         this.tickOccupied = false;  // 重置状态
         if (this.currentState == TaskState.COMPLETE) {
             debug("任务已完成");
@@ -300,7 +302,7 @@ public class Task {
                 } else if (BlockUtils.sideCoversSmallSquare(item.slimeBlock.pos, item.slimeBlock.facing)) {
                     item.slimeBlock.level -= 1;
                 } else {
-                    item.slimeBlock.level += 1;
+                    item.slimeBlock.level += 1000;
                 }
             }
             planItems.sort(Comparator
@@ -346,10 +348,9 @@ public class Task {
                         continue;
                     }
                     boolean b = true;
-                    if (this.activeBlockTasks != null) {
-                        for (Map.Entry<Task, Integer> entry : this.activeBlockTasks.entrySet()) {
-                            if (entry == null) continue;
-                            Task task = entry.getKey();
+                    if (!TaskManager.getInstance().getActiveBlockTasks().isEmpty()) {
+                        for (Task task : TaskManager.getInstance().getActiveBlockTasks()) {
+                            if (task == null) continue;
                             if (task.planItem == null) continue;
                             if (pos.equals(task.planItem.piston.pos)) {
                                 b = false;
@@ -363,6 +364,12 @@ public class Task {
                                 b = false;
                                 break;
                             }
+                            for (Direction direction : Direction.values()) {
+                                if (item.piston.pos.equals(task.planItem.redstoneTorch.pos.relative(direction))) {
+                                    b = false;
+                                    break;
+                                }
+                            }
                             if (item.piston.pos.equals(task.planItem.slimeBlock.pos)) {
                                 b = false;
                                 break;
@@ -372,6 +379,12 @@ public class Task {
                                 b = false;
                                 break;
                             }
+                            for (Direction direction : Direction.values()) {
+                                if (item.redstoneTorch.pos.equals(task.planItem.piston.pos.relative(direction))) {
+                                    b = false;
+                                    break;
+                                }
+                            }
                             if (item.redstoneTorch.pos.equals(task.planItem.redstoneTorch.pos)) {
                                 b = false;
                                 break;
@@ -380,6 +393,8 @@ public class Task {
                                 b = false;
                                 break;
                             }
+
+
                             if (item.slimeBlock.pos.equals(task.planItem.piston.pos)) {
                                 b = false;
                                 break;
@@ -402,6 +417,9 @@ public class Task {
                                 break;
                             }
                         }
+                    }
+                    if (TaskManager.getInstance().isBedrockMinerFeatureEnable() && item.redstoneTorch.type == 1) {
+                        continue;
                     }
                     if (b) {
                         this.planItem = item;
@@ -438,7 +456,10 @@ public class Task {
             }
             var instant = PlayerUtils.canInstantlyMineBlock(blockState);
             if (!instant) {
+                this.requestPickaxe = true;
                 PlayerInventoryUtils.autoSwitch(blockState);
+            } else {
+                this.requestPickaxe = false;
             }
             PlayerInteractionUtils.updateBlockBreakingProgress(blockPos, false);
             if (BlockUtils.isReplaceable(blockState)) {
@@ -477,8 +498,11 @@ public class Task {
             // 切换到工具
             if (!PlayerUtils.canInstantlyMineBlock(world.getBlockState(planItem.piston.pos))) {
                 PlayerInventoryUtils.autoSwitch(world.getBlockState(planItem.piston.pos));
+                this.requestPickaxe = true;
                 this.setWait(TaskState.EXECUTE, 1);
                 return;
+            } else {
+                this.requestPickaxe = false;
             }
             // 打掉附近红石火把
             final BlockPos[] nearbyRedstoneTorch = TaskPlanTools.findPistonNearbyRedstoneTorch(planItem.piston.pos, world);
@@ -496,6 +520,7 @@ public class Task {
             if (this.executeModify) {
                 this.resetModifyLook();
             }
+            this.requestPickaxe = false;
             this.executed = true;
             this.tickOccupied();
         }
@@ -548,6 +573,16 @@ public class Task {
                 this.currentState = TaskState.PLACE_PISTON;
                 return;
             }
+
+            BlockPos pistonHeadPos = planItem.piston.pos.relative(planItem.piston.facing);
+            if (world.getBlockState(planItem.piston.pos).getBlock() instanceof PistonBaseBlock) {
+                if (!world.getBlockState(this.planItem.piston.pos).hasProperty(PistonBaseBlock.EXTENDED)
+                        && world.getBlockState(pistonHeadPos).getBlock() instanceof PistonHeadBlock) {
+                    return;
+                }
+            }
+
+
 //            if (world.getBlockState(this.planItem.piston.pos).getBlock() instanceof PistonBaseBlock) {
 //                if (world.getBlockState(this.planItem.piston.pos).get(PistonBaseBlock.FACING) != this.planItem.piston.facing) {
 //                    this.debugUpdateStates("[%s] [%s] 活塞已放置, 但放置方向不正确", this.planItem.piston.pos.toShortString(), this.planItem.piston.facing);
@@ -588,11 +623,9 @@ public class Task {
 //            }
             if (world.getBlockState(this.planItem.piston.pos).getBlock() instanceof PistonBaseBlock) {
                 if (world.getBlockState(this.planItem.piston.pos).hasProperty(PistonBaseBlock.EXTENDED)) {
-                    if (world.getBlockState(this.planItem.piston.pos).hasProperty(PistonBaseBlock.EXTENDED)) {
-                        this.debugUpdateStates("[%s] [%s] 条件已充足, 准备开始尝试", this.planItem.piston.pos.toShortString(), this.planItem.piston.facing);
-                        this.currentState = TaskState.EXECUTE;
-                        return;
-                    }
+                    this.debugUpdateStates("[%s] [%s] 条件已充足, 准备开始尝试", this.planItem.piston.pos.toShortString(), this.planItem.piston.facing);
+                    this.currentState = TaskState.EXECUTE;
+                    return;
                 }
             }
             // 无法确认状态, 独占等待更新
@@ -607,10 +640,9 @@ public class Task {
             BlockPos pos2 = pos1.above();
             BlockState pistonState = world.getBlockState(pos1);
             if (pistonState.getBlock() instanceof PistonBaseBlock && PlayerUtils.canInstantlyMineBlock(pistonState)) {
-                if (this.activeBlockTasks != null) {
-                    for (Map.Entry<Task, Integer> entry : this.activeBlockTasks.entrySet()) {
-                        if (entry == null) continue;
-                        Task task = entry.getKey();
+                if (!TaskManager.getInstance().getActiveBlockTasks().isEmpty()) {
+                    for (Task task : TaskManager.getInstance().getActiveBlockTasks()) {
+                        if (task == null) continue;
                         if (task.planItem == null) continue;
                         if (pos1.equals(task.planItem.piston.pos)) {
                             return;
@@ -621,10 +653,9 @@ public class Task {
             }
             BlockState pistonUpState = world.getBlockState(pos2);
             if (pistonUpState.getBlock() instanceof PistonBaseBlock && PlayerUtils.canInstantlyMineBlock(pistonUpState)) {
-                if (this.activeBlockTasks != null) {
-                    for (Map.Entry<Task, Integer> entry : this.activeBlockTasks.entrySet()) {
-                        if (entry == null) continue;
-                        Task task = entry.getKey();
+                if (!TaskManager.getInstance().getActiveBlockTasks().isEmpty()) {
+                    for (Task task : TaskManager.getInstance().getActiveBlockTasks()) {
+                        if (task == null) continue;
                         if (task.planItem == null) continue;
                         if (pos2.equals(task.planItem.piston.pos)) {
                             return;
@@ -633,8 +664,9 @@ public class Task {
                 }
                 PlayerInteractionUtils.updateBlockBreakingProgress(pos2, false);
             }
-
-
+        }
+        if (TaskManager.getInstance().isBedrockMinerFeatureEnable()) {
+            this.retryCountMax = 1;
         }
         this.nextState = null;
         this.tickTotalCount = 0;
@@ -644,10 +676,12 @@ public class Task {
         this.planItem = null;
         this.recycledQueue.clear();
         this.executed = false;
+        this.requestPickaxe = false;
         this.recycled = false;
         this.timeout = false;
         this.currentState = TaskState.WAIT_GAME_UPDATE;
         this.retry = false;
+        this.find();
     }
 
     private void debug(String var1, Object... var2) {
@@ -672,11 +706,22 @@ public class Task {
         }
     }
 
+    public boolean isRequestPickaxe() {
+        return requestPickaxe;
+    }
+
     public boolean isComplete() {
         return currentState == TaskState.COMPLETE || tickTotalCount >= ticksTotalMax;
     }
 
     public TaskState getCurrentState() {
         return currentState;
+    }
+
+    public boolean isNeedModify() {
+        if (this.planItem != null) {
+            return this.planItem.piston.isNeedModify() || this.planItem.redstoneTorch.isNeedModify();
+        }
+        return false;
     }
 }

@@ -16,7 +16,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.*;
 import static com.github.bunnyi116.bedrockminer.I18n.*;
@@ -24,7 +26,7 @@ import static com.github.bunnyi116.bedrockminer.I18n.*;
 public class TaskManager {
     private static volatile @Nullable TaskManager INSTANCE;
     private final ArrayList<Task> pendingBlockTasks = new ArrayList<>();
-    private final LinkedHashMap<Task, Integer> activeBlockTasks = new LinkedHashMap<>();
+    private final ArrayList<Task> activeBlockTasks = new ArrayList<>();
     private final ArrayList<Task> cacheBlockTasks = new ArrayList<>();
     private final List<TaskRegion> pendingRegionTasks = new ArrayList<>();
     private boolean running;
@@ -48,62 +50,85 @@ public class TaskManager {
             return;
         }
         // 每40TICK进行排序一次
-        if (!this.pendingBlockTasks.isEmpty()) {
+        if (!this.pendingBlockTasks.isEmpty() || !this.activeBlockTasks.isEmpty()) {
             if (sortCount > 0) {
                 sortCount--;
             } else {
                 sortCount = 40;
-                this.pendingBlockTasks.sort((a1, a2) -> {
-                    // 首先按Y坐标降序排列（高的优先）
-                    int dy = a2.pos.getY() - a1.pos.getY();
-                    // 如果Y坐标不同，直接返回比较结果
-                    if (dy != 0) {
-                        return dy;
-                    }
-                    // 如果Y坐标相同，按水平距离升序排列（近的优先）
-                    double dist1 = PlayerUtils.getHorizontalDistanceToPlayer(a1.pos);
-                    double dist2 = PlayerUtils.getHorizontalDistanceToPlayer(a2.pos);
-                    return Double.compare(dist1, dist2);
-                });
+                if (this.pendingBlockTasks.size() > 1) {
+                    this.pendingBlockTasks.sort((a1, a2) -> {
+                        // 首先按Y坐标降序排列（高的优先）
+                        int dy = a2.pos.getY() - a1.pos.getY();
+                        // 如果Y坐标不同，直接返回比较结果
+                        if (dy != 0) {
+                            return dy;
+                        }
+                        // 如果Y坐标相同，按水平距离升序排列（近的优先）
+                        double dist1 = PlayerUtils.getHorizontalDistanceToPlayer(a1.pos);
+                        double dist2 = PlayerUtils.getHorizontalDistanceToPlayer(a2.pos);
+                        return Double.compare(dist1, dist2);
+                    });
+                }
+                if (this.activeBlockTasks.size() > 1) {
+                    this.activeBlockTasks.sort((a1, a2) -> Boolean.compare(a1.isNeedModify(), a2.isNeedModify()));
+                }
+
             }
         }
         boolean execute = false;
+        boolean requestPickaxe = false;
+        boolean modifyLook = false;
         if (!this.activeBlockTasks.isEmpty()) {
-            int resetCountMax = 10;
-            Iterator<Map.Entry<Task, Integer>> iterator = this.activeBlockTasks.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<Task, Integer> entry = iterator.next();
-                if (entry == null) continue;
-                Task currentTask = entry.getKey();
-                if (currentTask.world != world || !currentTask.canInteractWithBlockAt()) {
-                    if (entry.getValue() > resetCountMax) {
-
-                        // 检查现有任务, 如果只有一个任务, 就没必要重新选择新任务了(因为不存在其他任务)
-                        if (this.pendingBlockTasks.size() > 1 || !this.pendingRegionTasks.isEmpty() || !Config.getInstance().ranges.isEmpty()) {
-                            this.cacheBlockTasks.add(currentTask);
-                            iterator.remove();
-                            continue;
-                        }
-                    } else {
-                        MessageUtils.setOverlayMessage(Component.literal("远离当前正在处理的方块位置, 冷却时间剩余: " + (resetCountMax - entry.getValue())));
-                        entry.setValue(entry.getValue() + 1);
+            if (this.activeBlockTasks.size() > 1) {
+                for (Task entry : this.activeBlockTasks) {
+                    if (entry == null) continue;
+                    if (entry.getCurrentState() == TaskState.EXECUTE) {
+                        execute = true;
+                        break;
                     }
+                    if (entry.isRequestPickaxe()) {
+                        requestPickaxe = true;
+                        break;
+                    }
+                }
+            }
+            int resetCountMax = 20;
+            Iterator<Task> iterator = this.activeBlockTasks.iterator();
+            while (iterator.hasNext()) {
+                Task currentTask = iterator.next();
+                if (currentTask == null) continue;
+                if (currentTask.world != world || !currentTask.canInteractWithBlockAt()) {
+                    MessageUtils.setOverlayMessage(Component.literal("远离当前正在处理的方块位置, 冷却时间剩余: " + (resetCountMax - currentTask.active)));
                     continue;
+                }
+                if (currentTask.active >= resetCountMax) {
+                    if (this.pendingBlockTasks.size() > 1 || !this.pendingRegionTasks.isEmpty() || !Config.getInstance().ranges.isEmpty()) {
+                        this.cacheBlockTasks.add(currentTask);
+                        iterator.remove();
+                        currentTask.active = 0;
+                        continue;
+                    }
+                } else {
+                    currentTask.active++;
                 }
                 processing = true;
-                if (!execute && PlayerLookUtils.getTask() != null && !activeBlockTasks.containsKey(PlayerLookUtils.getTask())) {
+                if (PlayerLookUtils.getTask() != null && !activeBlockTasks.contains(PlayerLookUtils.getTask())) {
                     PlayerLookUtils.reset();
                 }
-                if (!execute && PlayerLookUtils.isModify() && PlayerLookUtils.getTask() != currentTask) {
-                    continue;
+                if (PlayerLookUtils.isModify()) {
+                    if (PlayerLookUtils.getTask() != currentTask) {
+                        continue;
+                    }
+                    modifyLook = true;
                 }
                 if (execute && currentTask.getCurrentState() != TaskState.EXECUTE) {
                     continue;
                 }
-                if (execute && (currentTask.planItem == null || currentTask.planItem.piston.isNeedModify())) {
+                if (requestPickaxe && !currentTask.isRequestPickaxe()) {
                     continue;
                 }
-                currentTask.tick(activeBlockTasks);
+                currentTask.tick();
+                currentTask.active = 0;
                 switch (currentTask.getCurrentState()) {
                     case EXECUTE -> {
                         if (currentTask.planItem != null && !currentTask.planItem.piston.isNeedModify()) {
@@ -116,14 +141,14 @@ public class TaskManager {
                         return;
                     }
                 }
-
-                entry.setValue(0);
                 processing = false;
                 if (currentTask.isComplete()) {
                     iterator.remove();
                     this.pendingBlockTasks.remove(currentTask);
+                    currentTask.active = 0;
+                    continue;
                 }
-                if (PlayerLookUtils.isModify()) {
+                if (modifyLook) {
                     return;
                 }
             }
@@ -152,10 +177,11 @@ public class TaskManager {
                     continue;
                 }
                 iterator.remove();
-                this.activeBlockTasks.put(task, 0);
+                this.activeBlockTasks.add(task);
                 if (this.activeBlockTasks.size() >= Config.getInstance().limitMax) {
                     return;
                 }
+                return;
             }
         }
 
@@ -167,8 +193,8 @@ public class TaskManager {
         while (iterator.hasNext() && this.activeBlockTasks.size() < Config.getInstance().limitMax) {
             Task task = iterator.next();
             if (task == null) continue;
-             BlockState blockState = world.getBlockState(task.pos);
-             Block block = blockState.getBlock();
+            BlockState blockState = world.getBlockState(task.pos);
+            Block block = blockState.getBlock();
             if (blockState.isAir() || BlockUtils.isReplaceable(blockState)) {
                 continue;
             }
@@ -181,17 +207,16 @@ public class TaskManager {
             if (!task.canInteractWithBlockAt()) {
                 continue;
             }
-            if (PlayerLookUtils.isModify() && PlayerLookUtils.getTask() != task) {
-                continue;
-            }
             if (task.world != world) {
                 iterator.remove();
             }
-            if (!this.activeBlockTasks.containsKey(task)) {
-                this.activeBlockTasks.put(task, 0);
+            if (!this.activeBlockTasks.contains(task)) {
+                this.activeBlockTasks.add(task);
+            }
+            if (this.activeBlockTasks.size() >= Config.getInstance().limitMax) {
+                return;
             }
         }
-
 
         // 没有正在处理的任务, 准备选择一个新的任务
         if (this.activeBlockTasks.size() < Config.getInstance().limitMax) {
@@ -208,7 +233,7 @@ public class TaskManager {
                 for (int dy = radius; dy > -radius; dy--) {
                     for (int dx = -radius; dx <= radius; dx++) {
                         for (int dz = -radius; dz <= radius; dz++) {
-                             BlockPos blockPos = player.blockPosition().offset(dx, dy, dz);
+                            BlockPos blockPos = player.blockPosition().offset(dx, dy, dz);
                             if (!PlayerUtils.canInteractWithBlockAt(blockPos, 1.0F)) {
                                 continue;
                             }
@@ -234,8 +259,8 @@ public class TaskManager {
                                 iterator2.remove();
                                 continue;
                             }
-                            if (!this.activeBlockTasks.containsKey(task)) {
-                                this.activeBlockTasks.put(task, 0);
+                            if (!this.activeBlockTasks.contains(task)) {
+                                this.activeBlockTasks.add(task);
                             }
                             if (this.activeBlockTasks.size() >= Config.getInstance().limitMax) {
                                 return;
@@ -420,6 +445,14 @@ public class TaskManager {
 
     public List<TaskRegion> getPendingRegionTasks() {
         return pendingRegionTasks;
+    }
+
+    public ArrayList<Task> getActiveBlockTasks() {
+        return activeBlockTasks;
+    }
+
+    public ArrayList<Task> getCacheBlockTasks() {
+        return cacheBlockTasks;
     }
 
     public static TaskManager getInstance() {

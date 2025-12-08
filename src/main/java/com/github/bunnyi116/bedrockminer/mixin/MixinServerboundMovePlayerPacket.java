@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Mixin(value = ServerboundMovePlayerPacket.class, priority = 999)
+@Mixin(value = ServerboundMovePlayerPacket.class, priority = 1010)
 public class MixinServerboundMovePlayerPacket {
     //#if MC > 12101
     @ModifyVariable(method = "<init>(DDDFFZZZZ)V", at = @At("HEAD"), ordinal = 0, argsOnly = true)
@@ -14,7 +14,7 @@ public class MixinServerboundMovePlayerPacket {
     //$$ @ModifyVariable(method = "<init>(DDDFFZZZ)V", at = @At("HEAD"), ordinal = 0, argsOnly = true)
     //#endif
     private static float modifyLookYaw(float yaw) {
-        return PlayerLookUtils.onModifyLookYaw(yaw);
+        return PlayerLookUtils.getYaw(yaw);
     }
 
 
@@ -24,6 +24,6 @@ public class MixinServerboundMovePlayerPacket {
     //$$ @ModifyVariable(method = "<init>(DDDFFZZZ)V", at = @At("HEAD"), ordinal = 1, argsOnly = true)
     //#endif
     private static float modifyLookPitch(float pitch) {
-        return PlayerLookUtils.onModifyLookPitch(pitch);
+        return PlayerLookUtils.getPitch(pitch);
     }
 }
