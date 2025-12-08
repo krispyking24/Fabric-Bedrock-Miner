@@ -25,30 +25,41 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 21
 
-      - name: Cache Gradle dependencies
+      - name: Cache Gradle dependencies (公共缓存)
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
             ./.gradle
-          key: ${{ runner.os }}-gradle-${{ hashFiles(
-            'gradle/wrapper/gradle-wrapper.properties', 
-            '**/*.gradle*',
-            '**/gradle.properties'
-            ) }}
+          # 固定公共缓存键（不依赖文件哈希，保证所有分支复用同一缓存）
+          key: ${{ runner.os }}-gradle-common
+          # 恢复键与主键一致，优先命中公共缓存
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            ${{ runner.os }}-gradle-common
+
+      - name: 清理缓存中超过指定天数的旧文件
+        run: |
+          # 可自定义清理天数（建议15-30天，平衡缓存命中率和磁盘占用）
+          CLEAN_DAYS=15
+          
+          # 清理Gradle全局缓存（目录不存在时忽略错误）
+          find ~/.gradle/caches -type f -mtime +$CLEAN_DAYS -delete || true
+          find ~/.gradle/wrapper -type f -mtime +$CLEAN_DAYS -delete || true
+          # 清理项目内Gradle缓存（目录不存在时忽略错误）
+          find ./.gradle -type f -mtime +$CLEAN_DAYS -delete || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
+          # 保留原有只读缓存逻辑（非主分支/开发分支只读）
           cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && github.ref != 'refs/heads/dev' }}
 
       - name: Build with gradle
@@ -66,14 +77,14 @@ jobs:
           BUILD_ID: ${{ github.run_number }}
           BUILD_RELEASE: ${{ inputs.release }}
 
-#      # [FEATURE] MIXIN_AUDITOR
-#      - name: Run mixin audit check for Minecraft client
-#        if: ${{ inputs.mixin_audit }}
-#        timeout-minutes: 10
-#        run: |
-#          mkdir -p ./run
-#          echo eula=true > ./run/eula.txt  # server needs this
-#          ./gradlew runClientMixinAudit
+      #      # [FEATURE] MIXIN_AUDITOR
+      #      - name: Run mixin audit check for Minecraft client
+      #        if: ${{ inputs.mixin_audit }}
+      #        timeout-minutes: 10
+      #        run: |
+      #          mkdir -p ./run
+      #          echo eula=true > ./run/eula.txt  # server needs this
+      #          ./gradlew runClientMixinAudit
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -97,22 +108,22 @@ jobs:
           name: mod-jars
           path: mod-jars/*.jar
 
-#      # [FEATURE] FALLENS_MAVEN
-#      - name: Publish with gradle
-#        if: inputs.release || github.ref == 'refs/heads/dev'
-#        run: |
-#          if [ -z "${{ inputs.target_subproject }}" ]; then
-#              echo "Publishing all subprojects"
-#              ./gradlew publish
-#          else
-#              args=$(echo "${{ inputs.target_subproject }}" | tr ',' '\n' | sed 's/$/:publish/' | paste -sd ' ')
-#              echo "Publishing with arguments=$args"
-#              ./gradlew $args
-#          fi
-#        env:
-#          BUILD_ID: ${{ github.run_number }}
-#          BUILD_RELEASE: ${{ inputs.release }}
-#          FALLENS_MAVEN_TOKEN: ${{ secrets.FALLENS_MAVEN_TOKEN }}
+  #      # [FEATURE] FALLENS_MAVEN
+  #      - name: Publish with gradle
+  #        if: inputs.release || github.ref == 'refs/heads/dev'
+  #        run: |
+  #          if [ -z "${{ inputs.target_subproject }}" ]; then
+  #              echo "Publishing all subprojects"
+  #              ./gradlew publish
+  #          else
+  #              args=$(echo "${{ inputs.target_subproject }}" | tr ',' '\n' | sed 's/$/:publish/' | paste -sd ' ')
+  #              echo "Publishing with arguments=$args"
+  #              ./gradlew $args
+  #          fi
+  #        env:
+  #          BUILD_ID: ${{ github.run_number }}
+  #          BUILD_RELEASE: ${{ inputs.release }}
+  #          FALLENS_MAVEN_TOKEN: ${{ secrets.FALLENS_MAVEN_TOKEN }}
 
   summary:
     runs-on: ubuntu-latest
