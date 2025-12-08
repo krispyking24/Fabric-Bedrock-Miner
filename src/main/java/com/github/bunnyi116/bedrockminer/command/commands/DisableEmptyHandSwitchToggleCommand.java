@@ -11,21 +11,21 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 
-public class DisableCommand extends CommandBase {
+public class DisableEmptyHandSwitchToggleCommand extends CommandBase {
 
     @Override
     public String getName() {
-        return "disable";
+        return "disableEmptyHandSwitchToggle";
     }
 
     @Override
     public void build(LiteralArgumentBuilder<FabricClientCommandSource> builder) {
         builder.executes(context -> {
-                    if (Config.getInstance().disable) {
-                        Config.getInstance().disable = false;
+                    if (Config.getInstance().disableEmptyHandSwitchToggle) {
+                        Config.getInstance().disableEmptyHandSwitchToggle = false;
                         MessageUtils.addMessage(I18n.COMMAND_DISABLE_OFF);
                     } else {
-                        Config.getInstance().disable = true;
+                        Config.getInstance().disableEmptyHandSwitchToggle = true;
                         MessageUtils.addMessage(I18n.COMMAND_DISABLE_ON);
                     }
                     Config.getInstance().save();
@@ -33,8 +33,8 @@ public class DisableCommand extends CommandBase {
                 })
                 .then(argument("bool", BoolArgumentType.bool())
                         .executes(context -> {
-                            Config.getInstance().disable = BoolArgumentType.getBool(context, "bool");
-                            if (Config.getInstance().disable) {
+                            Config.getInstance().disableEmptyHandSwitchToggle = BoolArgumentType.getBool(context, "bool");
+                            if (Config.getInstance().disableEmptyHandSwitchToggle) {
                                 MessageUtils.addMessage(I18n.COMMAND_DISABLE_ON);
                             } else {
                                 MessageUtils.addMessage(I18n.COMMAND_DISABLE_OFF);

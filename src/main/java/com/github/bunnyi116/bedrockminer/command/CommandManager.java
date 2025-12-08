@@ -2,10 +2,7 @@ package com.github.bunnyi116.bedrockminer.command;
 
 import com.github.bunnyi116.bedrockminer.BedrockMiner;
 import com.github.bunnyi116.bedrockminer.Test;
-import com.github.bunnyi116.bedrockminer.command.commands.BehaviorCommand;
-import com.github.bunnyi116.bedrockminer.command.commands.DebugCommand;
-import com.github.bunnyi116.bedrockminer.command.commands.DisableCommand;
-import com.github.bunnyi116.bedrockminer.command.commands.TaskCommand;
+import com.github.bunnyi116.bedrockminer.command.commands.*;
 import com.github.bunnyi116.bedrockminer.task.TaskManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -25,6 +22,7 @@ public class CommandManager {
         commands.add(new DebugCommand());
         commands.add(new TaskCommand());
         commands.add(new DisableCommand());
+        commands.add(new DisableEmptyHandSwitchToggleCommand());
     }
 
     private static String getCommandPrefix() {

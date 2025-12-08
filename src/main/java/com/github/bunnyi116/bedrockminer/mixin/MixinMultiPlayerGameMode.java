@@ -1,6 +1,7 @@
 package com.github.bunnyi116.bedrockminer.mixin;
 
 import com.github.bunnyi116.bedrockminer.BedrockMiner;
+import com.github.bunnyi116.bedrockminer.config.Config;
 import com.github.bunnyi116.bedrockminer.task.TaskManager;
 import com.github.bunnyi116.bedrockminer.util.player.PlayerInteractionUtils;
 import net.minecraft.client.Minecraft;
@@ -23,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.player;
 import static com.github.bunnyi116.bedrockminer.BedrockMiner.world;
 
-@Mixin(value = MultiPlayerGameMode.class, priority = 999)
+@Mixin(value = MultiPlayerGameMode.class, priority = 1010)
 public abstract class MixinMultiPlayerGameMode {
     @Unique
     private int interactBlockCooldown = 0;
@@ -49,16 +50,13 @@ public abstract class MixinMultiPlayerGameMode {
 
     @Inject(at = @At(value = "HEAD"), method = "useItemOn", cancellable = true)
     private void interactBlock(LocalPlayer localPlayer, InteractionHand interactionHand, BlockHitResult blockHitResult, CallbackInfoReturnable<InteractionResult> cir) {
-        if (this.interactBlockCooldown > 0) {
-            this.interactBlockCooldown--;
-        } else {
-            this.interactBlockCooldown = 1;
-            BlockPos blockPos = blockHitResult.getBlockPos();
-            BlockState blockState = world.getBlockState(blockPos);
-            Block block = blockState.getBlock();
-            if (TaskManager.getInstance().isBedrockMinerFeatureEnable() && player.getMainHandItem().isEmpty()) {
-                TaskManager.getInstance().switchToggle(block);
-            }
+        BlockPos blockPos = blockHitResult.getBlockPos();
+        BlockState blockState = world.getBlockState(blockPos);
+        Block block = blockState.getBlock();
+        if (TaskManager.getInstance().isBedrockMinerFeatureEnable() && player.getMainHandItem().isEmpty() && !Config.getInstance().disableEmptyHandSwitchToggle) {
+            TaskManager.getInstance().switchToggle(block);
+            cir.setReturnValue(InteractionResult.FAIL);
+            cir.cancel();
         }
         if (PlayerInteractionUtils.isBreakingBlock()) {
             cir.setReturnValue(InteractionResult.FAIL);
