@@ -2,8 +2,6 @@ package com.github.bunnyi116.bedrockminer.config;
 
 import com.github.bunnyi116.bedrockminer.task.TaskRegion;
 import com.github.bunnyi116.bedrockminer.util.block.BlockUtils;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,11 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Config {
-
-
+    public boolean disableEmptyHandSwitchToggle = false;
     public boolean disable = false;
     public boolean debug = false;
-    public boolean shortTsk = false;
+    public boolean shortTsk = true;
     public List<Integer> floorsBlacklist = new ArrayList<>();
     public List<TaskRegion> ranges = new ArrayList<>();
     public List<String> blockWhitelist = getDefaultBlockWhitelist();
