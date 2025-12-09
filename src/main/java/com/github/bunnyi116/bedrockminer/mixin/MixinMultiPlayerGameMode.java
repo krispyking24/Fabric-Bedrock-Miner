@@ -31,19 +31,21 @@ public abstract class MixinMultiPlayerGameMode {
 
     @Inject(at = @At(value = "HEAD"), method = "startDestroyBlock", cancellable = true)
     private void attackBlock(BlockPos blockPos, Direction direction, CallbackInfoReturnable<Boolean> cir) {
-        BlockState blockState = world.getBlockState(blockPos);
-        Block block = blockState.getBlock();
-        if (TaskManager.getInstance().isBedrockMinerFeatureEnable()) {
-            TaskManager.getInstance().addBlockTask(world, blockPos, block);
-        }
-        if (PlayerInteractionUtils.isBreakingBlock()) {
-            cir.cancel();
+        if (TaskManager.isWorking()) {
+            BlockState blockState = world.getBlockState(blockPos);
+            Block block = blockState.getBlock();
+            if (TaskManager.getInstance().isBedrockMinerFeatureEnable()) {
+                TaskManager.getInstance().addBlockTask(world, blockPos, block);
+            }
+            if (PlayerInteractionUtils.isBreakingBlock()) {
+                cir.cancel();
+            }
         }
     }
 
     @Inject(at = @At(value = "HEAD"), method = "stopDestroyBlock", cancellable = true)
     public void cancelBlockBreaking(CallbackInfo ci) {
-        if (PlayerInteractionUtils.isBreakingBlock()) {
+        if (TaskManager.isWorking() && PlayerInteractionUtils.isBreakingBlock()) {
             ci.cancel();
         }
     }
@@ -53,22 +55,29 @@ public abstract class MixinMultiPlayerGameMode {
         BlockPos blockPos = blockHitResult.getBlockPos();
         BlockState blockState = world.getBlockState(blockPos);
         Block block = blockState.getBlock();
-        if (TaskManager.getInstance().isBedrockMinerFeatureEnable() && player.getMainHandItem().isEmpty() && !Config.getInstance().disableEmptyHandSwitchToggle) {
-            TaskManager.getInstance().switchToggle(block);
+        if (interactBlockCooldown > 0) {
+            interactBlockCooldown--;
+            return;
         }
-        if (PlayerInteractionUtils.isBreakingBlock()) {
-            cir.setReturnValue(InteractionResult.FAIL);
-            cir.cancel();
+        interactBlockCooldown = 1;
+        if (TaskManager.getInstance().isBedrockMinerFeatureEnable() && player.getMainHandItem().isEmpty() && !Config.getInstance().disableEmptyHandSwitchToggle) {
+            if (PlayerInteractionUtils.isBreakingBlock()) {
+                cir.setReturnValue(InteractionResult.FAIL);
+                cir.cancel();
+            }
+            TaskManager.getInstance().switchToggle(block);
         }
     }
 
     @Inject(at = @At(value = "HEAD"), method = "tick", cancellable = true)
     public void tick(CallbackInfo ci) {
         updateGameVariable();
-        if (PlayerInteractionUtils.isBreakingBlock()) {
-            ci.cancel();
+        if (TaskManager.isWorking()) {
+            if (PlayerInteractionUtils.isBreakingBlock()) {
+                ci.cancel();
+            }
+            TaskManager.getInstance().tick();
         }
-        TaskManager.getInstance().tick();
         PlayerInteractionUtils.autoResetBreaking();    // 自动解除拦截玩家破坏机制，避免任务阻塞或玩家离开任务方块破坏范围
     }
 

@@ -54,6 +54,9 @@ dependencies {
     mappings(loom.officialMojangMappings())
     modImplementation("net.fabricmc:fabric-loader:$loaderVersion") // Fabric 加载器依赖
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion") // Fabric API 依赖
+
+    // Fabric 包装器（运行时, 正常情况下可以不用, 这里模拟用户环境, 一起加载到游戏）
+    runtimeOnly(project(":fabricWrapper"))
 }
 
 loom {
