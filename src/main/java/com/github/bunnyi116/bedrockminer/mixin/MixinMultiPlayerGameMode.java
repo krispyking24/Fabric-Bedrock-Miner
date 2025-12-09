@@ -55,8 +55,6 @@ public abstract class MixinMultiPlayerGameMode {
         Block block = blockState.getBlock();
         if (TaskManager.getInstance().isBedrockMinerFeatureEnable() && player.getMainHandItem().isEmpty() && !Config.getInstance().disableEmptyHandSwitchToggle) {
             TaskManager.getInstance().switchToggle(block);
-            cir.setReturnValue(InteractionResult.FAIL);
-            cir.cancel();
         }
         if (PlayerInteractionUtils.isBreakingBlock()) {
             cir.setReturnValue(InteractionResult.FAIL);
