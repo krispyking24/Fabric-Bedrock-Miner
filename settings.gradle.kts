@@ -20,7 +20,6 @@ pluginManagement {
     }
 }
 
-
 @Suppress("UNCHECKED_CAST")
 val settings = JsonSlurper().parseText(file("settings.json").readText()) as Map<String, List<String>>
 

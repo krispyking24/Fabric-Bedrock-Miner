@@ -36,31 +36,13 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ./.gradle
-          # 固定公共缓存键（不依赖文件哈希，保证所有分支复用同一缓存）
+            ~/.gradle/caches/fabric-loom 
+            ~/.gradle/wrapper            
+            ./.gradle/loom-cache
           key: ${{ runner.os }}-gradle-common
-          # 恢复键与主键一致，优先命中公共缓存
           restore-keys: |
             ${{ runner.os }}-gradle-common
-
-      - name: 清理缓存中超过指定天数的旧文件
-        run: |
-          # 可自定义清理天数（建议15-30天，平衡缓存命中率和磁盘占用）
-          CLEAN_DAYS=15
-          
-          # 清理Gradle全局缓存（目录不存在时忽略错误）
-          find ~/.gradle/caches -type f -mtime +$CLEAN_DAYS -delete || true
-          find ~/.gradle/wrapper -type f -mtime +$CLEAN_DAYS -delete || true
-          # 清理项目内Gradle缓存（目录不存在时忽略错误）
-          find ./.gradle -type f -mtime +$CLEAN_DAYS -delete || true
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          # 保留原有只读缓存逻辑（非主分支/开发分支只读）
-          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && github.ref != 'refs/heads/dev' }}
+            ${{ runner.os }}-gradle-
 
       - name: Build with gradle
         run: |

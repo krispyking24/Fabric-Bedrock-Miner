@@ -1,11 +1,13 @@
 plugins {
     id("maven-publish")
     id("com.github.hierynomus.license") version "0.16.1" apply false
-    id("fabric-loom") version "1.13-SNAPSHOT" apply false
+    id("net.fabricmc.fabric-loom") version "1.14-SNAPSHOT" apply false
+    id("net.fabricmc.fabric-loom-remap") version "1.14-SNAPSHOT" apply false
 
     // https://github.com/ReplayMod/preprocessor
     // https://github.com/Fallen-Breath/preprocessor
-    id("com.replaymod.preprocess") version "d452ef7612"
+    // https://jitpack.io/#Fallen-Breath/preprocessor
+    id("com.replaymod.preprocess") version "c5abb4fb12"
 
     // https://github.com/Fallen-Breath/yamlang
     id("me.fallenbreath.yamlang") version "1.5.0" apply false
@@ -14,11 +16,6 @@ plugins {
 preprocess {
     strictExtraMappings = false
 
-//    val mc1_16_05 = createNode("1.16.5", 1_16_05, "")
-//    val mc1_17_00 = createNode("1.17", 1_17_00, "")
-//    val mc1_17_01 = createNode("1.17.1", 1_17_01, "")
-//    val mc1_18_00 = createNode("1.18", 1_18_00, "")
-//    val mc1_18_01 = createNode("1.18.1", 1_18_01, "")
 //    val mc1_18_02 = createNode("1.18.2", 1_18_02, "")
     val mc1_19_00 = createNode("1.19", 1_19_00, "")
     val mc1_19_01 = createNode("1.19.1", 1_19_01, "")
@@ -43,7 +40,9 @@ preprocess {
     val mc1_21_08 = createNode("1.21.8", 1_21_08, "")
     val mc1_21_09 = createNode("1.21.9", 1_21_09, "")
     val mc1_21_10 = createNode("1.21.10", 1_21_10, "")
+    val mc1_21_11 = createNode("1.21.11", 1_21_11, "")
 
+    mc1_21_11.link(mc1_21_10, null)
     mc1_21_10.link(mc1_21_09, null)
     mc1_21_09.link(mc1_21_08, null)
     mc1_21_08.link(mc1_21_07, null)
@@ -66,12 +65,8 @@ preprocess {
     mc1_19_03.link(mc1_19_02, file("versions/mapping-1.19.2-1.19.3.txt"))
     mc1_19_02.link(mc1_19_01, null)
     mc1_19_01.link(mc1_19_00, null)
-//    mc1_19_00.link(mc1_18_02, file("versions/mapping-1.18.2-1.19.txt"))
 //    mc1_18_02.link(mc1_18_01, null)
-//    mc1_18_01.link(mc1_18_00, null)
-//    mc1_18_00.link(mc1_17_01, null)
-//    mc1_17_01.link(mc1_17_00, null)
-//    mc1_17_00.link(mc1_16_05, file("versions/mapping-1.16.5-1.17.txt"))
+
 }
 
 

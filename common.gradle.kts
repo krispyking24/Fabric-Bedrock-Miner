@@ -3,7 +3,7 @@ import groovy.json.JsonSlurper
 plugins {
     id("java") // 启用 Java 插件
     id("maven-publish") // 启用 Maven 发布插件 (用于发布构建产物到仓库)
-    id("fabric-loom") // 启用 Fabric Loom 插件 (Minecraft Mod 开发工具链)
+    id("net.fabricmc.fabric-loom-remap") // 启用 Fabric Loom 插件 (Minecraft Mod 开发工具链)
     id("com.replaymod.preprocess") // 启用 ReplayMod 预处理器插件 (用于处理跨 Minecraft 版本的代码/资源)
     id("me.fallenbreath.yamlang") // 启用 yamlang 插件 (用于处理语言文件，例如 YAML 格式)
 }
@@ -23,11 +23,11 @@ val loaderVersion = project.property("loader_version") as String
 
 val minecraftDependency = project.property("minecraft_dependency") as String
 val minecraftVersion = project.property("minecraft_version") as String
-val yarnMappings = project.property("yarn_mappings") as String
 val fabricApiVersion = project.property("fabric_api_version") as String
 
 // 根据 Minecraft 版本确定所需的 Java 兼容性版本
 val javaCompatibility = when {
+    mcVersion >= 260000 -> JavaVersion.VERSION_25   // 26+          需要 Java 25
     mcVersion >= 12005 -> JavaVersion.VERSION_21    // 1.20.5+      需要 Java 21
     mcVersion >= 11800 -> JavaVersion.VERSION_17    // 1.18-1.20.4  需要 Java 17
     mcVersion >= 11700 -> JavaVersion.VERSION_16    // 1.17.x       需要 Java 16
