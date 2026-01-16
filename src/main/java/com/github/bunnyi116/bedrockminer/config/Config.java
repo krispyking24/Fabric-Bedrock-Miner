@@ -41,13 +41,7 @@ public class Config {
     public static List<String> getDefaultBlockBlacklistServer() {
         // 默认方块黑名单 (用于限制的服务器, 与自定义黑名单分离)
         var list = new ArrayList<String>();
-        list.add(BlockUtils.getIdentifierString(Blocks.BARRIER));                    // 屏障
-        list.add(BlockUtils.getIdentifierString(Blocks.COMMAND_BLOCK));              // 普通命令方块
-        list.add(BlockUtils.getIdentifierString(Blocks.CHAIN_COMMAND_BLOCK));        // 连锁型命令方块
-        list.add(BlockUtils.getIdentifierString(Blocks.REPEATING_COMMAND_BLOCK));    // 循环型命令方块
-        list.add(BlockUtils.getIdentifierString(Blocks.STRUCTURE_VOID));             // 结构空位
-        list.add(BlockUtils.getIdentifierString(Blocks.STRUCTURE_BLOCK));            // 结构方块
-        list.add(BlockUtils.getIdentifierString(Blocks.JIGSAW));                     // 拼图方块
+        list.add(BlockUtils.getIdentifierString(Blocks.AIR));
         return list;
     }
 
