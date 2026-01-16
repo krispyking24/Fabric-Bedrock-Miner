@@ -17,15 +17,6 @@ This project is a modified fork of [LXYan2333/Fabric-Bedrock-Miner](https://gith
 ### Block Whitelist (Break Supported)
 - Bedrock
 
-### Block Blacklist (Break Not Supported, Cannot Be Changed by Command, Built-In Filter)
-- Barrier
-- Command Block
-- Chain Command Block
-- Repeating Command Block
-- Structure Void
-- Structure Block
-- Jigsaw Block
-
 ### Blocks for Adding Command Filters
 - Air
 - Replaceable Blocks
